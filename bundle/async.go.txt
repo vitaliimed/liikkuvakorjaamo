@@ -1,0 +1,10 @@
+func (h LeadHandler) handleAsyncSubmit(ctx context.Context, lead Lead) (bool,error) {
+ ctx,cancel:=context.WithTimeout(ctx,20*time.Second);defer cancel()
+ leadID,err:=saveLeadRecord(ctx,h.cfg,lead);if err!=nil{return false,err}
+ _=markLeadQueued(ctx,h.cfg,leadID)
+ queueCtx,queueCancel:=context.WithTimeout(ctx,5*time.Second);defer queueCancel()
+ if err:=enqueueLeadProcessingTask(queueCtx,h.cfg,leadID);err==nil{return false,nil}
+ log.Printf("Lead %s saved; queue unavailable, admin retry required",leadID)
+ _=markLeadFailed(ctx,h.cfg,leadID,"Заявка сохранена. Очередь недоступна: повторите обработку в админке.")
+ return false,nil
+}

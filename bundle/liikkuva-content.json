@@ -1,0 +1,694 @@
+{
+  "fi": {
+    "SiteName": "Liikkuva Auto Korjaamo",
+    "ShowStats": false,
+    "Header": {
+      "LogoText": "Liikkuva Auto Korjaamo",
+      "LogoURL": "/static/img/logo_liikkuva.svg",
+      "Nav": [
+        {
+          "Label": "Palvelut",
+          "Href": "#services"
+        },
+        {
+          "Label": "Hinnat",
+          "Href": "#pricing"
+        },
+        {
+          "Label": "Näin toimii",
+          "Href": "#how-it-works"
+        },
+        {
+          "Label": "Alueet",
+          "Href": "#areas"
+        }
+      ],
+      "CTA": "Pyydä apua"
+    },
+    "Footer": {
+      "Email": ""
+    },
+    "Hero": {
+      "BackgroundURL": "/static/img/mobile-mechanic-v2.png",
+      "PersonDesktopURL": "",
+      "Title": "Liikkuva autokorjaamo\nUudellamaalla.",
+      "Subtitle": "Kotipiha, työpaikka tai sovittu pysäköintipaikka. Selvitämme vian ja sovimme korjauksesta ennen työn aloittamista — ilman turhaa matkaa korjaamolle.",
+      "Badge": "DIAGNOSTIIKKA JA KORJAUS · UUSIMAA",
+      "Points": [
+        "Käynti 70 €",
+        "Työt sovitaan etukäteen",
+        "Palvelu paikan päällä"
+      ],
+      "PrimaryCTA": "Pyydä asentaja auton luokse",
+      "SecondaryCTA": "Tutustu palveluihin",
+      "TrustCards": [
+        {
+          "Title": "Koti, työpaikka tai parkkipaikka",
+          "Text": "Korjaus siellä, missä auto on"
+        },
+        {
+          "Title": "Hinta sovitaan ennen työtä",
+          "Text": "Selkeä arvio etukäteen"
+        },
+        {
+          "Title": "FI · EN · RU · UA",
+          "Text": "Palvelu neljällä kielellä"
+        }
+      ]
+    },
+    "Testimonials": {
+      "Items": []
+    },
+    "Services": {
+      "Heading": {
+        "Title": "Vianmääritys ensin.\nSopiva korjaus sen jälkeen.",
+        "Kicker": "01 / PALVELUT",
+        "Text": "Vianmääritystä ja korjauksia siellä, missä autosi on. Tarkka työn laajuus varmistetaan auton ja olosuhteiden mukaan."
+      },
+      "Items": [
+        {
+          "Title": "Akku ja käynnistys",
+          "Text": "Selvitetään, tarvitseeko akku latausta, vaihtoa vai muuta tarkistusta. Käynnistysongelman syy arvioidaan auton luona.",
+          "Badge": "AKKU",
+          "Price": "Tarjouksen mukaan"
+        },
+        {
+          "Title": "Vikakoodit ja vianmääritys",
+          "Text": "Luemme vikakoodit ja vertaamme niitä oireisiin. Saat arvion seuraavasta tarkistuksesta tai korjausvaiheesta.",
+          "Badge": "DIAGNOSTIIKKA",
+          "Price": "Diagnostiikka alk. 50 € + käynti"
+        },
+        {
+          "Title": "Startti ja lataus",
+          "Text": "Tutkimme käynnistys- ja latausjärjestelmän toiminnan. Osien vaihdon soveltuvuus riippuu automallista ja työtilasta.",
+          "Badge": "SÄHKÖ",
+          "Price": "Tarjouksen mukaan"
+        },
+        {
+          "Title": "Jarrujen tarkistus",
+          "Text": "Kuvaile ääni, tärinä tai muu muutos. Tarkistamme työn tarpeen ja sovimme, voidaanko korjaus tehdä kohteessa.",
+          "Badge": "JARRUT",
+          "Price": "Tarjouksen mukaan"
+        },
+        {
+          "Title": "Pienet sähköviat ja anturit",
+          "Text": "Soveltuvat anturi- ja sähköosien vaihdot voidaan tehdä auton luona, kun vika ja osan sopivuus on ensin varmistettu.",
+          "Badge": "KORJAUS",
+          "Price": "Tarjouksen mukaan"
+        },
+        {
+          "Title": "Auton tilanteen arvio",
+          "Text": "Kun et tiedä, mistä aloittaa, lähetä oireet. Selvitämme, auttaako käynti vai tarvitaanko korjaamon olosuhteita.",
+          "Badge": "ENSIARVIO",
+          "Price": "Tarjouksen mukaan"
+        }
+      ]
+    },
+    "Process": {
+      "Heading": {
+        "Title": "Näin valmistelet\nasentajan käynnin.",
+        "Kicker": "03 / Prosessi",
+        "Text": "Selkeä prosessi pyynnöstä korjaukseen."
+      },
+      "Items": [
+        {
+          "Title": "Lähetä auton tiedot",
+          "Text": "Rekisteritunnus, oire ja sijainti auttavat valmistautumaan. Kuva on vapaaehtoinen.",
+          "Number": "01"
+        },
+        {
+          "Title": "Varmistetaan käynnin ehdot",
+          "Text": "Käymme läpi ajan, työskentelypaikan ja hinnan ennen lähtöä.",
+          "Number": "02"
+        },
+        {
+          "Title": "Selvitetään vian syy",
+          "Text": "Asentaja arvioi tarvittavat tarkistukset auton luona. Diagnoosin jälkeen päätetään jatkosta.",
+          "Number": "03"
+        },
+        {
+          "Title": "Sovitaan korjauksesta",
+          "Text": "Soveltuva korjaus tehdään kohteessa. Osat ja lisätyöt vahvistetaan erikseen.",
+          "Number": "04"
+        }
+      ]
+    },
+    "Cases": {
+      "Heading": {
+        "Title": "Tyypillisiä tilanteita, joissa autamme",
+        "Kicker": "Esimerkit",
+        "Text": ""
+      },
+      "Items": [
+        {
+          "Title": "Auto ei käynnisty aamulla",
+          "Text": "Tarkistamme akun kunnon, liitännät, latauksen ja todennäköiset syyt.",
+          "Tag": "Tapaus 1",
+          "Items": [
+            "Paikan päällä aloitusdiagnoosi",
+            "Akun / latauksen tarkistus",
+            "Suositus seuraavaksi korjaukseksi"
+          ]
+        },
+        {
+          "Title": "Jarruissa tärinää tai ääntä",
+          "Text": "Tarkistamme oireet ja arvioimme, onnistuuko työ paikan päällä.",
+          "Tag": "Tapaus 2",
+          "Items": [
+            "Oireiden tarkistus",
+            "Näkyvien osien arvio",
+            "Korjauksen laajuuden selvennys"
+          ]
+        },
+        {
+          "Title": "Varoitusvalo syttyi",
+          "Text": "Vikakoodien luku ja ensitason diagnoosi auttavat löytämään seuraavan korjausaskeleen.",
+          "Tag": "Tapaus 3",
+          "Items": [
+            "Perus vikakoodien tarkistus",
+            "Oireiden läpikäynti",
+            "Korjauspolun arvio"
+          ]
+        },
+        {
+          "Title": "Tarvitset kiireellisen tarkastuksen",
+          "Text": "Autamme ymmärtämään tilanteen ja sen, voiko auton korjata paikan päällä vai tarvitseeko korjaamoa.",
+          "Tag": "Tapaus 4",
+          "Items": [
+            "Nopea tarkistus",
+            "Tekninen neuvo",
+            "Suositus seuraavaksi vaiheeksi"
+          ]
+        }
+      ]
+    },
+    "Areas": {
+      "Heading": {
+        "Title": "Autosi Uudellamaalla.\nMe tulemme paikalle.",
+        "Kicker": "04 / Toiminta-alue"
+      },
+      "Cities": [
+        "Helsinki",
+        "Espoo",
+        "Vantaa",
+        "Porvoo",
+        "Hyvinkää",
+        "Järvenpää",
+        "Lohja",
+        "Kerava"
+      ],
+      "NoteText": "Helsinki, Espoo, Vantaa, Kerava, Järvenpää, Hyvinkää, Porvoo ja Lohja. Lähetä tarkka sijainti: vahvistamme ajan, kohteen turvallisuuden ja käynnin ehdot ennen lähtöä.",
+      "NoteButton": "Lähetä pyyntö",
+      "MapImageURL": "/static/img/uusimaa-map.svg"
+    },
+    "FAQ": {
+      "Heading": {
+        "Title": "Usein kysytyt kysymykset",
+        "Kicker": "05 / UKK"
+      },
+      "Items": [
+        {
+          "Question": "Mitä 70 € käyntimaksu sisältää?",
+          "Answer": "70 € käyntimaksu kattaa asentajan saapumisen auton luokse. Diagnostiikka maksaa tarvittaessa lisäksi alkaen 50 €. Varaosat, korjaukset ja muut lisätyöt sovitaan ja veloitetaan erikseen ennen niiden aloittamista."
+        },
+        {
+          "Question": "Kuinka nopeasti voitte vastata?",
+          "Answer": "Se riippuu työtilanteesta, sijainnista ja viasta. Lähetä pyyntö ja vahvistamme saatavuuden nopeasti."
+        },
+        {
+          "Question": "Tuotteko työkalut ja osat?",
+          "Answer": "Työkalut kuuluvat palveluun. Sopivat osat riippuvat viasta ja vahvistetaan yhteydenoton aikana."
+        },
+        {
+          "Question": "Voiko kaikki korjaukset tehdä paikan päällä?",
+          "Answer": "Ei. Monet yleiset viat voidaan diagnosoida tai korjata paikan päällä, mutta osa töistä vaatii korjaamon."
+        },
+        {
+          "Question": "Palveletteko vain suomeksi?",
+          "Answer": "Palvelemme suomeksi, englanniksi, venäjäksi ja ukrainaksi."
+        },
+        {
+          "Question": "Millainen paikka sopii liikkuvalle autokorjaamolle?",
+          "Answer": "Tarvitsemme luvallisen ja turvallisen työskentelypaikan, jossa auton ympärillä on tilaa. Kerro, onko auto kotipihalla, työpaikalla vai pysäköintihallissa. Kohteen olosuhteet ja työn soveltuvuus arvioidaan ennen käyntiä."
+        },
+        {
+          "Question": "Mitä tietoja tarvitaan ennen vianmääritystä?",
+          "Answer": "Lähetä auton rekisteritunnus, oireen kuvaus ja sijainti. Kerro myös, milloin oire alkoi ja palaako mittaristossa varoitusvalo. Kuva auttaa valmistautumaan, mutta sitä ei tarvitse lähettää."
+        }
+      ]
+    },
+    "TrustPanel": {
+      "Title": "Auto paikallaan. Sinä jatkat päivääsi.",
+      "Text": "Kerro ongelma ja sijainti. Tarkistamme saatavuuden, käymme hinnan läpi ja sovimme sopivan ajan.",
+      "Items": [
+        "Asentajan käynti 70 €",
+        "Diagnostiikka tarvittaessa alk. 50 €",
+        "Varaosat ja lisätyöt sovitaan erikseen",
+        "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"
+      ]
+    },
+    "Capability": {
+      "Heading": {
+        "Title": "Oikea ratkaisu autollesi.",
+        "Kicker": "TYÖN LAAJUUS",
+        "Text": "Moni työ onnistuu paikan päällä. Jos työ tarvitsee nosturin tai laajempaa purkamista, kerromme siitä ennen korjausta."
+      },
+      "CanDo": {
+        "Title": "Voimme usein tehdä paikan päällä",
+        "Items": [
+          "Akun testaus ja akun vaihto",
+          "Vikakoodien luku ja ensidiagnoosi",
+          "Käynnistys- ja latausongelmien perusselvitys",
+          "Valitut anturien ja pienten osien vaihdot",
+          "Jarrujen tarkastus ja mallikohtaiset kevyet työt"
+        ]
+      },
+      "NeedsWorkshop": {
+        "Title": "Usein vaatii korjaamon",
+        "Items": [
+          "Laajat moottori- ja vaihteistotyöt",
+          "Työt jotka vaativat nosturia tai erikoislaitteita",
+          "Suuret alustaremontit ja ruostekorjaukset",
+          "Työt joissa turvallinen pääsy osiin ei onnistu paikan päällä",
+          "Tapaukset joissa vika vaatii pidemmän purun tai syvätestauksen"
+        ]
+      }
+    },
+    "FinalCTA": {
+      "Title": "Auto tarvitsee apua? Aloitetaan tästä.",
+      "Text": "Kuvaile ongelma — etsitään toimiva ratkaisu yhdessä.",
+      "Kicker": "Tarvitsetko apua nyt?",
+      "Button": "Pyydä huoltoa"
+    },
+    "Form": {
+      "LabelName": "Nimi",
+      "PlaceholderName": "Nimesi",
+      "LabelPhone": "Puhelin",
+      "PlaceholderPhone": "+358 40 123 45 67",
+      "LabelEmail": "Sähköposti",
+      "PlaceholderEmail": "email@example.com",
+      "LabelAddress": "Osoite",
+      "PlaceholderAddress": "Katu ja numero / piha / pysäköinti",
+      "LabelCar": "Rekisterinumero",
+      "PlaceholderCar": "Esim. ABC-123",
+      "LabelMessage": "Vika / pyyntö",
+      "PlaceholderMessage": "Kuvaile ongelma",
+      "SuccessMessage": "Pyyntö lähetettiin onnistuneesti.",
+      "ErrorMessage": "Pyynnön lähetys epäonnistui. Yritä uudelleen.",
+      "SubmitLoadingText": "Lähetetään...",
+      "NameRequiredMessage": "Kirjoita nimesi.",
+      "ContactRequiredMessage": "Anna puhelinnumero.",
+      "PhoneInvalidMessage": "Anna kelvollinen puhelinnumero.",
+      "EmailInvalidMessage": "Anna kelvollinen sähköpostiosoite.",
+      "RegistrationInvalidMessage": "Anna rekisterinumero muodossa ABC-123.",
+      "PhotosTooManyMessage": "Voit lähettää enintään 3 kuvaa.",
+      "PhotosTypeMessage": "Vain kuvatiedostot ovat sallittuja.",
+      "PhotosSizeMessage": "Yhden kuvan maksimikoko on 10 MB.",
+      "GeoUnsupportedMessage": "Selaimesi ei tue sijainnin hakemista.",
+      "GeoLoadingText": "Haetaan sijaintia...",
+      "GeoAddedText": "Sijainti lisätty",
+      "GeoFailedMessage": "Sijainnin haku epäonnistui.",
+      "MapPickFirstMessage": "Valitse ensin piste kartalta.",
+      "MapPointAddedText": "Karttapiste lisätty",
+      "ReverseGeocodeFailedMessage": "Koordinaatit tallennettiin, mutta osoitetta ei voitu täyttää automaattisesti.",
+      "NetworkErrorMessage": "Verkko- tai selainvirhe. Yritä uudelleen.",
+      "SubmitButton": "Lähetä avunpyyntö",
+      "Title": "Miten voimme auttaa?",
+      "Intro": "Kerro lyhyesti, mitä autolle tapahtui ja missä se on. Otamme yhteyttä ja sovimme käynnistä.",
+      "VisitPriceText": "Asentajan saapuminen 70 €. Diagnostiikka tarvittaessa alk. 50 €. Muut työt ja varaosat sovitaan erikseen.",
+      "VisitPriceFootnote": "Lomakkeen lähettäminen on maksutonta. Vahvistamme ajan ja sovitun työn ennen käyntiä.",
+      "UseLocationButton": "Käytä sijaintiani",
+      "PickMapButton": "Valitse piste kartalta",
+      "UploadButtonText": "Lisää kuvat",
+      "PhotosHint": "Voit lisätä enintään 3 kuvaa. JPG, PNG tai WEBP, max 10 MB / kuva.",
+      "LabelPhotos": "Kuvat",
+      "PhoneHelp": "",
+      "AddressHelp": "Voit kirjoittaa osoitteen itse tai täyttää sen sijainnista.",
+      "CarHelp": "Syötä rekisterinumero muodossa ABC-123"
+    },
+    "Stats": [
+      {
+        "Title": "Käynti 70 €",
+        "Text": "Asentajan saapuminen auton luokse"
+      },
+      {
+        "Title": "Diagnostiikka alk. 50 €",
+        "Text": "Vain tarvittaessa"
+      },
+      {
+        "Title": "Työ sovitaan",
+        "Text": "Korjaukset ja varaosat erikseen"
+      },
+      {
+        "Title": "Uusimaa",
+        "Text": "Koti, työpaikka tai parkkipaikka"
+      }
+    ]
+  },
+  "en": {
+    "SiteName": "Liikkuva Auto Korjaamo",
+    "ShowStats": false,
+    "Header": {
+      "LogoText": "Liikkuva Auto Korjaamo",
+      "LogoURL": "/static/img/logo_liikkuva.svg",
+      "Nav": [
+        {
+          "Label": "Services",
+          "Href": "#services"
+        },
+        {
+          "Label": "Pricing",
+          "Href": "#pricing"
+        },
+        {
+          "Label": "How it works",
+          "Href": "#how-it-works"
+        },
+        {
+          "Label": "Service area",
+          "Href": "#areas"
+        }
+      ],
+      "CTA": "Request help"
+    },
+    "Footer": {
+      "Email": ""
+    },
+    "Hero": {
+      "BackgroundURL": "/static/img/mobile-mechanic-v2.png",
+      "PersonDesktopURL": "",
+      "Title": "Mobile mechanic.\nAt your doorstep.",
+      "Subtitle": "Your driveway, workplace or an agreed parking spot. We investigate the fault and agree the repair before work starts — saving a trip to the workshop.",
+      "Badge": "MOBILE DIAGNOSTICS & REPAIR · UUSIMAA",
+      "Points": [
+        "Visit €70",
+        "Work agreed in advance",
+        "Service at your location"
+      ],
+      "PrimaryCTA": "Request a mechanic",
+      "SecondaryCTA": "Explore our services",
+      "TrustCards": [
+        {
+          "Title": "Home, workplace or parking area",
+          "Text": "Repairs where your car is"
+        },
+        {
+          "Title": "Price agreed before work",
+          "Text": "A clear assessment in advance"
+        },
+        {
+          "Title": "FI · EN · RU · UA",
+          "Text": "Service in four languages"
+        }
+      ]
+    },
+    "Testimonials": {
+      "Items": []
+    },
+    "Services": {
+      "Heading": {
+        "Title": "Find the fault.\nAgree the right repair.",
+        "Kicker": "01 / SERVICES",
+        "Text": "Diagnostics and repairs where your car is parked. We confirm the scope of work for your vehicle and the conditions on-site."
+      },
+      "Items": [
+        {
+          "Title": "Battery and starting",
+          "Text": "We assess whether the battery needs charging, replacement or further checks. The cause of the starting issue is investigated at the vehicle.",
+          "Badge": "BATTERY",
+          "Price": "Quoted individually"
+        },
+        {
+          "Title": "Fault codes and diagnostics",
+          "Text": "We read fault codes alongside the symptoms. You receive an assessment of the next check or repair step.",
+          "Badge": "DIAGNOSTICS",
+          "Price": "Diagnostics from €50 + visit"
+        },
+        {
+          "Title": "Starter and charging",
+          "Text": "We check the starting and charging system. Replacement options depend on the vehicle model and safe access.",
+          "Badge": "ELECTRICAL",
+          "Price": "Quoted individually"
+        },
+        {
+          "Title": "Brake assessment",
+          "Text": "Describe the noise, vibration or change in braking. We assess the work needed and whether it can be done at your location.",
+          "Badge": "BRAKES",
+          "Price": "Quoted individually"
+        },
+        {
+          "Title": "Small electrical faults and sensors",
+          "Text": "Suitable sensor and electrical part replacements can be completed at the vehicle after checking the fault and part compatibility.",
+          "Badge": "REPAIR",
+          "Price": "Quoted individually"
+        },
+        {
+          "Title": "Assess your car’s situation",
+          "Text": "Not sure where to start? Send the symptoms. We assess whether a visit can help or the job needs workshop conditions.",
+          "Badge": "ASSESSMENT",
+          "Price": "Quoted individually"
+        }
+      ]
+    },
+    "Process": {
+      "Heading": {
+        "Title": "Prepare for your\nmechanic’s visit.",
+        "Kicker": "03 / Process",
+        "Text": "Simple and clear process from request to repair."
+      },
+      "Items": [
+        {
+          "Title": "Send the vehicle details",
+          "Text": "Registration, symptoms and location help us prepare. A photo is optional.",
+          "Number": "01"
+        },
+        {
+          "Title": "Confirm the visit",
+          "Text": "We agree the appointment, working space and price before travelling.",
+          "Number": "02"
+        },
+        {
+          "Title": "Investigate the cause",
+          "Text": "The mechanic assesses the checks needed at the vehicle. The findings guide the next step.",
+          "Number": "03"
+        },
+        {
+          "Title": "Agree the repair",
+          "Text": "Suitable work is carried out on-site. Parts and additional work are confirmed separately.",
+          "Number": "04"
+        }
+      ]
+    },
+    "Cases": {
+      "Heading": {
+        "Title": "Typical situations we handle",
+        "Kicker": "Examples",
+        "Text": ""
+      },
+      "Items": [
+        {
+          "Title": "Car does not start in the morning",
+          "Text": "We check battery condition, connections, charging behavior and likely no-start causes.",
+          "Tag": "Case 1",
+          "Items": [
+            "On-site initial diagnosis",
+            "Battery / charging issue review",
+            "Next repair recommendation"
+          ]
+        },
+        {
+          "Title": "Brake vibration or noise",
+          "Text": "We inspect brake-related symptoms and determine whether on-site work is possible.",
+          "Tag": "Case 2",
+          "Items": [
+            "Symptom inspection",
+            "Visible component check",
+            "Repair scope clarification"
+          ]
+        },
+        {
+          "Title": "Warning light turned on",
+          "Text": "Fault reading and first-level diagnosis help identify what should be fixed next.",
+          "Tag": "Case 3",
+          "Items": [
+            "Basic code check",
+            "Symptom discussion",
+            "Repair path estimate"
+          ]
+        },
+        {
+          "Title": "Need urgent inspection before service",
+          "Text": "We help understand the issue and whether the car can be repaired on-site or needs workshop work.",
+          "Tag": "Case 4",
+          "Items": [
+            "Quick review",
+            "Technical advice",
+            "Next-step recommendation"
+          ]
+        }
+      ]
+    },
+    "Areas": {
+      "Heading": {
+        "Title": "Your car in Uusimaa.\nWe come to you.",
+        "Kicker": "04 / Coverage"
+      },
+      "Cities": [
+        "Helsinki",
+        "Espoo",
+        "Vantaa",
+        "Porvoo",
+        "Hyvinkää",
+        "Järvenpää",
+        "Lohja",
+        "Kerava"
+      ],
+      "NoteText": "Helsinki, Espoo, Vantaa, Kerava, Järvenpää, Hyvinkää, Porvoo and Lohja. Send the exact location so we can confirm the appointment, safe access and visit terms before travelling.",
+      "NoteButton": "Send request",
+      "MapImageURL": "/static/img/uusimaa-map.svg"
+    },
+    "FAQ": {
+      "Heading": {
+        "Title": "Frequently asked questions",
+        "Kicker": "05 / FAQ"
+      },
+      "Items": [
+        {
+          "Question": "What does the €70 visit fee include?",
+          "Answer": "The €70 visit fee covers the mechanic's travel to your car. Diagnostics, if needed, cost from an additional €50. Parts, repairs and other work are agreed and charged separately before they begin."
+        },
+        {
+          "Question": "How fast can you respond?",
+          "Answer": "It depends on workload, location and issue type. Send a request and we will confirm availability quickly."
+        },
+        {
+          "Question": "Do you bring tools and parts?",
+          "Answer": "Tools are included. Suitable parts depend on the issue and are discussed during request review."
+        },
+        {
+          "Question": "Can every repair be done on-site?",
+          "Answer": "No. Many common issues can be diagnosed or fixed on-site, but some jobs still require a workshop."
+        },
+        {
+          "Question": "Do you work only in Finnish?",
+          "Answer": "Not only in Finnish, the service can be handled in Finnish and English, Russian and Ukrainian"
+        },
+        {
+          "Question": "What location is suitable for a mobile mechanic?",
+          "Answer": "We need permission to work and a safe space around the vehicle. Tell us if it is in a driveway, at work or in a parking garage. We assess the conditions and suitability of the job before the visit."
+        },
+        {
+          "Question": "What information helps prepare for diagnostics?",
+          "Answer": "Send the registration, symptoms and location. Tell us when the issue started and whether a warning light is on. An optional photo can help us prepare."
+        }
+      ]
+    },
+    "TrustPanel": {
+      "Title": "Your car stays put. Your day moves on.",
+      "Text": "Tell us the problem and location. We check availability, explain the pricing and arrange a suitable time.",
+      "Items": [
+        "Mechanic visit €70",
+        "Diagnostics, if needed, from €50",
+        "Parts and additional work agreed separately",
+        "Finnish, English, Russian and Ukrainian service"
+      ]
+    },
+    "Capability": {
+      "Heading": {
+        "Title": "The right solution for your car.",
+        "Kicker": "SCOPE OF WORK",
+        "Text": "Many jobs can be completed on-site. If your repair needs a lift or extensive dismantling, we explain that before starting."
+      },
+      "CanDo": {
+        "Title": "Often possible on-site",
+        "Items": [
+          "Battery testing and battery replacement",
+          "Fault code reading and first diagnosis",
+          "Basic starting and charging system checks",
+          "Selected sensor and small part replacements",
+          "Brake inspection and model-dependent light work"
+        ]
+      },
+      "NeedsWorkshop": {
+        "Title": "Usually needs a workshop",
+        "Items": [
+          "Major engine or gearbox repairs",
+          "Work that needs a lift or specialist equipment",
+          "Large suspension or rust repairs",
+          "Jobs where safe access to parts is not possible on-site",
+          "Cases that need longer disassembly or deeper testing"
+        ]
+      }
+    },
+    "FinalCTA": {
+      "Title": "Your car needs help? Start here.",
+      "Text": "Tell us what's wrong — let's find a practical solution together.",
+      "Kicker": "Need help now?",
+      "Button": "Request service"
+    },
+    "Form": {
+      "LabelName": "Name",
+      "PlaceholderName": "Your name",
+      "LabelPhone": "Phone",
+      "PlaceholderPhone": "+358 40 123 45 67",
+      "LabelEmail": "Email",
+      "PlaceholderEmail": "email@example.com",
+      "LabelAddress": "Address",
+      "PlaceholderAddress": "Street and number / yard / parking area",
+      "LabelCar": "Registration number",
+      "PlaceholderCar": "For example ABC-123",
+      "LabelMessage": "Problem / request",
+      "PlaceholderMessage": "Describe the issue",
+      "SuccessMessage": "Your request has been sent successfully.",
+      "ErrorMessage": "Failed to send request. Please try again.",
+      "SubmitLoadingText": "Sending...",
+      "NameRequiredMessage": "Please enter your name.",
+      "ContactRequiredMessage": "Please enter your phone number.",
+      "PhoneInvalidMessage": "Please enter a valid phone number.",
+      "EmailInvalidMessage": "Please enter a valid email address.",
+      "RegistrationInvalidMessage": "Please enter a valid registration number in format ABC-123.",
+      "PhotosTooManyMessage": "Please upload up to 3 photos only.",
+      "PhotosTypeMessage": "Only image files are allowed.",
+      "PhotosSizeMessage": "Each photo must be smaller than 10 MB.",
+      "GeoUnsupportedMessage": "Geolocation is not supported in this browser.",
+      "GeoLoadingText": "Detecting location...",
+      "GeoAddedText": "Location added",
+      "GeoFailedMessage": "Could not get your location.",
+      "MapPickFirstMessage": "Please pick a point on the map first.",
+      "MapPointAddedText": "Map point added",
+      "ReverseGeocodeFailedMessage": "Coordinates were saved, but the address could not be filled automatically.",
+      "NetworkErrorMessage": "Network or browser error. Please try again.",
+      "SubmitButton": "Send help request",
+      "Title": "How can we help?",
+      "Intro": "Tell us briefly what happened and where your car is. We will contact you to arrange a visit.",
+      "VisitPriceText": "Mechanic visit €70. Diagnostics, if needed, from €50. Other work and spare parts are agreed separately.",
+      "VisitPriceFootnote": "Sending a request is free. We confirm the time and agreed work before the visit.",
+      "UseLocationButton": "Use my location",
+      "PickMapButton": "Pick point on map",
+      "UploadButtonText": "Upload photos",
+      "PhotosHint": "You can add up to 3 photos. JPG, PNG or WEBP, max 10 MB each.",
+      "LabelPhotos": "Photos",
+      "PhoneHelp": "",
+      "AddressHelp": "You can type the address manually or fill it from location.",
+      "CarHelp": "Use registration number format ABC-123"
+    },
+    "Stats": [
+      {
+        "Title": "Visit €70",
+        "Text": "Mechanic travel to your car"
+      },
+      {
+        "Title": "Diagnostics from €50",
+        "Text": "Only if needed"
+      },
+      {
+        "Title": "Work agreed",
+        "Text": "Repairs and parts separately"
+      },
+      {
+        "Title": "Uusimaa",
+        "Text": "Home, workplace or parking area"
+      }
+    ]
+  }
+}

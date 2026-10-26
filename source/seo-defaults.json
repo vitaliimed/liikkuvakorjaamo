@@ -1,0 +1,15 @@
+{
+  "LandingSEOTitleFI": "Liikkuva autokorjaamo Uusimaa | Korjaus auton luona",
+  "LandingSEOTitleEN": "Mobile mechanic in Uusimaa | Liikkuva Auto Korjaamo",
+  "LandingSEODescriptionFI": "Liikkuva autokorjaamo kotiin tai työpaikalle: akun, käynnistyksen ja vikakoodien tarkistus Uudellamaalla. Käynti 70 €, diagnostiikka tarvittaessa alk. 50 €.",
+  "LandingSEODescriptionEN": "A mobile mechanic at your home or workplace in Uusimaa. Battery, starting and fault-code checks. Visit €70; diagnostics, when needed, from an additional €50.",
+  "GA4MeasurementID": "G-MXX9XCNCRB",
+  "LandingRobotsMeta": "index, follow, max-image-preview:large",
+  "ThankYouRobotsMeta": "noindex, follow",
+  "PrivacyRobotsMeta": "noindex, follow",
+  "PrivacySEOTitleFI": "Tietosuojaseloste | Liikkuva Auto Korjaamo",
+  "PrivacySEOTitleEN": "Privacy policy | Liikkuva Auto Korjaamo",
+  "ThankYouSEOTitleFI": "Pyyntö vastaanotettu | Liikkuva Auto Korjaamo",
+  "ThankYouSEOTitleEN": "Request received | Liikkuva Auto Korjaamo",
+  "RobotsTXT": "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /internal/\nDisallow: /lead\nDisallow: /static/seo/\n\nSitemap: https://liikkuvakorjaamo.fi/sitemap.xml\n"
+}

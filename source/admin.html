@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.PageTitle}}</title>
+  <style>
+    :root{
+      --bg:#f0f3f7;
+      --card:#ffffff;
+      --text:#10213a;
+      --muted:#64748b;
+      --line:#dbe2ea;
+      --line-strong:#c9d5e3;
+      --blue:#315ab6;
+      --blue-dark:#10213a;
+      --dark:#10213a;
+      --ok:#15803d;
+      --bad:#b91c1c;
+      --wait:#10213a;
+      --chip:#eef2f7;
+      --shadow:0 12px 32px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding-bottom:110px;
+    }
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:24px 20px 0;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:16px;
+    }
+    .titlebox h1{margin:0 0 6px;font-size:30px}
+    .titlebox p{margin:0;color:var(--muted)}
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .link-btn,.secondary-btn,button{
+      appearance:none;
+      border:0;
+      border-radius:14px;
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:700;
+      text-decoration:none;
+      cursor:pointer;
+    }
+    .link-btn,button.primary{
+      background:var(--blue);
+      color:#fff;
+      box-shadow:0 10px 18px rgba(37,99,235,.18);
+    }
+    .secondary-btn{
+      background:#111827;
+      color:#fff;
+    }
+    .ghost-btn{
+      background:#fff;
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+    .msg-ok,.msg-err{
+      border-radius:14px;
+      padding:12px 14px;
+      margin:0 0 14px;
+      white-space:pre-wrap;
+    }
+    .msg-ok{background:#ecfdf5;color:var(--ok);border:1px solid #bbf7d0}
+    .msg-err{background:#fef2f2;color:var(--bad);border:1px solid #fecaca}
+    .card{
+      background:var(--card);
+      border:1px solid #e6edf5;
+      border-radius:24px;
+      box-shadow:var(--shadow);
+    }
+    .tabs-shell{
+      display:grid;
+      grid-template-columns:240px minmax(0,1fr);
+      gap:18px;
+      align-items:start;
+    }
+    .tabs-nav{
+      position:sticky;
+      top:18px;
+      padding:14px;
+      z-index:5;
+    }
+    .tabs-nav h2{
+      margin:0 0 10px;
+      font-size:16px;
+    }
+    .tabs-nav p{
+      margin:0 0 14px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .tab-list{
+      display:grid;
+      gap:8px;
+    }
+    .tab-button{
+  appearance:none;
+  width:100%;
+  display:block;
+  text-align:left;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid transparent;
+  background:#f8fafc;
+  color:var(--text);
+  font-weight:700;
+  cursor:pointer;
+  position:relative;
+  z-index:6;
+  pointer-events:auto;
+  text-decoration:none;
+}
+    .tab-button small{
+      display:block;
+      margin-top:4px;
+      font-weight:500;
+      color:var(--muted);
+    }
+    .tab-button.active{
+      background:#eff6ff;
+      border-color:#bfdbfe;
+      color:var(--blue-dark);
+    }
+    .panel-stack{
+      display:grid;
+      gap:18px;
+    }
+    .panel{
+      display:none;
+      padding:22px;
+    }
+    .panel.active{display:block}
+    .panel h2{
+      margin:0 0 8px;
+      font-size:24px;
+    }
+    .panel-intro{
+      margin:0 0 18px;
+      color:var(--muted);
+      line-height:1.55;
+    }
+    .section-title{
+      margin:22px 0 12px;
+      font-size:18px;
+    }
+    .subnote{
+      display:inline-block;
+      margin-left:8px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:500;
+    }
+    .grid{
+      display:grid;
+      gap:16px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .grid-3{
+      display:grid;
+      gap:16px;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+    .field.full{grid-column:1/-1}
+    .field label{
+      font-size:13px;
+      font-weight:700;
+    }
+    .field-hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:-2px;
+    }
+    input,textarea,select{
+      width:100%;
+      border:1px solid var(--line-strong);
+      border-radius:14px;
+      padding:12px 14px;
+      font-size:14px;
+      color:var(--text);
+      background:#fff;
+      font-family:inherit;
+    }
+    input:focus,textarea:focus,select:focus{
+      outline:none;
+      border-color:#93c5fd;
+      box-shadow:0 0 0 4px rgba(59,130,246,.12);
+    }
+    textarea{
+      min-height:110px;
+      resize:vertical;
+      line-height:1.55;
+    }
+    textarea.code{
+      min-height:260px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    .lang-grid{
+      display:grid;
+      gap:16px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      align-items:start;
+    }
+    .lang-card{
+      background:#f8fafc;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+    }
+    .lang-card h3{
+      margin:0 0 12px;
+      font-size:16px;
+    }
+    .meta-box{
+      background:#f8fafc;
+      border:1px dashed var(--line-strong);
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:14px;
+    }
+    .preview-box{
+      background:#f8fafc;
+      border:1px dashed var(--line-strong);
+      border-radius:18px;
+      padding:14px;
+      display:grid;
+      gap:10px;
+    }
+    .preview-box img{
+      max-width:100%;
+      max-height:90px;
+      object-fit:contain;
+      display:block;
+    }
+    .helper-list{
+      margin:0;
+      padding-left:18px;
+      color:var(--muted);
+      line-height:1.55;
+    }
+    .sticky-save{
+      position:fixed;
+      left:20px;
+      right:20px;
+      bottom:18px;
+      z-index:90;
+      background:rgba(255,255,255,.94);
+      border:1px solid #dbe2ea;
+      backdrop-filter:blur(12px);
+      box-shadow:0 18px 40px rgba(15,23,42,.12);
+      border-radius:20px;
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .sticky-save-copy strong{display:block;font-size:14px}
+    .sticky-save-copy span{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:16px 0 20px;
+    }
+    .filter-link{
+      display:inline-block;
+      padding:10px 14px;
+      border-radius:999px;
+      background:#eef2f7;
+      color:#10213a;
+      text-decoration:none;
+      font-size:14px;
+      font-weight:700;
+    }
+    .filter-link.active{
+      background:var(--blue);
+      color:#fff;
+    }
+    .table-wrap{
+      overflow:auto;
+      border:1px solid #e5e7eb;
+      border-radius:18px;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      min-width:900px;
+      border-collapse:collapse;
+    }
+    th,td{
+      padding:12px 14px;
+      border-bottom:1px solid #edf2f7;
+      text-align:left;
+      vertical-align:top;
+      font-size:14px;
+    }
+    th{
+      background:#f8fafc;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      color:#64748b;
+    }
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .badge.wait{background:#dbeafe;color:var(--wait)}
+    .badge.ok{background:#dcfce7;color:var(--ok)}
+    .badge.bad{background:#fee2e2;color:var(--bad)}
+    .mini-link{
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .lead-details{
+      margin-top:28px;
+      padding-top:24px;
+      border-top:1px solid #e5e7eb;
+    }
+    .detail-grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .detail-box{
+      background:#f8fafc;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:14px;
+    }
+    .detail-box strong{
+      display:block;
+      margin-bottom:6px;
+      font-size:12px;
+      color:#64748b;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .detail-box.full{grid-column:1/-1}
+    .code-block{
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:#10213a;
+      color:#e5e7eb;
+      border-radius:16px;
+      padding:14px;
+      font-size:13px;
+      margin-top:10px;
+      line-height:1.55;
+    }
+    .photo-list{display:grid;gap:10px;margin-top:10px}
+    .login-card{
+      max-width:420px;
+      margin:80px auto;
+      padding:26px;
+    }
+    .quick-links{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .quick-links a{
+      font-size:13px;
+      color:var(--blue);
+      text-decoration:none;
+      font-weight:700;
+    }
+    .lead-workspace{
+      margin:18px 0 22px;
+      padding:20px;
+      border:1px solid #cbdcf0;
+      border-radius:22px;
+      background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%);
+      box-shadow:0 14px 34px rgba(15,23,42,.08);
+    }
+    .lead-workspace-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .lead-workspace-head h3{
+      margin:4px 0 3px;
+      font-size:25px;
+      line-height:1.1;
+    }
+    .lead-workspace-head p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .lead-kicker{
+      color:#0369a1;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .lead-stage-form{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      margin-top:16px;
+      padding:12px;
+      border:1px solid #dbe7f3;
+      border-radius:16px;
+      background:#fff;
+    }
+    .lead-stage-form select{min-height:44px}
+    .lead-primary-actions,
+    .lead-email-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+      margin-top:14px;
+    }
+    .lead-primary-actions a,
+    .lead-primary-actions button,
+    .lead-email-actions button{
+      min-height:44px;
+    }
+    .lead-message-card{
+      margin-top:16px;
+      padding:16px;
+      border-radius:17px;
+      background:#10213a;
+      color:#e2e8f0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      line-height:1.55;
+    }
+    .lead-message-card strong{
+      display:block;
+      margin-bottom:7px;
+      color:#93c5fd;
+      font-size:11px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .lead-contact-summary{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:14px;
+    }
+    .lead-contact-summary div{
+      padding:12px;
+      border:1px solid #e2e8f0;
+      border-radius:14px;
+      background:#fff;
+      min-width:0;
+      word-break:break-word;
+    }
+    .lead-contact-summary strong{
+      display:block;
+      margin-bottom:4px;
+      color:#64748b;
+      font-size:10px;
+      text-transform:uppercase;
+    }
+    .lead-email-status{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:14px;
+    }
+    .lead-email-status div{
+      padding:10px 12px;
+      border-radius:13px;
+      background:#eef2f7;
+      font-size:12px;
+    }
+    .lead-email-status strong{display:block;margin-bottom:3px}
+    .mobile-lead-list{display:none}
+    .mobile-lead-card{
+      display:block;
+      padding:15px;
+      border:1px solid #dbe4ee;
+      border-radius:18px;
+      background:#fff;
+      color:var(--text);
+      text-decoration:none;
+      box-shadow:0 8px 22px rgba(15,23,42,.05);
+    }
+    .mobile-lead-card + .mobile-lead-card{margin-top:10px}
+    .mobile-lead-card-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .mobile-lead-card h3{margin:0 0 5px;font-size:18px}
+    .mobile-lead-card p{margin:0;color:#475569;font-size:13px;line-height:1.45}
+    .mobile-lead-card-meta{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:10px;
+      color:#64748b;
+      font-size:12px;
+    }
+    @media (max-width: 1120px){
+      .tabs-shell{grid-template-columns:1fr}
+      .tabs-nav{position:static}
+    }
+    @media (max-width: 860px){
+      .grid,.lang-grid,.detail-grid,.grid-3{grid-template-columns:1fr}
+      .sticky-save{left:12px;right:12px;bottom:12px;flex-direction:column;align-items:stretch}
+      .topbar{flex-direction:column}
+      .top-actions{justify-content:flex-start}
+      .panel{padding:18px}
+      .wrap{padding:18px 14px 0}
+      .table-wrap{display:none}
+      .mobile-lead-list{display:block}
+      .lead-contact-summary,.lead-email-status{grid-template-columns:1fr}
+      .lead-workspace{padding:15px;border-radius:18px}
+      .lead-workspace-head{align-items:flex-start}
+      .lead-workspace-head h3{font-size:22px}
+      .lead-stage-form{grid-template-columns:1fr}
+      .lead-stage-form button{width:100%}
+      .lead-primary-actions,.lead-email-actions{display:grid;grid-template-columns:1fr 1fr}
+      .lead-primary-actions a,.lead-primary-actions button,.lead-email-actions form,.lead-email-actions button{width:100%}
+    }
+    @media (max-width: 520px){
+      .lead-primary-actions,.lead-email-actions{grid-template-columns:1fr}
+      .filter-link{padding:9px 11px;font-size:12px}
+    }
+  </style>
+<link rel="stylesheet" href="/static/css/pro.css?v=20261025"><script src="/static/js/events.js?v=20261025" defer></script><link rel="stylesheet" href="/static/css/admin-mobile.css"><script src="/static/js/admin-mobile.js" defer></script></head>
+<body>
+  <div class="wrap">
+    {{if .LoginRequired}}
+      <div class="card login-card">
+        <h1>Вход в управление</h1>
+        <p class="panel-intro">Введите пароль для управления сайтом и заявками.</p>
+        {{if .Error}}<div class="msg-err">{{.Error}}</div>{{end}}
+        <form method="post" action="/admin/login">
+          <div class="field">
+            <label>Пароль</label>
+            <input type="password" name="password" required>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="primary" type="submit">Войти</button>
+          </div>
+        </form>
+      </div>
+    {{else}}
+      <div class="topbar">
+        <div class="titlebox">
+          <h1>Управление сайтом</h1>
+          <p>Разделы сайта, заявки и настройки. Кнопка сохранения всегда доступна.</p>
+          <div class="quick-links"><a href="/admin/email">Новое письмо</a>
+            <a href="/fi" target="_blank" rel="noopener noreferrer">Открыть сайт — FI</a>
+            <a href="/en" target="_blank" rel="noopener noreferrer">Открыть сайт — EN</a>
+            <a href="/thank-you-fi" target="_blank" rel="noopener noreferrer">После заявки — FI</a>
+            <a href="/privacy?lang=fi" target="_blank" rel="noopener noreferrer">Конфиденциальность — FI</a>
+          </div>
+        </div>
+        <div class="top-actions">
+          <form method="post" action="/admin/logout">
+            <button type="submit" class="secondary-btn">Выйти</button>
+          </form>
+        </div>
+      </div>
+
+      {{if .Saved}}<div class="msg-ok">Настройки сохранены.</div>{{end}}
+      {{if .RetryQueued}}<div class="msg-ok">Заявка снова поставлена в очередь.</div>{{end}}
+      {{if .ReadyEmailSent}}<div class="msg-ok">Письмо о готовности отправлено.</div>{{end}}
+	  {{if .ConfirmationEmailSent}}<div class="msg-ok">Подтверждение заявки отправлено.</div>{{end}}
+	  {{if .ReviewEmailSent}}<div class="msg-ok">Приглашение оставить отзыв отправлено.</div>{{end}}
+      {{if .StatusUpdated}}<div class="msg-ok">Статус работы обновлён.</div>{{end}}
+      {{if .Error}}<div class="msg-err">{{.Error}}</div>{{end}}
+	  {{if not .MailEnabled}}<div class="msg-err">Отправка писем отключена. Настройте SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD и MAIL_FROM в Cloud Run по инструкции EMAIL-RU.md.</div>{{end}}
+
+      <div class="tabs-shell">
+        <aside class="card tabs-nav">
+          <h2>Разделы</h2>
+          <p>Выберите раздел. Последний открытый раздел сохраняется в браузере.</p>
+            <div class="tab-list">
+            <a class="tab-button {{if or (eq .ActiveTab "") (eq .ActiveTab "general")}}active{{end}}" href="/admin?tab=general">Основные настройки <small>Телефон, кнопка, логотип</small></a>
+            <a class="tab-button {{if eq .ActiveTab "assets"}}active{{end}}" href="/admin?tab=assets">Изображения и оформление <small>Иконки, первый экран, карта, услуги</small></a>
+            <a class="tab-button {{if eq .ActiveTab "landing-fi"}}active{{end}}" href="/admin?tab=landing-fi">Главная — финский <small>Основной текст на финском</small></a>
+             <a class="tab-button {{if eq .ActiveTab "landing-en"}}active{{end}}" href="/admin?tab=landing-en">Главная — английский <small>Основной текст на английском</small></a>
+            <a class="tab-button {{if eq .ActiveTab "form-fi"}}active{{end}}" href="/admin?tab=form-fi">Форма — финский <small>Тексты и проверка формы на финском</small></a>
+            <a class="tab-button {{if eq .ActiveTab "form-en"}}active{{end}}" href="/admin?tab=form-en">Форма — английский <small>Тексты и проверка формы на английском</small></a>
+            <a class="tab-button {{if eq .ActiveTab "promo"}}active{{end}}" href="/admin?tab=promo">Предложение <small>Акции и рекламные предложения</small></a>
+            <a class="tab-button {{if eq .ActiveTab "testimonials"}}active{{end}}" href="/admin?tab=testimonials">Отзывы <small>Имя клиента, отзыв, фотография</small></a>
+			<a class="tab-button {{if eq .ActiveTab "reviews"}}active{{end}}" href="/admin?tab=reviews">Модерация отзывов <small>{{.OverviewPendingReviews}} ожидает одобрения</small></a>
+            <a class="tab-button {{if eq .ActiveTab "services"}}active{{end}}" href="/admin?tab=services">Карточки услуг <small>Карточки с прокруткой на сайте</small></a>
+            <a class="tab-button {{if eq .ActiveTab "cases"}}active{{end}}" href="/admin?tab=cases">Примеры работ <small>Карточки с прокруткой на сайте</small></a>
+            <a class="tab-button {{if eq .ActiveTab "thankyou"}}active{{end}}" href="/admin?tab=thankyou">После отправки заявки <small>Подтверждение заявки на FI и EN</small></a>
+            <a class="tab-button {{if eq .ActiveTab "privacy"}}active{{end}}" href="/admin?tab=privacy">Конфиденциальность <small>Политика конфиденциальности</small></a>
+            <a class="tab-button {{if eq .ActiveTab "seo"}}active{{end}}" href="/admin?tab=seo">SEO и индексация <small>Метатеги и robots.txt</small></a>
+              <a class="tab-button {{if eq .ActiveTab "leads"}}active{{end}}" href="/admin?tab=leads">Заявки <small>Заявки, этапы и повторная обработка</small></a>
+          </div>
+        </aside>
+
+        <div class="panel-stack">
+          <form id="adminSettingsForm" method="post" action="/admin/save">
+            <input type="hidden" name="active_tab" value="{{if .ActiveTab}}{{.ActiveTab}}{{else}}general{{end}}">
+            <section class="card panel {{if or (eq .ActiveTab "") (eq .ActiveTab "general")}}active{{end}}" data-panel="general"><div class="pro-settings"><h2>Цены и оформление</h2><p>Выезд и диагностика оплачиваются отдельно. Значения ниже применяются к стандартным ценовым блокам и новым заявкам. Если заполнить основной текст SEO-страницы, он заменит стандартные описания этой страницы. Разделяйте абзацы пустой строкой. В собственных текстах используйте {visit} и {diagnostic}, чтобы цены обновлялись автоматически.</p><label>Выезд, €<input type="number" name="ProVisitEUR" value="{{.Settings.ProVisitEUR}}" min="1" max="2000"></label><label>Диагностика от, €<input type="number" name="ProDiagnosticEUR" value="{{.Settings.ProDiagnosticEUR}}" min="1" max="2000"></label><label>Основной шрифт, px (16–22)<input type="number" name="ProFontSize" value="{{.Settings.ProFontSize}}" min="16" max="22"></label><label>Акцентный цвет (#2458d6)<input name="ProAccent" value="{{.Settings.ProAccent}}" pattern="#[0-9a-fA-F]{6}" placeholder="#2458d6"></label><label>Основной текст страницы «Цены» (финский)<textarea name="ProPricingText" rows="5">{{.Settings.ProPricingText}}</textarea></label><label>Основной текст страницы «Зона выезда» (финский)<textarea name="ProAreasText" rows="5">{{.Settings.ProAreasText}}</textarea></label><label>Основной текст страницы «Диагностика» (финский)<textarea name="ProDiagnosticsText" rows="5">{{.Settings.ProDiagnosticsText}}</textarea></label><label>Цены — SEO-заголовок (финский)<textarea name="ProPricingTitle" rows="5">{{.Settings.ProPricingTitle}}</textarea></label><label>Цены — Meta описание (финский)<textarea name="ProPricingDescription" rows="5">{{.Settings.ProPricingDescription}}</textarea></label><label>Цены — Заголовок H1 (финский)<textarea name="ProPricingHeading" rows="5">{{.Settings.ProPricingHeading}}</textarea></label><label>Зона выезда — SEO-заголовок (финский)<textarea name="ProAreasTitle" rows="5">{{.Settings.ProAreasTitle}}</textarea></label><label>Зона выезда — Meta описание (финский)<textarea name="ProAreasDescription" rows="5">{{.Settings.ProAreasDescription}}</textarea></label><label>Зона выезда — Заголовок H1 (финский)<textarea name="ProAreasHeading" rows="5">{{.Settings.ProAreasHeading}}</textarea></label><label>Диагностика — SEO-заголовок (финский)<textarea name="ProDiagnosticsTitle" rows="5">{{.Settings.ProDiagnosticsTitle}}</textarea></label><label>Диагностика — Meta описание (финский)<textarea name="ProDiagnosticsDescription" rows="5">{{.Settings.ProDiagnosticsDescription}}</textarea></label><label>Диагностика — Заголовок H1 (финский)<textarea name="ProDiagnosticsHeading" rows="5">{{.Settings.ProDiagnosticsHeading}}</textarea></label></div>
+              <h2>Основные настройки</h2>
+              <p class="panel-intro">Контакты, реквизиты и оформление шапки. Логотип задаётся ссылкой или путём к файлу.</p>
+
+              <div class="grid">
+                <div class="field">
+                  <label>Телефон</label>
+                  <input type="text" name="phone" required autocomplete="tel" inputmode="tel" value="{{.Settings.Phone}}">
+                </div>
+                <div class="field">
+                  <label>Логотип путь или URL</label>
+                  <input type="text" id="logoUrlInput" name="logo_url" value="{{.Settings.LogoURL}}" placeholder="/static/img/logo_liikkuva.svg">
+                  <div class="field-hint">Укажите путь к файлу, например <code>/static/img/logo_liikkuva.svg</code> или полную общедоступную ссылку.</div>
+                </div>
+              </div>
+
+              <div class="preview-box" style="margin-top:16px;">
+                <strong>Текущий логотип</strong>
+                <img id="logoPreview" src="{{if .Settings.LogoURL}}{{.Settings.LogoURL}}{{else}}/static/img/logo_liikkuva.svg{{end}}" alt="Logo preview" onerror="this.style.display='none';document.getElementById('logoPreviewFallback').style.display='block';">
+                <div id="logoPreviewFallback" class="field-hint" style="display:none;">Не удалось загрузить логотип по указанному пути.</div>
+              </div>
+
+              <div class="section-title">Реквизиты компании</div>
+              <div class="grid">
+                <div class="field">
+                  <label>WhatsApp номер</label>
+                  <input type="text" name="whatsapp_number" value="{{.Settings.WhatsAppNumber}}" placeholder="+358401234567">
+                </div>
+                <div class="field">
+                  <label>Почта для связи</label>
+                  <input type="email" name="service_email" value="{{.Settings.ServiceEmail}}" placeholder="service@autohelp.fi">
+                </div>
+                <div class="field">
+                  <label>Название компании</label>
+                  <input type="text" name="business_name" value="{{.Settings.BusinessName}}">
+                </div>
+                <div class="field">
+                  <label>Y-tunnus (регистрационный номер)</label>
+                  <input type="text" name="y_tunnus" value="{{.Settings.YTunnus}}">
+                </div>
+                <div class="field">
+                  <label>Основной город</label>
+                  <input type="text" name="base_city" value="{{.Settings.BaseCity}}" placeholder="Helsinki / Uusimaa">
+                </div>
+                <div class="field">
+                  <label>Рабочие часы FI</label>
+                  <input type="text" name="working_hours_fi" value="{{.Settings.WorkingHoursFI}}" placeholder="Sopimuksen mukaan">
+                </div>
+                <div class="field full">
+                  <label>Рабочие часы EN</label>
+                  <input type="text" name="working_hours_en" value="{{.Settings.WorkingHoursEN}}" placeholder="By appointment">
+                </div>
+              </div>
+
+              <div class="section-title">Кнопка в шапке</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Шапка кнопка FI</label>
+                  <input type="text" name="header_cta_fi" value="{{.Settings.HeaderCTAFI}}">
+                </div>
+                <div class="field">
+                  <label>Шапка кнопка EN</label>
+                  <input type="text" name="header_cta_en" value="{{.Settings.HeaderCTAEN}}">
+                </div>
+              </div>
+              <div class="section-title">Социальные сети</div>
+<div class="grid">
+  <div class="field">
+    <label>Instagram URL</label>
+    <input type="text" name="instagram_url" value="{{.Settings.InstagramURL}}" placeholder="https://instagram.com/yourprofile">
+  </div>
+  <div class="field">
+    <label>TikTok URL</label>
+    <input type="text" name="tiktok_url" value="{{.Settings.TikTokURL}}" placeholder="https://www.tiktok.com/@yourprofile">
+  </div>
+  <div class="field full">
+    <label>Facebook group URL</label>
+    <input type="text" name="facebook_group_url" value="{{.Settings.FacebookGroupURL}}" placeholder="https://facebook.com/groups/yourgroup">
+    <div class="field-hint">Если ссылка не задана, иконка внизу сайта и на странице подтверждения скрыта.</div>
+  </div>
+</div>
+
+              <div class="section-title">Видимость блоков</div>
+              <div class="meta-box">
+                <strong>Показывать и скрывать блоки</strong>
+                <p class="panel-intro" style="margin:8px 0 0;">Снимите отметку, чтобы скрыть блок сайта. Содержимое сохраняется и может быть показано снова.</p>
+              </div>
+              <div class="grid-3" style="margin-top:16px;">
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="stats_enabled" value="1" {{if .Settings.StatsEnabled}}checked{{end}} style="width:auto;">
+                  Блок показателей
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="services_enabled" value="1" {{if .Settings.ServicesEnabled}}checked{{end}} style="width:auto;">
+                  Услуги
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="process_enabled" value="1" {{if .Settings.ProcessEnabled}}checked{{end}} style="width:auto;">
+                  Этапы работы
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="cases_enabled" value="1" {{if .Settings.CasesEnabled}}checked{{end}} style="width:auto;">
+                  Примеры работ
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="capability_enabled" value="1" {{if .Settings.CapabilityEnabled}}checked{{end}} style="width:auto;">
+                  Выезд и работа в мастерской
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="areas_enabled" value="1" {{if .Settings.AreasEnabled}}checked{{end}} style="width:auto;">
+                  Зона обслуживания и карта
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="testimonials_enabled" value="1" {{if .Settings.TestimonialsEnabled}}checked{{end}} style="width:auto;">
+                  Отзывы
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="faq_enabled" value="1" {{if .Settings.FAQEnabled}}checked{{end}} style="width:auto;">
+                  FAQ
+                </label>
+                <label class="field" style="flex-direction:row;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;">
+                  <input type="checkbox" name="final_cta_enabled" value="1" {{if .Settings.FinalCTAEnabled}}checked{{end}} style="width:auto;">
+                  Заключительный призыв
+                </label>
+              </div>
+
+              <div class="section-title">Аналитика, реклама и согласие</div>
+              <div class="grid">
+                <div class="field">
+                  <label>GA4 Measurement ID</label>
+                  <input type="text" name="ga4_measurement_id" value="{{.Settings.GA4MeasurementID}}" placeholder="G-XXXXXXXXXX">
+                  <div class="field-hint">ID счётчика GA4. Сбор аналитики зависит от выбора посетителя в настройках cookies.</div>
+                </div>
+                <div class="field">
+                  <label>Google Ads Метка ID</label>
+                  <input type="text" name="google_ads_tag_id" value="{{.Settings.GoogleAdsTagID}}" placeholder="AW-1234567890">
+                  <div class="field-hint">ID Google Ads (AW-…). Заполните для рекламных аудиторий и прямой передачи конверсий.</div>
+                </div>
+                <div class="field full">
+                  <label>Google Ads lead conversion подпись</label>
+                  <input type="text" name="google_ads_lead_conversion_label" value="{{.Settings.GoogleAdsLeadConversionLabel}}" placeholder="AbCdEfGhIjKlMnOpQr">
+                  <div class="field-hint">Необязательно. Вместе с Google Ads Tag ID включает конверсию после сохранения заявки при согласии на рекламу.</div>
+                </div>
+                <div class="field">
+                  <label>Meta Pixel ID</label>
+                  <input type="text" name="meta_pixel_id" value="{{.Settings.MetaPixelID}}" placeholder="123456789012345">
+                  <div class="field-hint">Загружается при согласии на рекламу. События PageView и Lead после сохранения заявки.</div>
+                </div>
+                <div class="field">
+                  <label>LinkedIn Partner ID</label>
+                  <input type="text" name="linkedin_partner_id" value="{{.Settings.LinkedInPartnerID}}" placeholder="123456">
+                  <div class="field-hint">Необязательно. LinkedIn Insight Tag загружается при согласии на рекламу.</div>
+                </div>
+                <div class="field full">
+                  <label>LinkedIn lead conversion ID</label>
+                  <input type="text" name="linkedin_lead_conversion_id" value="{{.Settings.LinkedInLeadConversionID}}" placeholder="1234567">
+                  <div class="field-hint">Необязательно. ID конверсии LinkedIn для сохранённой заявки при согласии на рекламу.</div>
+                </div>
+                <div class="field full">
+                  <label>TikTok Pixel ID</label>
+                  <input type="text" name="tiktok_pixel_id" value="{{.Settings.TikTokPixelID}}" placeholder="CXXXXXXXXXXXXXXXXX">
+                  <div class="field-hint">Загружается при согласии на рекламу. События PageView и SubmitForm после сохранения заявки.</div>
+                </div>
+              </div>
+
+              <div class="meta-box" style="margin-top:18px;">
+                <strong>Как работает раздел</strong>
+                <p class="panel-intro" style="margin:8px 0 0;">Настройки общие для страниц сайта. Consent Mode v2 учитывает выбор посетителя. Meta, LinkedIn и TikTok загружаются при согласии на рекламу. Конверсия отправляется после сохранения заявки; данные формы в аналитику не передаются.</p>
+              </div>
+            </section>
+
+            
+            <section class="card panel {{if eq .ActiveTab "assets"}}active{{end}}" data-panel="assets">
+              <h2>Изображения и оформление</h2>
+              <p class="panel-intro">Укажите ссылку на изображение или путь внутри /static/img/. Рекомендуются сжатые WebP и JPG.</p>
+
+              <div class="section-title">Иконки & приложения иконки</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Favicon SVG URL</label>
+                  <input type="text" id="faviconSvgInput" name="favicon_svg_url" value="{{.Settings.FaviconSVGURL}}" placeholder="/static/img/favicon.svg">
+                </div>
+                <div class="field">
+                  <label>Favicon 32x32 URL</label>
+                  <input type="text" name="favicon_32_url" value="{{.Settings.Favicon32URL}}" placeholder="/static/img/favicon-32x32.png">
+                </div>
+                <div class="field">
+                  <label>Favicon 16x16 URL</label>
+                  <input type="text" name="favicon_16_url" value="{{.Settings.Favicon16URL}}" placeholder="/static/img/favicon-16x16.png">
+                </div>
+                <div class="field">
+                  <label>Favicon ICO URL</label>
+                  <input type="text" name="favicon_ico_url" value="{{.Settings.FaviconICOURL}}" placeholder="/static/img/favicon.ico">
+                </div>
+                <div class="field full">
+                  <label>Apple касания icon URL</label>
+                  <input type="text" name="apple_touch_icon_url" value="{{.Settings.AppleTouchIconURL}}" placeholder="/static/img/apple-touch-icon.png">
+                </div>
+              </div>
+
+              <div class="section-title">Первый экран</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Первый экран мастер на компьютере URL</label>
+                  <input type="text" id="heroPersonInput" name="hero_person_desktop_url" value="{{.Settings.HeroPersonDesktopURL}}" placeholder="https://.../mechanic-hero.webp">
+                  <div class="field-hint">Для дополнительного изображения мастера используйте PNG или WebP. Оно показывается на широком экране.</div>
+                </div>
+                <div class="field">
+                  <label>Первый экран мастер alt FI</label>
+                  <input type="text" name="hero_person_alt_fi" value="{{.Settings.HeroPersonAltFI}}" placeholder="Mekaanikko työskentelee auton vieressä Helsingissä">
+                </div>
+                <div class="field">
+                  <label>Первый экран мастер alt EN</label>
+                  <input type="text" name="hero_person_alt_en" value="{{.Settings.HeroPersonAltEN}}" placeholder="Mechanic working next to a car in Helsinki">
+                </div>
+                <div class="field full">
+                  <label>Первый экран фон изображение URL</label>
+                  <input type="text" id="heroBackgroundInput" name="hero_background_url" value="{{.Settings.HeroBackgroundURL}}" placeholder="https://.../hero-background.webp">
+                  <div class="field-hint">Необязательное изображение. Используйте сжатый файл; страница работает и без него.</div>
+                </div>
+              </div>
+
+              <div class="grid" style="margin-top:16px;">
+                <div class="preview-box">
+                  <strong>Первый экран мастер предпросмотр</strong>
+                  <img id="heroPersonPreview" src="{{if .Settings.HeroPersonDesktopURL}}{{.Settings.HeroPersonDesktopURL}}{{else}}/static/img/logo_liikkuva.svg{{end}}" alt="Hero person preview" onerror="this.style.display='none';document.getElementById('heroPersonPreviewFallback').style.display='block';">
+                  <div id="heroPersonPreviewFallback" class="field-hint" style="display:none;">Не удалось загрузить изображение мастера.</div>
+                </div>
+                <div class="preview-box">
+                  <strong>Первый экран фон предпросмотр</strong>
+                  <img id="heroBackgroundPreview" src="{{.Settings.HeroBackgroundURL}}" alt="Hero background preview" {{if not .Settings.HeroBackgroundURL}}style="display:none;"{{end}} onerror="this.style.display='none';document.getElementById('heroBackgroundPreviewFallback').style.display='block';">
+                  <div id="heroBackgroundPreviewFallback" class="field-hint" {{if .Settings.HeroBackgroundURL}}style="display:none;"{{end}}>Фоновое изображение не задано или недоступно по ссылке.</div>
+                </div>
+              </div>
+
+              <div class="section-title">Coverage карта visual</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Areas карта изображение URL</label>
+                  <input type="text" id="areasMapInput" name="areas_map_image_url" value="{{.Settings.AreasMapImageURL}}" placeholder="https://.../uusimaa-map.webp">
+                  <div class="field-hint">Изображение зоны обслуживания. Используйте компактный SVG или WebP.</div>
+                </div>
+              </div>
+
+               <div class="preview-box" style="margin-top:16px;">
+                <strong>Предпросмотр карты</strong>
+                <img id="areasMapPreview" src="{{.Settings.AreasMapImageURL}}" alt="Map visual preview" {{if not .Settings.AreasMapImageURL}}style="display:none;"{{end}} onerror="this.style.display='none';document.getElementById('areasMapPreviewFallback').style.display='block';">
+                 <div id="areasMapPreviewFallback" class="field-hint" {{if .Settings.AreasMapImageURL}}style="display:none;"{{end}}>Изображение карты не задано или недоступно.</div>
+                </div>
+
+              <div class="section-title">Услуга изображение файлы</div>
+              <p class="panel-intro">Для услуг используйте единый стиль изображений. Рекомендуемый размер — 1200×900.</p>
+              <div class="grid">
+                <div class="field"><label>Услуга изображение 1 URL</label><input type="text" name="services_image_1_url" value="{{.Settings.ServicesImage1URL}}"></div>
+                <div class="field"><label>Услуга изображение 2 URL</label><input type="text" name="services_image_2_url" value="{{.Settings.ServicesImage2URL}}"></div>
+                <div class="field"><label>Услуга изображение 3 URL</label><input type="text" name="services_image_3_url" value="{{.Settings.ServicesImage3URL}}"></div>
+                <div class="field"><label>Услуга изображение 4 URL</label><input type="text" name="services_image_4_url" value="{{.Settings.ServicesImage4URL}}"></div>
+                <div class="field"><label>Услуга изображение 5 URL</label><input type="text" name="services_image_5_url" value="{{.Settings.ServicesImage5URL}}"></div>
+                <div class="field"><label>Услуга изображение 6 URL</label><input type="text" name="services_image_6_url" value="{{.Settings.ServicesImage6URL}}"></div>
+              </div>
+            </section>
+
+            <section class="card panel {{if eq .ActiveTab "landing-fi"}}active{{end}}" data-panel="landing-fi">
+              <h2>Главная содержание — финский</h2>
+              <p class="panel-intro">Основной текст сайта на финском языке.</p>
+
+              <div class="section-title">Первый экран</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Первый экран заголовок FI</label>
+                  <textarea name="hero_title_fi">{{.Settings.HeroTitleFI}}</textarea>
+                </div>
+                <div class="field full">
+                  <label>Первый экран подзаголовок FI</label>
+                  <textarea name="hero_subtitle_fi">{{.Settings.HeroSubtitleFI}}</textarea>
+                </div>
+                <div class="field">
+                  <label>Основная кнопка FI</label>
+                  <input type="text" name="primary_cta_fi" value="{{.Settings.PrimaryCTAFI}}">
+                </div>
+                <div class="field">
+                  <label>Дополнительная кнопка FI</label>
+                  <input type="text" name="secondary_cta_fi" value="{{.Settings.SecondaryCTAFI}}">
+                </div>
+              </div>
+
+              <div class="section-title">Услуги</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Услуги надзаголовок FI</label>
+                  <input type="text" name="services_kicker_fi" value="{{.Settings.ServicesKickerFI}}">
+                </div>
+                <div class="field full">
+                  <label>Услуги заголовок FI</label>
+                  <input type="text" name="services_title_fi" value="{{.Settings.ServicesTitleFI}}">
+                </div>
+                <div class="field full">
+                  <label>Услуги текст FI</label>
+                  <textarea name="services_text_fi">{{.Settings.ServicesTextFI}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Этапы работы</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Этапы надзаголовок FI</label>
+                  <input type="text" name="process_kicker_fi" value="{{.Settings.ProcessKickerFI}}">
+                </div>
+                <div class="field full">
+                  <label>Этапы заголовок FI</label>
+                  <input type="text" name="process_title_fi" value="{{.Settings.ProcessTitleFI}}">
+                </div>
+                <div class="field full">
+                  <label>Этапы текст FI</label>
+                  <textarea name="process_text_fi">{{.Settings.ProcessTextFI}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Заключительный призыв</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Заключительный кнопка надзаголовок FI</label>
+                  <input type="text" name="final_cta_kicker_fi" value="{{.Settings.FinalCTAKickerFI}}">
+                </div>
+                <div class="field full">
+                  <label>Заключительный кнопка заголовок FI</label>
+                  <input type="text" name="final_cta_title_fi" value="{{.Settings.FinalCTATitleFI}}">
+                </div>
+                <div class="field full">
+                  <label>Заключительный кнопка текст FI</label>
+                  <textarea name="final_cta_text_fi">{{.Settings.FinalCTATextFI}}</textarea>
+                </div>
+                <div class="field">
+                  <label>Заключительный кнопка кнопка FI</label>
+                  <input type="text" name="final_cta_button_fi" value="{{.Settings.FinalCTAButtonFI}}">
+                </div>
+              </div>
+            </section>
+
+            <section class="card panel {{if eq .ActiveTab "landing-en"}}active{{end}}" data-panel="landing-en">
+              <h2>Главная содержание — английский</h2>
+              <p class="panel-intro">Основной текст сайта на английском языке.</p>
+
+              <div class="section-title">Первый экран</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Первый экран заголовок EN</label>
+                  <textarea name="hero_title_en">{{.Settings.HeroTitleEN}}</textarea>
+                </div>
+                <div class="field full">
+                  <label>Первый экран подзаголовок EN</label>
+                  <textarea name="hero_subtitle_en">{{.Settings.HeroSubtitleEN}}</textarea>
+                </div>
+                <div class="field">
+                  <label>Основная кнопка EN</label>
+                  <input type="text" name="primary_cta_en" value="{{.Settings.PrimaryCTAEN}}">
+                </div>
+                <div class="field">
+                  <label>Дополнительная кнопка EN</label>
+                  <input type="text" name="secondary_cta_en" value="{{.Settings.SecondaryCTAEN}}">
+                </div>
+              </div>
+
+              <div class="section-title">Услуги</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Услуги надзаголовок EN</label>
+                  <input type="text" name="services_kicker_en" value="{{.Settings.ServicesKickerEN}}">
+                </div>
+                <div class="field full">
+                  <label>Услуги заголовок EN</label>
+                  <input type="text" name="services_title_en" value="{{.Settings.ServicesTitleEN}}">
+                </div>
+                <div class="field full">
+                  <label>Услуги текст EN</label>
+                  <textarea name="services_text_en">{{.Settings.ServicesTextEN}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Этапы работы</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Этапы надзаголовок EN</label>
+                  <input type="text" name="process_kicker_en" value="{{.Settings.ProcessKickerEN}}">
+                </div>
+                <div class="field full">
+                  <label>Этапы заголовок EN</label>
+                  <input type="text" name="process_title_en" value="{{.Settings.ProcessTitleEN}}">
+                </div>
+                <div class="field full">
+                  <label>Этапы текст EN</label>
+                  <textarea name="process_text_en">{{.Settings.ProcessTextEN}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Заключительный призыв</div>
+              <div class="grid">
+                <div class="field">
+                  <label>Заключительный кнопка надзаголовок EN</label>
+                  <input type="text" name="final_cta_kicker_en" value="{{.Settings.FinalCTAKickerEN}}">
+                </div>
+                <div class="field full">
+                  <label>Заключительный кнопка заголовок EN</label>
+                  <input type="text" name="final_cta_title_en" value="{{.Settings.FinalCTATitleEN}}">
+                </div>
+                <div class="field full">
+                  <label>Заключительный кнопка текст EN</label>
+                  <textarea name="final_cta_text_en">{{.Settings.FinalCTATextEN}}</textarea>
+                </div>
+                <div class="field">
+                  <label>Заключительный кнопка кнопка EN</label>
+                  <input type="text" name="final_cta_button_en" value="{{.Settings.FinalCTAButtonEN}}">
+                </div>
+              </div>
+            </section>
+
+
+            <section class="card panel {{if eq .ActiveTab "form-fi"}}active{{end}}" data-panel="form-fi">
+              <h2>Форма — финский</h2>
+              <p class="panel-intro">Тексты, подсказки и сообщения проверки формы на финском языке.</p>
+
+              <div class="section-title">Основные тексты</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Форма заголовок FI</label>
+                  <input type="text" name="form_title_fi" value="{{.Settings.FormTitleFI}}">
+                </div>
+                <div class="field full">
+                  <label>Форма введение FI</label>
+                  <textarea name="form_intro_fi">{{.Settings.FormIntroFI}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Подписи полей</div>
+              <div class="grid">
+                <div class="field"><label>Имя подпись</label><input type="text" name="form_label_name_fi" value="{{.Settings.FormLabelNameFI}}"></div>
+                <div class="field"><label>Телефон подпись</label><input type="text" name="form_label_phone_fi" value="{{.Settings.FormLabelPhoneFI}}"></div>
+                <div class="field"><label>Почта подпись</label><input type="text" name="form_label_email_fi" value="{{.Settings.FormLabelEmailFI}}"></div>
+                <div class="field"><label>Адрес подпись</label><input type="text" name="form_label_address_fi" value="{{.Settings.FormLabelAddressFI}}"></div>
+                <div class="field"><label>Автомобиль подпись</label><input type="text" name="form_label_car_fi" value="{{.Settings.FormLabelCarFI}}"></div>
+                <div class="field"><label>Фотографии подпись</label><input type="text" name="form_label_photos_fi" value="{{.Settings.FormLabelPhotosFI}}"></div>
+                <div class="field full"><label>Сообщение подпись</label><input type="text" name="form_label_message_fi" value="{{.Settings.FormLabelMessageFI}}"></div>
+              </div>
+
+              <div class="section-title">Подсказки внутри полей</div>
+              <div class="grid">
+                <div class="field"><label>Имя подсказка</label><input type="text" name="form_placeholder_name_fi" value="{{.Settings.FormPlaceholderNameFI}}"></div>
+                <div class="field"><label>Телефон подсказка</label><input type="text" name="form_placeholder_phone_fi" value="{{.Settings.FormPlaceholderPhoneFI}}"></div>
+                <div class="field"><label>Почта подсказка</label><input type="text" name="form_placeholder_email_fi" value="{{.Settings.FormPlaceholderEmailFI}}"></div>
+                <div class="field"><label>Адрес подсказка</label><input type="text" name="form_placeholder_address_fi" value="{{.Settings.FormPlaceholderAddressFI}}"></div>
+                <div class="field"><label>Автомобиль подсказка</label><input type="text" name="form_placeholder_car_fi" value="{{.Settings.FormPlaceholderCarFI}}"></div>
+                <div class="field full"><label>Сообщение подсказка</label><input type="text" name="form_placeholder_message_fi" value="{{.Settings.FormPlaceholderMessageFI}}"></div>
+              </div>
+
+              <div class="section-title">Кнопки, пояснения и фотографии</div>
+              <div class="grid">
+                <div class="field"><label>Использовать местоположение кнопка</label><input type="text" name="form_use_location_button_fi" value="{{.Settings.FormUseLocationButtonFI}}"></div>
+                <div class="field"><label>Выбор карта кнопка</label><input type="text" name="form_pick_map_button_fi" value="{{.Settings.FormPickMapButtonFI}}"></div>
+                <div class="field"><label>Загрузить кнопка текст</label><input type="text" name="form_upload_button_text_fi" value="{{.Settings.FormUploadButtonTextFI}}"></div>
+                <div class="field"><label>Фотографии подсказка</label><input type="text" name="form_photos_hint_fi" value="{{.Settings.FormPhotosHintFI}}"></div>
+                <div class="field"><label>Телефон пояснение текст</label><input type="text" name="form_phone_help_fi" value="{{.Settings.FormPhoneHelpFI}}"></div>
+                <div class="field"><label>Адрес пояснение текст</label><input type="text" name="form_address_help_fi" value="{{.Settings.FormAddressHelpFI}}"></div>
+                <div class="field"><label>Автомобиль пояснение текст</label><input type="text" name="form_car_help_fi" value="{{.Settings.FormCarHelpFI}}"></div>
+                <div class="field"><label>Отправка кнопка</label><input type="text" name="form_submit_button_fi" value="{{.Settings.FormSubmitButtonFI}}"></div>
+                <div class="field"><label>Отправка загрузка текст</label><input type="text" name="form_submit_loading_text_fi" value="{{.Settings.FormSubmitLoadingTextFI}}"></div>
+                <div class="field"><label>Успех message</label><input type="text" name="form_success_message_fi" value="{{.Settings.FormSuccessMessageFI}}"></div>
+                <div class="field full"><label>Ошибка message</label><input type="text" name="form_error_message_fi" value="{{.Settings.FormErrorMessageFI}}"></div>
+              </div>
+
+              <div class="section-title">Проверка данных и системные сообщения</div>
+              <div class="grid">
+                <div class="field"><label>Имя обязательно</label><input type="text" name="form_name_required_fi" value="{{.Settings.FormNameRequiredFI}}"></div>
+                <div class="field"><label>Контакт обязательно</label><input type="text" name="form_contact_required_fi" value="{{.Settings.FormContactRequiredFI}}"></div>
+                <div class="field"><label>Телефон некорректно</label><input type="text" name="form_phone_invalid_fi" value="{{.Settings.FormPhoneInvalidFI}}"></div>
+                <div class="field"><label>Почта некорректно</label><input type="text" name="form_email_invalid_fi" value="{{.Settings.FormEmailInvalidFI}}"></div>
+                <div class="field"><label>Госномер некорректно</label><input type="text" name="form_registration_invalid_fi" value="{{.Settings.FormRegistrationInvalidFI}}"></div>
+                <div class="field"><label>Слишком много фотографий</label><input type="text" name="form_photos_too_many_fi" value="{{.Settings.FormPhotosTooManyFI}}"></div>
+                <div class="field"><label>Неверный файл тип</label><input type="text" name="form_photos_type_fi" value="{{.Settings.FormPhotosTypeFI}}"></div>
+                <div class="field"><label>Фото размер ошибка</label><input type="text" name="form_photos_size_fi" value="{{.Settings.FormPhotosSizeFI}}"></div>
+                <div class="field"><label>Геолокация не поддерживается</label><input type="text" name="form_geo_unsupported_fi" value="{{.Settings.FormGeoUnsupportedFI}}"></div>
+                <div class="field"><label>Геолокация загрузка</label><input type="text" name="form_geo_loading_fi" value="{{.Settings.FormGeoLoadingFI}}"></div>
+                <div class="field"><label>Геолокация добавлена</label><input type="text" name="form_geo_added_fi" value="{{.Settings.FormGeoAddedFI}}"></div>
+                <div class="field"><label>Геолокация ошибка</label><input type="text" name="form_geo_failed_fi" value="{{.Settings.FormGeoFailedFI}}"></div>
+                <div class="field"><label>Карта pick сначала</label><input type="text" name="form_map_pick_first_fi" value="{{.Settings.FormMapPickFirstFI}}"></div>
+                <div class="field"><label>Карта точка добавлена</label><input type="text" name="form_map_point_added_fi" value="{{.Settings.FormMapPointAddedFI}}"></div>
+                <div class="field"><label>Обратное геокодирование ошибка</label><input type="text" name="form_reverse_geocode_failed_fi" value="{{.Settings.FormReverseGeocodeFailedFI}}"></div>
+                <div class="field"><label>Сеть ошибка</label><input type="text" name="form_network_error_fi" value="{{.Settings.FormNetworkErrorFI}}"></div>
+              </div>
+            </section>
+
+
+            <section class="card panel {{if eq .ActiveTab "form-en"}}active{{end}}" data-panel="form-en">
+              <h2>Форма — английский</h2>
+              <p class="panel-intro">Тексты, подсказки и сообщения проверки формы на английском языке.</p>
+
+              <div class="section-title">Основные тексты</div>
+              <div class="grid">
+                <div class="field full">
+                  <label>Форма заголовок EN</label>
+                  <input type="text" name="form_title_en" value="{{.Settings.FormTitleEN}}">
+                </div>
+                <div class="field full">
+                  <label>Форма введение EN</label>
+                  <textarea name="form_intro_en">{{.Settings.FormIntroEN}}</textarea>
+                </div>
+              </div>
+
+              <div class="section-title">Подписи полей</div>
+              <div class="grid">
+                <div class="field"><label>Имя подпись</label><input type="text" name="form_label_name_en" value="{{.Settings.FormLabelNameEN}}"></div>
+                <div class="field"><label>Телефон подпись</label><input type="text" name="form_label_phone_en" value="{{.Settings.FormLabelPhoneEN}}"></div>
+                <div class="field"><label>Почта подпись</label><input type="text" name="form_label_email_en" value="{{.Settings.FormLabelEmailEN}}"></div>
+                <div class="field"><label>Адрес подпись</label><input type="text" name="form_label_address_en" value="{{.Settings.FormLabelAddressEN}}"></div>
+                <div class="field"><label>Автомобиль подпись</label><input type="text" name="form_label_car_en" value="{{.Settings.FormLabelCarEN}}"></div>
+                <div class="field"><label>Фотографии подпись</label><input type="text" name="form_label_photos_en" value="{{.Settings.FormLabelPhotosEN}}"></div>
+                <div class="field full"><label>Сообщение подпись</label><input type="text" name="form_label_message_en" value="{{.Settings.FormLabelMessageEN}}"></div>
+              </div>
+
+              <div class="section-title">Подсказки внутри полей</div>
+              <div class="grid">
+                <div class="field"><label>Имя подсказка</label><input type="text" name="form_placeholder_name_en" value="{{.Settings.FormPlaceholderNameEN}}"></div>
+                <div class="field"><label>Телефон подсказка</label><input type="text" name="form_placeholder_phone_en" value="{{.Settings.FormPlaceholderPhoneEN}}"></div>
+                <div class="field"><label>Почта подсказка</label><input type="text" name="form_placeholder_email_en" value="{{.Settings.FormPlaceholderEmailEN}}"></div>
+                <div class="field"><label>Адрес подсказка</label><input type="text" name="form_placeholder_address_en" value="{{.Settings.FormPlaceholderAddressEN}}"></div>
+                <div class="field"><label>Автомобиль подсказка</label><input type="text" name="form_placeholder_car_en" value="{{.Settings.FormPlaceholderCarEN}}"></div>
+                <div class="field full"><label>Сообщение подсказка</label><input type="text" name="form_placeholder_message_en" value="{{.Settings.FormPlaceholderMessageEN}}"></div>
+              </div>
+
+              <div class="section-title">Кнопки, пояснения и фотографии</div>
+              <div class="grid">
+                <div class="field"><label>Использовать местоположение кнопка</label><input type="text" name="form_use_location_button_en" value="{{.Settings.FormUseLocationButtonEN}}"></div>
+                <div class="field"><label>Выбор карта кнопка</label><input type="text" name="form_pick_map_button_en" value="{{.Settings.FormPickMapButtonEN}}"></div>
+                <div class="field"><label>Загрузить кнопка текст</label><input type="text" name="form_upload_button_text_en" value="{{.Settings.FormUploadButtonTextEN}}"></div>
+                <div class="field"><label>Фотографии подсказка</label><input type="text" name="form_photos_hint_en" value="{{.Settings.FormPhotosHintEN}}"></div>
+                <div class="field"><label>Телефон пояснение текст</label><input type="text" name="form_phone_help_en" value="{{.Settings.FormPhoneHelpEN}}"></div>
+                <div class="field"><label>Адрес пояснение текст</label><input type="text" name="form_address_help_en" value="{{.Settings.FormAddressHelpEN}}"></div>
+                <div class="field"><label>Автомобиль пояснение текст</label><input type="text" name="form_car_help_en" value="{{.Settings.FormCarHelpEN}}"></div>
+                <div class="field"><label>Отправка кнопка</label><input type="text" name="form_submit_button_en" value="{{.Settings.FormSubmitButtonEN}}"></div>
+                <div class="field"><label>Отправка загрузка текст</label><input type="text" name="form_submit_loading_text_en" value="{{.Settings.FormSubmitLoadingTextEN}}"></div>
+                <div class="field"><label>Успех message</label><input type="text" name="form_success_message_en" value="{{.Settings.FormSuccessMessageEN}}"></div>
+                <div class="field full"><label>Ошибка message</label><input type="text" name="form_error_message_en" value="{{.Settings.FormErrorMessageEN}}"></div>
+              </div>
+
+              <div class="section-title">Проверка данных и системные сообщения</div>
+              <div class="grid">
+                <div class="field"><label>Имя обязательно</label><input type="text" name="form_name_required_en" value="{{.Settings.FormNameRequiredEN}}"></div>
+                <div class="field"><label>Контакт обязательно</label><input type="text" name="form_contact_required_en" value="{{.Settings.FormContactRequiredEN}}"></div>
+                <div class="field"><label>Телефон некорректно</label><input type="text" name="form_phone_invalid_en" value="{{.Settings.FormPhoneInvalidEN}}"></div>
+                <div class="field"><label>Почта некорректно</label><input type="text" name="form_email_invalid_en" value="{{.Settings.FormEmailInvalidEN}}"></div>
+                <div class="field"><label>Госномер некорректно</label><input type="text" name="form_registration_invalid_en" value="{{.Settings.FormRegistrationInvalidEN}}"></div>
+                <div class="field"><label>Слишком много фотографий</label><input type="text" name="form_photos_too_many_en" value="{{.Settings.FormPhotosTooManyEN}}"></div>
+                <div class="field"><label>Неверный файл тип</label><input type="text" name="form_photos_type_en" value="{{.Settings.FormPhotosTypeEN}}"></div>
+                <div class="field"><label>Фото размер ошибка</label><input type="text" name="form_photos_size_en" value="{{.Settings.FormPhotosSizeEN}}"></div>
+                <div class="field"><label>Геолокация не поддерживается</label><input type="text" name="form_geo_unsupported_en" value="{{.Settings.FormGeoUnsupportedEN}}"></div>
+                <div class="field"><label>Геолокация загрузка</label><input type="text" name="form_geo_loading_en" value="{{.Settings.FormGeoLoadingEN}}"></div>
+                <div class="field"><label>Геолокация добавлена</label><input type="text" name="form_geo_added_en" value="{{.Settings.FormGeoAddedEN}}"></div>
+                <div class="field"><label>Геолокация ошибка</label><input type="text" name="form_geo_failed_en" value="{{.Settings.FormGeoFailedEN}}"></div>
+                <div class="field"><label>Карта pick сначала</label><input type="text" name="form_map_pick_first_en" value="{{.Settings.FormMapPickFirstEN}}"></div>
+                <div class="field"><label>Карта точка добавлена</label><input type="text" name="form_map_point_added_en" value="{{.Settings.FormMapPointAddedEN}}"></div>
+                <div class="field"><label>Обратное геокодирование ошибка</label><input type="text" name="form_reverse_geocode_failed_en" value="{{.Settings.FormReverseGeocodeFailedEN}}"></div>
+                <div class="field"><label>Сеть ошибка</label><input type="text" name="form_network_error_en" value="{{.Settings.FormNetworkErrorEN}}"></div>
+              </div>
+            </section>
+
+
+            <section class="card panel {{if eq .ActiveTab "promo"}}active{{end}}" data-panel="promo">
+              <h2>Блок предложения</h2>
+              <p class="panel-intro">Акции, сезонные предложения и рекламные сообщения на сайте.</p>
+
+              <div class="meta-box">
+                <strong>Как это работает</strong>
+                <p class="panel-intro" style="margin:8px 0 0;">Если блок включён и заголовок заполнен, предложение показывается под первым экраном. Адрес кнопки по умолчанию: <code>#lead-form</code> если собственная ссылка не указана.</p>
+              </div>
+
+              <div class="field" style="margin-top:18px;">
+                <label style="display:flex;align-items:center;gap:10px;">
+                  <input type="checkbox" name="promo_enabled" value="1" {{if .Settings.PromoEnabled}}checked{{end}} style="width:auto;">
+                  Включить блок предложения
+                </label>
+              </div>
+
+              <div class="lang-grid" style="margin-top:18px;">
+                <div class="lang-card">
+                  <h3>финский</h3>
+                  <div class="field"><label>Предложение метка FI</label><input type="text" name="promo_badge_fi" value="{{.Settings.PromoBadgeFI}}"></div>
+                  <div class="field"><label>Предложение заголовок FI</label><input type="text" name="promo_title_fi" value="{{.Settings.PromoTitleFI}}"></div>
+                  <div class="field"><label>Предложение текст FI</label><textarea name="promo_text_fi">{{.Settings.PromoTextFI}}</textarea></div>
+                  <div class="field"><label>Предложение кнопка FI</label><input type="text" name="promo_button_fi" value="{{.Settings.PromoButtonFI}}"></div>
+                </div>
+                <div class="lang-card">
+                  <h3>английский</h3>
+                  <div class="field"><label>Предложение метка EN</label><input type="text" name="promo_badge_en" value="{{.Settings.PromoBadgeEN}}"></div>
+                  <div class="field"><label>Предложение заголовок EN</label><input type="text" name="promo_title_en" value="{{.Settings.PromoTitleEN}}"></div>
+                  <div class="field"><label>Предложение текст EN</label><textarea name="promo_text_en">{{.Settings.PromoTextEN}}</textarea></div>
+                  <div class="field"><label>Предложение кнопка EN</label><input type="text" name="promo_button_en" value="{{.Settings.PromoButtonEN}}"></div>
+                </div>
+              </div>
+
+              <div class="field full" style="margin-top:18px;">
+                <label>Предложение URL</label>
+                <input type="text" name="promo_url" value="{{.Settings.PromoURL}}" placeholder="#lead-form">
+                <div class="field-hint">Можно указать якорь, например <code>#lead-form</code>, внутренний путь или полную внешнюю ссылку.</div>
+              </div>
+            </section>
+
+<section class="card panel {{if eq .ActiveTab "testimonials"}}active{{end}}" data-panel="testimonials">
+  <h2>Отзывы</h2>
+  <p class="panel-intro">Добавляйте только реальные отзывы. Пустые карточки не сохраняются.</p>
+
+  <div class="meta-box">
+    <strong>Как это работает</strong>
+    <p class="panel-intro" style="margin:8px 0 0;">
+      Укажите имя клиента, реальный текст отзыва и оценку. Фотография необязательна.
+    </p>
+  </div>
+
+  <div id="testimonialAdminList" class="panel-stack" style="margin-top:16px;">
+    {{range .Settings.Testimonials}}
+      <div class="card testimonial-admin-item" style="padding:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
+          <h3 style="margin:0;">Отзыв</h3>
+          <button type="button" class="ghost-btn testimonial-remove-btn">Удалить</button>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Имя</label>
+            <input type="text" name="testimonial_name[]" value="{{.Name}}">
+          </div>
+
+          <div class="field">
+            <label>Фото URL</label>
+            <input type="text" name="testimonial_photo_url[]" value="{{.PhotoURL}}">
+          </div>
+
+          <div class="field">
+            <label>Оценка (1–5)</label>
+            <input type="number" min="1" max="5" step="1" name="testimonial_rating[]" value="{{if gt .Rating 0}}{{.Rating}}{{else}}5{{end}}">
+          </div>
+
+          <div class="field full">
+            <label>Текст отзыва FI</label>
+            <textarea name="testimonial_quote_fi[]">{{.QuoteFI}}</textarea>
+          </div>
+
+          <div class="field full">
+            <label>Текст отзыва EN</label>
+            <textarea name="testimonial_quote_en[]">{{.QuoteEN}}</textarea>
+          </div>
+        </div>
+      </div>
+    {{end}}
+  </div>
+
+  <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+    <button type="button" class="secondary-btn" id="addTestimonialBtn">+ Добавить отзыв</button>
+  </div>
+
+  <template id="testimonialAdminTemplate">
+    <div class="card testimonial-admin-item" style="padding:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
+        <h3 style="margin:0;">Отзыв</h3>
+        <button type="button" class="ghost-btn testimonial-remove-btn">Удалить</button>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Имя</label>
+          <input type="text" name="testimonial_name[]" value="">
+        </div>
+
+        <div class="field">
+          <label>Фото URL</label>
+          <input type="text" name="testimonial_photo_url[]" value="">
+        </div>
+
+        <div class="field">
+          <label>Оценка (1–5)</label>
+          <input type="number" min="1" max="5" step="1" name="testimonial_rating[]" value="5">
+        </div>
+
+        <div class="field full">
+          <label>Текст отзыва FI</label>
+          <textarea name="testimonial_quote_fi[]"></textarea>
+        </div>
+
+        <div class="field full">
+          <label>Текст отзыва EN</label>
+          <textarea name="testimonial_quote_en[]"></textarea>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      const list = document.getElementById("testimonialAdminList");
+      const addBtn = document.getElementById("addTestimonialBtn");
+      const template = document.getElementById("testimonialAdminTemplate");
+
+      if (!list || !addBtn || !template) return;
+
+      function bindRemoveButtons(scope) {
+        scope.querySelectorAll(".testimonial-remove-btn").forEach((btn) => {
+          if (btn.dataset.bound === "1") return;
+          btn.dataset.bound = "1";
+          btn.addEventListener("click", function () {
+            const item = btn.closest(".testimonial-admin-item");
+            if (item) item.remove();
+          });
+        });
+      }
+
+      addBtn.addEventListener("click", function () {
+        const clone = template.content.cloneNode(true);
+        list.appendChild(clone);
+        bindRemoveButtons(list);
+      });
+
+      bindRemoveButtons(list);
+    })();
+  </script>
+</section>
+
+<section class="card panel {{if eq .ActiveTab "services"}}active{{end}}" data-panel="services">
+  <h2>Карточки услуг</h2>
+  <p class="panel-intro">Добавляйте карточки услуг. Остальные карточки доступны прокруткой.</p>
+
+  <div class="meta-box">
+    <strong>Правило публикации</strong>
+    <p class="panel-intro" style="margin:8px 0 0;">
+      Добавьте услуги. На широком экране сначала видны 6 карточек, остальные доступны прокруткой.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <button type="button" class="ghost-btn" id="addServiceCardBtn">+ Добавить услуга карточка</button>
+  </div>
+
+  <div id="serviceCardsList" class="admin-repeater-list">
+    {{range .Settings.ServiceItems}}
+      <div class="card meta-box service-admin-item admin-repeater-item">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;">
+          <strong>Услуга карточка</strong>
+          <button type="button" class="ghost-btn service-remove-btn">Удалить</button>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Метка FI</label>
+            <input type="text" name="service_badge_fi[]" value="{{.BadgeFI}}" placeholder="Suosittu">
+          </div>
+          <div class="field">
+            <label>Метка EN</label>
+            <input type="text" name="service_badge_en[]" value="{{.BadgeEN}}" placeholder="Popular">
+          </div>
+
+          <div class="field">
+            <label>Цена FI</label>
+            <input type="text" name="service_price_fi[]" value="{{.PriceFI}}" placeholder="alkaen 79 €">
+          </div>
+          <div class="field">
+            <label>Цена EN</label>
+            <input type="text" name="service_price_en[]" value="{{.PriceEN}}" placeholder="from €79">
+          </div>
+
+          <div class="field">
+            <label>Title FI</label>
+            <input type="text" name="service_title_fi[]" value="{{.TitleFI}}">
+          </div>
+          <div class="field">
+            <label>Title EN</label>
+            <input type="text" name="service_title_en[]" value="{{.TitleEN}}">
+          </div>
+
+          <div class="field full">
+            <label>Text FI</label>
+            <textarea name="service_text_fi[]">{{.TextFI}}</textarea>
+          </div>
+          <div class="field full">
+            <label>Text EN</label>
+            <textarea name="service_text_en[]">{{.TextEN}}</textarea>
+          </div>
+
+          <div class="field full">
+            <label>Изображение URL</label>
+            <input type="text" name="service_image_url[]" value="{{.ImageURL}}" placeholder="https://...">
+            <div class="field-hint">Необязательно. Используйте сжатый WebP или JPG. Без ссылки карточка показывается без изображения.</div>
+          </div>
+        </div>
+      </div>
+    {{end}}
+  </div>
+
+  <template id="serviceCardTemplate">
+    <div class="card meta-box service-admin-item admin-repeater-item">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;">
+        <strong>Услуга карточка</strong>
+        <button type="button" class="ghost-btn service-remove-btn">Удалить</button>
+      </div>
+
+      <div class="grid">
+        <div class="field"><label>Метка FI</label><input type="text" name="service_badge_fi[]" placeholder="Suosittu"></div>
+        <div class="field"><label>Метка EN</label><input type="text" name="service_badge_en[]" placeholder="Popular"></div>
+        <div class="field"><label>Цена FI</label><input type="text" name="service_price_fi[]" placeholder="alkaen 79 €"></div>
+        <div class="field"><label>Цена EN</label><input type="text" name="service_price_en[]" placeholder="from €79"></div>
+        <div class="field"><label>Title FI</label><input type="text" name="service_title_fi[]"></div>
+        <div class="field"><label>Title EN</label><input type="text" name="service_title_en[]"></div>
+        <div class="field full"><label>Text FI</label><textarea name="service_text_fi[]"></textarea></div>
+        <div class="field full"><label>Text EN</label><textarea name="service_text_en[]"></textarea></div>
+        <div class="field full"><label>Изображение URL</label><input type="text" name="service_image_url[]" placeholder="https://..."></div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      const list = document.getElementById("serviceCardsList");
+      const addBtn = document.getElementById("addServiceCardBtn");
+      const template = document.getElementById("serviceCardTemplate");
+      if (!list || !addBtn || !template) return;
+
+      function bindRemoveButtons(scope) {
+        scope.querySelectorAll(".service-remove-btn").forEach((btn) => {
+          if (btn.dataset.bound === "1") return;
+          btn.dataset.bound = "1";
+          btn.addEventListener("click", function () {
+            const item = btn.closest(".service-admin-item");
+            if (item) item.remove();
+          });
+        });
+      }
+
+      addBtn.addEventListener("click", function () {
+        list.appendChild(template.content.cloneNode(true));
+        bindRemoveButtons(list);
+      });
+
+      bindRemoveButtons(list);
+    })();
+  </script>
+</section>
+<section class="card panel {{if eq .ActiveTab "cases"}}active{{end}}" data-panel="cases">
+  <h2>Примеры работ</h2>
+  <p class="panel-intro">Добавляйте карточки примеров работ. Остальные карточки доступны прокруткой.</p>
+
+  <div class="meta-box">
+    <strong>Правило публикации</strong>
+    <p class="panel-intro" style="margin:8px 0 0;">
+      Добавляйте реальные примеры работ: проблемы запуска, аккумулятора, тормозов, сигналы на панели. Карточки доступны прокруткой.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <button type="button" class="ghost-btn" id="addCaseCardBtn">+ Добавить работу карточка</button>
+  </div>
+
+  <div id="caseCardsList" class="admin-repeater-list">
+    {{range .Settings.CaseItems}}
+      <div class="card meta-box case-admin-item admin-repeater-item">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;">
+          <strong>Работа карточка</strong>
+          <button type="button" class="ghost-btn case-remove-btn">Удалить</button>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Метка FI</label>
+            <input type="text" name="case_tag_fi[]" value="{{.TagFI}}" placeholder="Tapaus 1">
+          </div>
+          <div class="field">
+            <label>Метка EN</label>
+            <input type="text" name="case_tag_en[]" value="{{.TagEN}}" placeholder="Case 1">
+          </div>
+
+          <div class="field">
+            <label>Title FI</label>
+            <input type="text" name="case_title_fi[]" value="{{.TitleFI}}">
+          </div>
+          <div class="field">
+            <label>Title EN</label>
+            <input type="text" name="case_title_en[]" value="{{.TitleEN}}">
+          </div>
+
+          <div class="field full">
+            <label>Text FI</label>
+            <textarea name="case_text_fi[]">{{.TextFI}}</textarea>
+          </div>
+          <div class="field full">
+            <label>Text EN</label>
+            <textarea name="case_text_en[]">{{.TextEN}}</textarea>
+          </div>
+
+          <div class="lang-grid full">
+            <div class="lang-card">
+              <h3>Пункты FI</h3>
+              <div class="field"><label>Пункт 1</label><input type="text" name="case_point_1_fi[]" value="{{index .PointsFI 0}}"></div>
+              <div class="field"><label>Пункт 2</label><input type="text" name="case_point_2_fi[]" value="{{index .PointsFI 1}}"></div>
+              <div class="field"><label>Пункт 3</label><input type="text" name="case_point_3_fi[]" value="{{index .PointsFI 2}}"></div>
+              <div class="field"><label>Пункт 4</label><input type="text" name="case_point_4_fi[]" value="{{index .PointsFI 3}}"></div>
+            </div>
+
+            <div class="lang-card">
+              <h3>Пункты EN</h3>
+              <div class="field"><label>Пункт 1</label><input type="text" name="case_point_1_en[]" value="{{index .PointsEN 0}}"></div>
+              <div class="field"><label>Пункт 2</label><input type="text" name="case_point_2_en[]" value="{{index .PointsEN 1}}"></div>
+              <div class="field"><label>Пункт 3</label><input type="text" name="case_point_3_en[]" value="{{index .PointsEN 2}}"></div>
+              <div class="field"><label>Пункт 4</label><input type="text" name="case_point_4_en[]" value="{{index .PointsEN 3}}"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{end}}
+  </div>
+
+  <template id="caseCardTemplate">
+    <div class="card meta-box case-admin-item admin-repeater-item">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;">
+        <strong>Работа карточка</strong>
+        <button type="button" class="ghost-btn case-remove-btn">Удалить</button>
+      </div>
+
+      <div class="grid">
+        <div class="field"><label>Метка FI</label><input type="text" name="case_tag_fi[]" placeholder="Tapaus"></div>
+        <div class="field"><label>Метка EN</label><input type="text" name="case_tag_en[]" placeholder="Case"></div>
+        <div class="field"><label>Title FI</label><input type="text" name="case_title_fi[]"></div>
+        <div class="field"><label>Title EN</label><input type="text" name="case_title_en[]"></div>
+        <div class="field full"><label>Text FI</label><textarea name="case_text_fi[]"></textarea></div>
+        <div class="field full"><label>Text EN</label><textarea name="case_text_en[]"></textarea></div>
+
+        <div class="lang-grid full">
+          <div class="lang-card">
+            <h3>Пункты FI</h3>
+            <div class="field"><label>Пункт 1</label><input type="text" name="case_point_1_fi[]"></div>
+            <div class="field"><label>Пункт 2</label><input type="text" name="case_point_2_fi[]"></div>
+            <div class="field"><label>Пункт 3</label><input type="text" name="case_point_3_fi[]"></div>
+            <div class="field"><label>Пункт 4</label><input type="text" name="case_point_4_fi[]"></div>
+          </div>
+          <div class="lang-card">
+            <h3>Пункты EN</h3>
+            <div class="field"><label>Пункт 1</label><input type="text" name="case_point_1_en[]"></div>
+            <div class="field"><label>Пункт 2</label><input type="text" name="case_point_2_en[]"></div>
+            <div class="field"><label>Пункт 3</label><input type="text" name="case_point_3_en[]"></div>
+            <div class="field"><label>Пункт 4</label><input type="text" name="case_point_4_en[]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      const list = document.getElementById("caseCardsList");
+      const addBtn = document.getElementById("addCaseCardBtn");
+      const template = document.getElementById("caseCardTemplate");
+      if (!list || !addBtn || !template) return;
+
+      function bindRemoveButtons(scope) {
+        scope.querySelectorAll(".case-remove-btn").forEach((btn) => {
+          if (btn.dataset.bound === "1") return;
+          btn.dataset.bound = "1";
+          btn.addEventListener("click", function () {
+            const item = btn.closest(".case-admin-item");
+            if (item) item.remove();
+          });
+        });
+      }
+
+      addBtn.addEventListener("click", function () {
+        list.appendChild(template.content.cloneNode(true));
+        bindRemoveButtons(list);
+      });
+
+      bindRemoveButtons(list);
+    })();
+  </script>
+</section>
+<section class="card panel {{if eq .ActiveTab "thankyou"}}active{{end}}" data-panel="thankyou">
+              <h2>Thank-you страница</h2>
+              <p class="panel-intro">Тексты страницы после успешной отправки заявки и её SEO-настройки.</p>
+              <div class="lang-grid">
+                <div class="lang-card">
+                  <h3>финский</h3>
+                  <div class="field">
+                    <label>SEO заголовок FI</label>
+                    <input type="text" name="thankyou_seo_title_fi" value="{{.Settings.ThankYouSEOTitleFI}}">
+                  </div>
+                  <div class="field">
+                    <label>SEO описание FI</label>
+                    <textarea name="thankyou_seo_description_fi">{{.Settings.ThankYouSEODescriptionFI}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Title FI</label>
+                    <input type="text" name="thankyou_title_fi" value="{{.Settings.ThankYouTitleFI}}">
+                  </div>
+                  <div class="field">
+                    <label>Text FI</label>
+                    <textarea name="thankyou_text_fi">{{.Settings.ThankYouTextFI}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Кнопка текст FI</label>
+                    <input type="text" name="thankyou_button_fi" value="{{.Settings.ThankYouButtonFI}}">
+                  </div>
+                  <div class="field">
+                    <label>Кнопка URL FI</label>
+                    <input type="text" name="thankyou_button_url_fi" value="{{.Settings.ThankYouButtonURLFI}}">
+                  </div>
+                </div>
+                <div class="lang-card">
+                  <h3>английский</h3>
+                  <div class="field">
+                    <label>SEO заголовок EN</label>
+                    <input type="text" name="thankyou_seo_title_en" value="{{.Settings.ThankYouSEOTitleEN}}">
+                  </div>
+                  <div class="field">
+                    <label>SEO описание EN</label>
+                    <textarea name="thankyou_seo_description_en">{{.Settings.ThankYouSEODescriptionEN}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Title EN</label>
+                    <input type="text" name="thankyou_title_en" value="{{.Settings.ThankYouTitleEN}}">
+                  </div>
+                  <div class="field">
+                    <label>Text EN</label>
+                    <textarea name="thankyou_text_en">{{.Settings.ThankYouTextEN}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Кнопка текст EN</label>
+                    <input type="text" name="thankyou_button_en" value="{{.Settings.ThankYouButtonEN}}">
+                  </div>
+                  <div class="field">
+                    <label>Кнопка URL EN</label>
+                    <input type="text" name="thankyou_button_url_en" value="{{.Settings.ThankYouButtonURLEN}}">
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card panel {{if eq .ActiveTab "privacy"}}active{{end}}" data-panel="privacy">
+              <h2>Конфиденциальность страница</h2>
+              <p class="panel-intro">Текст политики конфиденциальности. Проверьте реквизиты оператора и фактически используемые сервисы.</p>
+
+              <div class="lang-grid">
+                <div class="lang-card">
+                  <h3>финский</h3>
+                  <div class="field"><label>SEO заголовок FI</label><input type="text" name="privacy_seo_title_fi" value="{{.Settings.PrivacySEOTitleFI}}"></div>
+                  <div class="field"><label>SEO описание FI</label><textarea name="privacy_seo_description_fi">{{.Settings.PrivacySEODescriptionFI}}</textarea></div>
+                  <div class="field"><label>Страница заголовок FI</label><input type="text" name="privacy_title_fi" value="{{.Settings.PrivacyTitleFI}}"></div>
+                  <div class="field"><label>Введение FI</label><textarea name="privacy_intro_fi">{{.Settings.PrivacyIntroFI}}</textarea></div>
+                  <div class="field"><label>Раздел 1 заголовок FI</label><input type="text" name="privacy_section_1_title_fi" value="{{.Settings.PrivacySection1TitleFI}}"></div>
+                  <div class="field"><label>Раздел 1 текст FI</label><textarea name="privacy_section_1_text_fi">{{.Settings.PrivacySection1TextFI}}</textarea></div>
+                  <div class="field"><label>Раздел 2 заголовок FI</label><input type="text" name="privacy_section_2_title_fi" value="{{.Settings.PrivacySection2TitleFI}}"></div>
+                  <div class="field"><label>Раздел 2 текст FI</label><textarea name="privacy_section_2_text_fi">{{.Settings.PrivacySection2TextFI}}</textarea></div>
+                  <div class="field"><label>Раздел 3 заголовок FI</label><input type="text" name="privacy_section_3_title_fi" value="{{.Settings.PrivacySection3TitleFI}}"></div>
+                  <div class="field"><label>Раздел 3 текст FI</label><textarea name="privacy_section_3_text_fi">{{.Settings.PrivacySection3TextFI}}</textarea></div>
+                  <div class="field"><label>Раздел 4 заголовок FI</label><input type="text" name="privacy_section_4_title_fi" value="{{.Settings.PrivacySection4TitleFI}}"></div>
+                  <div class="field"><label>Раздел 4 текст FI</label><textarea name="privacy_section_4_text_fi">{{.Settings.PrivacySection4TextFI}}</textarea></div>
+                  <div class="field"><label>Раздел 5 заголовок FI</label><input type="text" name="privacy_section_5_title_fi" value="{{.Settings.PrivacySection5TitleFI}}"></div>
+                  <div class="field"><label>Раздел 5 текст FI</label><textarea name="privacy_section_5_text_fi">{{.Settings.PrivacySection5TextFI}}</textarea></div>
+                </div>
+
+                <div class="lang-card">
+                  <h3>английский</h3>
+                  <div class="field"><label>SEO заголовок EN</label><input type="text" name="privacy_seo_title_en" value="{{.Settings.PrivacySEOTitleEN}}"></div>
+                  <div class="field"><label>SEO описание EN</label><textarea name="privacy_seo_description_en">{{.Settings.PrivacySEODescriptionEN}}</textarea></div>
+                  <div class="field"><label>Страница заголовок EN</label><input type="text" name="privacy_title_en" value="{{.Settings.PrivacyTitleEN}}"></div>
+                  <div class="field"><label>Введение EN</label><textarea name="privacy_intro_en">{{.Settings.PrivacyIntroEN}}</textarea></div>
+                  <div class="field"><label>Раздел 1 заголовок EN</label><input type="text" name="privacy_section_1_title_en" value="{{.Settings.PrivacySection1TitleEN}}"></div>
+                  <div class="field"><label>Раздел 1 текст EN</label><textarea name="privacy_section_1_text_en">{{.Settings.PrivacySection1TextEN}}</textarea></div>
+                  <div class="field"><label>Раздел 2 заголовок EN</label><input type="text" name="privacy_section_2_title_en" value="{{.Settings.PrivacySection2TitleEN}}"></div>
+                  <div class="field"><label>Раздел 2 текст EN</label><textarea name="privacy_section_2_text_en">{{.Settings.PrivacySection2TextEN}}</textarea></div>
+                  <div class="field"><label>Раздел 3 заголовок EN</label><input type="text" name="privacy_section_3_title_en" value="{{.Settings.PrivacySection3TitleEN}}"></div>
+                  <div class="field"><label>Раздел 3 текст EN</label><textarea name="privacy_section_3_text_en">{{.Settings.PrivacySection3TextEN}}</textarea></div>
+                  <div class="field"><label>Раздел 4 заголовок EN</label><input type="text" name="privacy_section_4_title_en" value="{{.Settings.PrivacySection4TitleEN}}"></div>
+                  <div class="field"><label>Раздел 4 текст EN</label><textarea name="privacy_section_4_text_en">{{.Settings.PrivacySection4TextEN}}</textarea></div>
+                  <div class="field"><label>Раздел 5 заголовок EN</label><input type="text" name="privacy_section_5_title_en" value="{{.Settings.PrivacySection5TitleEN}}"></div>
+                  <div class="field"><label>Раздел 5 текст EN</label><textarea name="privacy_section_5_text_en">{{.Settings.PrivacySection5TextEN}}</textarea></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card panel {{if eq .ActiveTab "seo"}}active{{end}}" data-panel="seo">
+              <h2>SEO и индексация</h2>
+              <p class="panel-intro">Заголовки и описания для поиска, настройки индексации и robots.txt.</p>
+
+              <div class="section-title">Главная SEO</div>
+              <div class="lang-grid">
+                <div class="lang-card">
+                  <h3>финский</h3>
+                  <div class="field"><label>Главная SEO заголовок FI</label><input type="text" name="landing_seo_title_fi" value="{{.Settings.LandingSEOTitleFI}}"></div>
+                  <div class="field"><label>Главная SEO описание FI</label><textarea name="landing_seo_description_fi">{{.Settings.LandingSEODescriptionFI}}</textarea></div>
+                </div>
+                <div class="lang-card">
+                  <h3>английский</h3>
+                  <div class="field"><label>Главная SEO заголовок EN</label><input type="text" name="landing_seo_title_en" value="{{.Settings.LandingSEOTitleEN}}"></div>
+                  <div class="field"><label>Главная SEO описание EN</label><textarea name="landing_seo_description_en">{{.Settings.LandingSEODescriptionEN}}</textarea></div>
+                </div>
+              </div>
+
+              <div class="section-title">Robots метатег</div>
+              <div class="grid-3">
+                <div class="field">
+                  <label>Главная индексация метатег</label>
+                  <input type="text" name="landing_robots_meta" value="{{.Settings.LandingRobotsMeta}}" placeholder="index, follow">
+                </div>
+                <div class="field">
+                  <label>Thank-you индексация метатег</label>
+                  <input type="text" name="thankyou_robots_meta" value="{{.Settings.ThankYouRobotsMeta}}" placeholder="noindex, follow">
+                </div>
+                <div class="field">
+                  <label>Конфиденциальность индексация метатег</label>
+                  <input type="text" name="privacy_robots_meta" value="{{.Settings.PrivacyRobotsMeta}}" placeholder="index, follow">
+                </div>
+              </div>
+
+              <div class="section-title">индексация.txt</div>
+              <div class="field">
+                <label>индексация.txt содержание</label>
+                <textarea class="code" name="robots_txt" placeholder="User-agent: *&#10;Allow: /&#10;Sitemap: https://liikkuvakorjaamo.fi/sitemap.xml">{{.Settings.RobotsTXT}}</textarea>
+                <div class="field-hint">Можно использовать <code>&#123;&#123;SITE_URL&#125;&#125;</code> в тексте. Сервер заменит его адресом сайта в robots.txt.</div>
+              </div>
+            </section>
+          </form>
+
+		  <section class="card panel {{if eq .ActiveTab "reviews"}}active{{end}}" data-panel="reviews">
+			<h2>Отзывы клиентов</h2>
+			<p class="panel-intro">Отзывы по личной ссылке клиента сначала попадают сюда. На сайте публикуются только одобренные отзывы на соответствующем языке.</p>
+
+			<div class="toolbar">
+			  <a class="filter-link {{if eq .ReviewStatusFilter "all"}}active{{end}}" href="/admin?tab=reviews&review_status=all">Все</a>
+			  <a class="filter-link {{if eq .ReviewStatusFilter "pending"}}active{{end}}" href="/admin?tab=reviews&review_status=pending">Ожидает</a>
+			  <a class="filter-link {{if eq .ReviewStatusFilter "approved"}}active{{end}}" href="/admin?tab=reviews&review_status=approved">Опубликовано</a>
+			  <a class="filter-link {{if eq .ReviewStatusFilter "rejected"}}active{{end}}" href="/admin?tab=reviews&review_status=rejected">Отклонено</a>
+			</div>
+
+			{{range .Reviews}}
+			  <article class="lead-details" style="margin-top:16px;">
+				<div class="detail-grid">
+				  <div class="detail-box"><strong>Создано</strong>{{.CreatedAt}}</div>
+				  <div class="detail-box"><strong>Имя</strong>{{.Name}}</div>
+				  <div class="detail-box"><strong>Оценка</strong>{{.Stars}} ({{.Rating}}/5)</div>
+				  <div class="detail-box"><strong>Язык</strong>{{.Language}}</div>
+				  <div class="detail-box"><strong>Статус</strong><span class="badge {{if eq .Status "approved"}}ok{{else if eq .Status "rejected"}}bad{{else}}wait{{end}}">{{.Status}}</span></div>
+				  <div class="detail-box"><strong>Заявка</strong><a class="mini-link" href="/admin?tab=leads&lead_id={{.LeadID}}">Открыть заявку</a></div>
+				</div>
+				<div class="section-title">Текст отзыва</div>
+				<div class="code-block">{{.Message}}</div>
+				<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+				  <form method="post" action="/admin/reviews/moderate">
+					<input type="hidden" name="review_id" value="{{.ID}}">
+					<input type="hidden" name="action" value="approve">
+					<button type="submit" class="primary">Одобрить и опубликовать</button>
+				  </form>
+				  <form method="post" action="/admin/reviews/moderate">
+					<input type="hidden" name="review_id" value="{{.ID}}">
+					<input type="hidden" name="action" value="reject">
+					<button type="submit" class="ghost-btn">Отклонить</button>
+				  </form>
+				</div>
+			  </article>
+			{{else}}
+			  <div class="meta-box" style="margin-top:16px;">Нет отзывов с выбранным статусом.</div>
+			{{end}}
+		  </section>
+
+          <section class="card panel {{if eq .ActiveTab "leads"}}active{{end}}" data-panel="leads">
+            <h2>Работа с клиентом</h2>
+            <p class="panel-intro">Откройте заявку, свяжитесь с клиентом и обновляйте этап работы. На телефоне выбранная заявка показывается первой.</p>
+
+            <div class="toolbar">
+              <a class="filter-link {{if eq .ClientStatusFilter "all"}}active{{end}}" href="/admin?tab=leads&client_status=all">Все</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "new"}}active{{end}}" href="/admin?tab=leads&client_status=new">Новая</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "contacted"}}active{{end}}" href="/admin?tab=leads&client_status=contacted">Связались</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "scheduled"}}active{{end}}" href="/admin?tab=leads&client_status=scheduled">Выезд назначен</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "in_progress"}}active{{end}}" href="/admin?tab=leads&client_status=in_progress">В работе</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "waiting_parts"}}active{{end}}" href="/admin?tab=leads&client_status=waiting_parts">Ожидаем запчасти</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "ready_for_pickup"}}active{{end}}" href="/admin?tab=leads&client_status=ready_for_pickup">Готово</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "completed"}}active{{end}}" href="/admin?tab=leads&client_status=completed">Завершено</a>
+              <a class="filter-link {{if eq .ClientStatusFilter "cancelled"}}active{{end}}" href="/admin?tab=leads&client_status=cancelled">Отменено</a>
+            </div>
+
+            {{if .SelectedLead}}
+              <article class="lead-workspace" id="selected-lead">
+                <div class="lead-workspace-head">
+                  <div>
+                    <span class="lead-kicker">Выбранная заявка</span>
+                    <h3>{{.SelectedLead.Name}}</h3>
+                    <p>{{.SelectedLead.Car}} · {{.SelectedLead.CreatedAt}}</p>
+                  </div>
+                  <span class="badge {{if eq .SelectedLead.ClientStatus "completed"}}ok{{else if eq .SelectedLead.ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.SelectedLead.ClientStatus}}</span>
+                </div>
+
+                <form class="lead-stage-form" method="post" action="/admin/leads/update-status">
+                  <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                  <select name="client_status" aria-label="Client work status">
+                    <option value="new" {{if eq .SelectedLead.ClientStatus "new"}}selected{{end}}>1. Новая заявка</option>
+                    <option value="contacted" {{if eq .SelectedLead.ClientStatus "contacted"}}selected{{end}}>2. Клиент связались</option>
+                    <option value="scheduled" {{if eq .SelectedLead.ClientStatus "scheduled"}}selected{{end}}>3. Выезд назначен</option>
+                    <option value="in_progress" {{if eq .SelectedLead.ClientStatus "in_progress"}}selected{{end}}>4. Работа в процессе</option>
+                    <option value="waiting_parts" {{if eq .SelectedLead.ClientStatus "waiting_parts"}}selected{{end}}>5. Ожидание для запчасти</option>
+                    <option value="ready_for_pickup" {{if eq .SelectedLead.ClientStatus "ready_for_pickup"}}selected{{end}}>6. Готовность / выдача</option>
+                    <option value="completed" {{if eq .SelectedLead.ClientStatus "completed"}}selected{{end}}>7. Завершено</option>
+                    <option value="cancelled" {{if eq .SelectedLead.ClientStatus "cancelled"}}selected{{end}}>Отменено</option>
+                  </select>
+                  <button type="submit" class="primary">Обновить статус</button>
+                </form>
+
+                <div class="lead-primary-actions">
+                  {{if ne .SelectedLead.Phone "—"}}<a class="filter-link" href="tel:{{.SelectedLead.Phone}}">Позвонить клиенту</a>{{end}}
+                  {{if ne .SelectedLead.Email "—"}}<a class="filter-link" href="mailto:{{.SelectedLead.Email}}">Написать клиенту</a>{{end}}
+                  {{if ne .SelectedLead.MapsURL "—"}}<a class="filter-link" href="{{.SelectedLead.MapsURL}}" target="_blank" rel="noopener noreferrer">Открыть карту</a>{{end}}
+                  {{if ne .SelectedLead.Phone "—"}}<button type="button" class="ghost-btn" onclick="navigator.clipboard.writeText('{{.SelectedLead.Phone}}')">Копировать телефон</button>{{end}}
+                </div>
+
+                <div class="lead-message-card"><strong>Клиент заявка</strong>{{.SelectedLead.Message}}</div>
+
+                <div class="lead-contact-summary">
+                  <div><strong>Телефон</strong>{{.SelectedLead.Phone}}</div>
+                  <div><strong>Электронная почта</strong>{{.SelectedLead.Email}}</div>
+                  <div><strong>Адрес</strong>{{.SelectedLead.Address}}</div>
+                </div>
+
+                <div class="lead-email-status">
+                  <div><strong>Request подтверждение</strong>{{.SelectedLead.ConfirmationEmailStatus}}</div>
+                  <div><strong>Письмо о готовности</strong>{{.SelectedLead.ReadyEmailStatus}}</div>
+                  <div><strong>Приглашение оставить отзыв</strong>{{.SelectedLead.ReviewInviteEmailStatus}}</div>
+                </div>
+
+                <div class="lead-email-actions">
+                  <form method="post" action="/admin/leads/retry">
+                    <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                    <button type="submit" class="ghost-btn">Повторить обработку</button>
+                  </form>
+                  {{if ne .SelectedLead.Email "—"}}
+                    <form method="post" action="/admin/leads/send-confirmation-email">
+                      <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                      <button type="submit" class="primary">Отправить подтверждение заявки</button>
+                    </form>
+                    <form method="post" action="/admin/leads/send-ready-email">
+                      <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                      <button type="submit" class="primary">Сообщить о готовности автомобиля</button>
+                    </form>
+                    <form method="post" action="/admin/leads/send-review-email">
+                      <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                      <button type="submit" class="primary">Попросить отзыв</button>
+                    </form>
+                  {{end}}
+                </div>
+
+                {{if ne .SelectedLead.Email "—"}}
+                  <div class="section-title">Текст письма клиенту</div>
+                  <form method="post" action="/admin/leads/send-custom-email" enctype="multipart/form-data" class="card" style="padding:18px; margin-top:12px;">
+                    <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+
+                    <div class="grid">
+                      <div class="field full">
+                        <label>Кому</label>
+                        <input type="text" value="{{.SelectedLead.Email}}" disabled>
+                      </div>
+
+                      <div class="field full">
+                        <label>Тема письма</label>
+                        <input
+                          type="text"
+                          name="custom_email_subject"
+                          required
+                          placeholder="For example: Liikkuva: update about vehicle {{.SelectedLead.Car}}">
+                      </div>
+
+                      <div class="field full">
+                        <label>Сообщение</label>
+                        <textarea
+                          name="custom_email_message"
+                          required
+                          style="min-height:160px;"
+                          placeholder="Write your message to the client here..."></textarea>
+                        <div class="field-hint">Введите обычный текст. Оформление письма добавится автоматически.</div>
+                      </div>
+                    </div>
+
+                    <div style="margin-top:14px; display:flex; gap:12px; flex-wrap:wrap;">
+                      <label>Вложения (до 10 файлов, всего до 15 МБ)<input type="file" name="custom_email_attachments" multiple></label><button type="submit" class="primary">Отправить письмо</button>
+                    </div>
+                  </form>
+                {{end}}
+
+                {{if or (ne .SelectedLead.ConfirmationEmailError "—") (ne .SelectedLead.ReviewInviteEmailError "—")}}
+                  <details style="margin-top:14px;">
+                    <summary class="mini-link">Показать почта ошибка подробности</summary>
+                    <div class="code-block">
+                      <div>Подтверждение: {{.SelectedLead.ConfirmationEmailError}}</div>
+                      <div>Отзыв приглашение: {{.SelectedLead.ReviewInviteEmailError}}</div>
+                    </div>
+                  </details>
+                {{end}}
+              </article>
+            {{end}}
+
+            <div class="mobile-lead-list">
+              {{range .Leads}}
+                <a class="mobile-lead-card" href="/admin?tab=leads&lead_id={{.ID}}&client_status={{$.ClientStatusFilter}}#selected-lead">
+                  <div class="mobile-lead-card-top">
+                    <span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.ClientStatus}}</span>
+                    <span>{{.CreatedAt}}</span>
+                  </div>
+                  <h3>{{.Name}}{{if ne .Car "—"}} · {{.Car}}{{end}}</h3>
+                  <p>{{.MessagePreview}}</p>
+                  <div class="mobile-lead-card-meta"><span>{{.Phone}}</span><span>Открыть →</span></div>
+                </a>
+              {{else}}
+                <div class="meta-box">На этом этапе заявок нет.</div>
+              {{end}}
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Создано</th>
+                    <th>Имя</th>
+                    <th>Автомобиль</th>
+                    <th>Телефон</th>
+                    <th>Этап работы</th>
+                    <th>Доставка уведомлений</th>
+                    <th>Открыть</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{range .Leads}}
+                    <tr>
+                      <td>{{.CreatedAt}}</td>
+                      <td>{{.Name}}</td>
+                      <td>{{.Car}}</td>
+                      <td>{{.Phone}}</td>
+                      <td><span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.ClientStatus}}</span></td>
+                      <td><span class="badge {{if eq .ProcessingStatus "done"}}ok{{else if eq .ProcessingStatus "failed"}}bad{{else}}wait{{end}}">{{.ProcessingStatus}}</span></td>
+                      <td><a class="mini-link" href="/admin?tab=leads&lead_id={{.ID}}&client_status={{$.ClientStatusFilter}}#selected-lead">Открыть</a></td>
+                    </tr>
+                  {{else}}
+                    <tr>
+                      <td colspan="7">Заявок пока нет.</td>
+                    </tr>
+                  {{end}}
+                </tbody>
+              </table>
+            </div>
+
+            {{if .SelectedLead}}
+              <details class="lead-details">
+                <summary class="filter-link">Технические сведения</summary>
+                <div style="margin-top:18px;">
+                <div class="section-title">Детали заявки</div>
+
+                <div class="detail-grid">
+                  <div class="detail-box"><strong>ID</strong>{{.SelectedLead.ID}}</div>
+                  <div class="detail-box"><strong>Создано</strong>{{.SelectedLead.CreatedAt}}</div>
+                  <div class="detail-box"><strong>Имя</strong>{{.SelectedLead.Name}}</div>
+                  <div class="detail-box"><strong>Телефон</strong>{{.SelectedLead.Phone}}</div>
+                  <div class="detail-box"><strong>Электронная почта</strong>{{.SelectedLead.Email}}</div>
+                  <div class="detail-box"><strong>Язык</strong>{{.SelectedLead.Language}}</div>
+                  <div class="detail-box"><strong>Адрес</strong>{{.SelectedLead.Address}}</div>
+                  <div class="detail-box"><strong>Как найти автомобиль</strong>{{.SelectedLead.AddressHint}}</div>
+                  <div class="detail-box"><strong>Местоположение источник</strong>{{.SelectedLead.LocationSource}}</div>
+                  <div class="detail-box"><strong>Maps URL</strong>{{.SelectedLead.MapsURL}}</div>
+                  <div class="detail-box"><strong>Широта</strong>{{.SelectedLead.Latitude}}</div>
+                  <div class="detail-box"><strong>Долгота</strong>{{.SelectedLead.Longitude}}</div>
+                  <div class="detail-box"><strong>Автомобиль</strong>{{.SelectedLead.Car}}</div>
+                  <div class="detail-box"><strong>Источник</strong>{{.SelectedLead.Source}}</div>
+                  <div class="detail-box"><strong>Статус обработки</strong>{{.SelectedLead.ProcessingStatus}}</div>
+                  <div class="detail-box"><strong>Статус Telegram</strong>{{.SelectedLead.TelegramStatus}}</div>
+                  <div class="detail-box"><strong>Статус таблицы</strong>{{.SelectedLead.SheetsStatus}}</div>
+                  <div class="detail-box"><strong>Статус клиента</strong>{{.SelectedLead.ClientStatus}}</div>
+                  <div class="detail-box"><strong>Готовность почта статус</strong>{{.SelectedLead.ReadyEmailStatus}}</div>
+                  <div class="detail-box"><strong>Готовность почта отправлено в</strong>{{.SelectedLead.ReadyEmailSentAt}}</div>
+				  <div class="detail-box"><strong>Подтверждение заявки</strong>{{.SelectedLead.ConfirmationEmailStatus}}</div>
+				  <div class="detail-box"><strong>Подтверждение отправлено в</strong>{{.SelectedLead.ConfirmationEmailSentAt}}</div>
+				  <div class="detail-box"><strong>Приглашение оставить отзыв</strong>{{.SelectedLead.ReviewInviteEmailStatus}}</div>
+				  <div class="detail-box"><strong>Отзыв приглашение отправлено в</strong>{{.SelectedLead.ReviewInviteEmailSentAt}}</div>
+                  <div class="detail-box"><strong>Обработано</strong>{{.SelectedLead.ProcessedAt}}</div>
+                  <div class="detail-box"><strong>Поставлено в очередь</strong>{{.SelectedLead.TaskEnqueuedAt}}</div>
+                  <div class="detail-box"><strong>Обновлено</strong>{{.SelectedLead.UpdatedAt}}</div>
+                  <div class="detail-box"><strong>Страница URL</strong>{{.SelectedLead.PageURL}}</div>
+                  <div class="detail-box"><strong>Referer</strong>{{.SelectedLead.Referer}}</div>
+                  <div class="detail-box"><strong>UTM Source</strong>{{.SelectedLead.UTMSource}}</div>
+                  <div class="detail-box"><strong>UTM Medium</strong>{{.SelectedLead.UTMMedium}}</div>
+                  <div class="detail-box"><strong>UTM Campaign</strong>{{.SelectedLead.UTMCampaign}}</div>
+                  <div class="detail-box"><strong>UTM Term</strong>{{.SelectedLead.UTMTerm}}</div>
+                  <div class="detail-box"><strong>UTM Content</strong>{{.SelectedLead.UTMContent}}</div>
+                  <div class="detail-box"><strong>IP</strong>{{.SelectedLead.IP}}</div>
+                  <div class="detail-box full"><strong>User Agent</strong>{{.SelectedLead.UserAgent}}</div>
+                </div>
+
+                <div class="section-title">Сообщение</div>
+                <div class="code-block">{{.SelectedLead.Message}}</div>
+
+                <div class="section-title">Последняя ошибка</div>
+                <div class="code-block">{{.SelectedLead.LastError}}</div>
+
+                <div class="section-title">Готовность почта ошибка</div>
+                <div class="code-block">{{.SelectedLead.ReadyEmailError}}</div>
+
+				<div class="section-title">Подтверждение почта ошибка</div>
+				<div class="code-block">{{.SelectedLead.ConfirmationEmailError}}</div>
+
+				<div class="section-title">Отзыв приглашение ошибка</div>
+				<div class="code-block">{{.SelectedLead.ReviewInviteEmailError}}</div>
+
+                {{if .SelectedLead.PhotoURLs}}
+                  <div class="section-title">Фотографии</div>
+                  <div class="photo-list">
+                    {{range $index, $photo := .SelectedLead.PhotoURLs}}
+                      <a class="mini-link" href="/admin/photo?lead={{$.SelectedLead.ID}}&amp;index={{$index}}" target="_blank" rel="noopener noreferrer">Открыть фотографию</a>
+                    {{end}}
+                  </div>
+                {{end}}
+                                  <div class="toolbar" style="margin-top:18px;">
+                  {{if ne .SelectedLead.Phone "—"}}
+                    <a class="filter-link" href="tel:{{.SelectedLead.Phone}}">Позвонить</a>
+                    <button type="button" class="ghost-btn" onclick="navigator.clipboard.writeText('{{.SelectedLead.Phone}}')">Копировать телефон</button>
+                  {{end}}
+
+                  {{if ne .SelectedLead.Email "—"}}
+                    <a class="filter-link" href="mailto:{{.SelectedLead.Email}}">Электронная почта</a>
+                    <button type="button" class="ghost-btn" onclick="navigator.clipboard.writeText('{{.SelectedLead.Email}}')">Копировать почту</button>
+                  {{end}}
+
+                  {{if ne .SelectedLead.MapsURL "—"}}
+                    <a class="filter-link" href="{{.SelectedLead.MapsURL}}" target="_blank" rel="noopener noreferrer">Открыть карту</a>
+                    <button type="button" class="ghost-btn" onclick="navigator.clipboard.writeText('{{.SelectedLead.MapsURL}}')">Копировать ссылку на карту</button>
+                  {{end}}
+
+                  {{if ne .SelectedLead.PageURL "—"}}
+                    <a class="filter-link" href="{{.SelectedLead.PageURL}}" target="_blank" rel="noopener noreferrer">Открыть страница URL</a>
+                  {{end}}
+                </div>
+                <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
+                  <form method="post" action="/admin/leads/retry">
+                    <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                    <button type="submit" class="primary">Повторить обработку</button>
+                  </form>
+
+                  {{if ne .SelectedLead.Email "—"}}
+                  <form method="post" action="/admin/leads/send-ready-email">
+                    <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+                    <button type="submit" class="primary">Сообщить о готовности</button>
+                  </form>
+				  <form method="post" action="/admin/leads/send-review-email">
+					<input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
+					<button type="submit" class="primary">Попросить отзыв</button>
+				  </form>
+                  {{end}}
+                </div>
+
+                </div>
+              </details>
+            {{end}}
+          </section>
+        </div>
+      </div>
+
+      <div class="sticky-save">
+        <div class="sticky-save-copy">
+          <strong>Сохранение всегда под рукой</strong>
+          <span>Используйте меню разделов для быстрого перехода.</span>
+        </div>
+        <button class="primary" type="submit" form="adminSettingsForm">Сохранить настройки</button>
+      </div>
+    {{end}}
+  </div>
+</body>
+</html>

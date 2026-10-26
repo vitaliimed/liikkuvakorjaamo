@@ -1,0 +1,18 @@
+func (h LeadHandler) Submit(w http.ResponseWriter, r *http.Request) {
+ if r.Method != http.MethodPost {writeJSON(w,405,APIResponse{OK:false,Message:"method not allowed"});return}
+ r.Body=http.MaxBytesReader(w,r.Body,maxMultipartMemory)
+ if strings.HasPrefix(r.Header.Get("Content-Type"),"multipart/form-data") {
+  if err:=r.ParseMultipartForm(maxMultipartMemory);err!=nil{writeJSON(w,400,APIResponse{OK:false,Message:"invalid multipart form"});return}
+ }else if err:=r.ParseForm();err!=nil{writeJSON(w,400,APIResponse{OK:false,Message:"invalid form"});return}
+ if r.MultipartForm!=nil{defer r.MultipartForm.RemoveAll()}
+ if strings.TrimSpace(r.FormValue("company"))!=""{writeJSON(w,200,APIResponse{OK:false,Message:"Request could not be accepted"});return}
+ lang:=sanitizeLanguage(strings.TrimSpace(r.FormValue("language")),h.cfg.DefaultLanguage)
+ lead:=buildLeadFromRequest(h.cfg,r,lang)
+ settings,settingsErr:=loadSiteSettings(r.Context(),h.cfg);if settingsErr!=nil {writeJSON(w,503,APIResponse{OK:false,Message:saveErrorMessageByLanguage(lang)});return};lead.VisitPriceEUR=liikkuvaVisitFee(settings);lead.DiagnosticFromEUR=liikkuvaProDefaults(settings).ProDiagnosticEUR
+ if issues:=validateLead(lead);len(issues)>0{writeJSON(w,400,APIResponse{OK:false,Message:validationMessageByLanguage(lang),Errors:issues});return}
+ photoURLs,photoPaths,err:=saveUploadedPhotos(h.cfg,r)
+ if err!=nil{writeJSON(w,400,APIResponse{OK:false,Message:err.Error()});return}
+ defer deleteTempFiles(photoPaths);lead.PhotoURLs=photoURLs;lead.PhotoPaths=photoPaths
+ if _,err:=h.handleAsyncSubmit(r.Context(),lead);err!=nil{log.Printf("Lead was not saved: %v",err);writeJSON(w,503,APIResponse{OK:false,Message:saveErrorMessageByLanguage(lang)});return}
+ writeJSON(w,200,APIResponse{OK:true,Message:successMessageByLanguage(lang),SubmissionID:lead.SubmissionID,RedirectURL:thankYouRedirectByLanguage(lang)})
+}

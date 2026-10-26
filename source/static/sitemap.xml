@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<url><loc>https://liikkuvakorjaamo.fi/</loc><xhtml:link rel="alternate" hreflang="fi" href="https://liikkuvakorjaamo.fi/"/><xhtml:link rel="alternate" hreflang="en" href="https://liikkuvakorjaamo.fi/en"/><xhtml:link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/"/></url>
+<url><loc>https://liikkuvakorjaamo.fi/en</loc><xhtml:link rel="alternate" hreflang="fi" href="https://liikkuvakorjaamo.fi/"/><xhtml:link rel="alternate" hreflang="en" href="https://liikkuvakorjaamo.fi/en"/><xhtml:link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/"/></url>
+<url><loc>https://liikkuvakorjaamo.fi/hinnasto</loc></url>
+<url><loc>https://liikkuvakorjaamo.fi/palvelualue</loc></url>
+<url><loc>https://liikkuvakorjaamo.fi/vikadiagnostiikka</loc></url>
+</urlset>

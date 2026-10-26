@@ -1,0 +1,169 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"mime"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"net/mail"
+	"strings"
+	"testing"
+)
+
+func TestProPriceSettings(t *testing.T) {
+	s := liikkuvaProDefaults(SiteSettings{})
+	if s.ProVisitEUR != 70 || s.ProDiagnosticEUR != 50 || s.ProFontSize != 18 {
+		t.Fatal(s.ProVisitEUR, s.ProDiagnosticEUR, s.ProFontSize)
+	}
+	custom := SiteSettings{ProVisitEUR: 90, ProDiagnosticEUR: 60}
+	got := liikkuvaPriceText("70 €; €70; 50 €; €50; {visit}; {diagnostic}; {total}", custom)
+	if got != "90 €; €90; 60 €; €60; 90; 60; 150" {
+		t.Fatal(got)
+	}
+	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#2458d6" {
+		t.Fatal("Unsafe CSS accepted")
+	}
+}
+func TestPhoneRequiredForEmailLead(t *testing.T) {
+	issues := validateLead(Lead{Name: "Test", Email: "client@example.com", Language: "en"})
+	if len(issues) == 0 {
+		t.Fatal("email-only request accepted")
+	}
+	if issues := validateLead(Lead{Name: "Test", Phone: "+358401234567", Language: "fi"}); len(issues) != 0 {
+		t.Fatal(issues)
+	}
+}
+func TestSavedFeeInEmail(t *testing.T) {
+	lead := Lead{Name: "Test", Language: "en", VisitPriceEUR: 95}
+	body := buildLeadConfirmationText(Config{SiteURL: "https://liikkuvakorjaamo.fi"}, lead)
+	if !strings.Contains(body, "€95") || strings.Contains(body, "includes travel") {
+		t.Fatal(body)
+	}
+}
+func TestProPublicRoutes(t *testing.T) {
+	renderer, e := newTemplateRenderer()
+	if e != nil {
+		t.Fatal(e)
+	}
+	cfg := Config{SiteURL: "https://liikkuvakorjaamo.fi", DefaultLanguage: "fi"}
+	handler := liikkuvaPro(cfg, liikkuvaSecurity(cfg, newRouter(cfg, renderer)))
+	for _, path := range []string{"/", "/en", "/hinnasto", "/palvelualue", "/vikadiagnostiikka", "/privacy", "/thank-you-fi", "/sitemap.xml", "/robots.txt", "/tracking-config.js"} {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+		if w.Code != 200 {
+			t.Errorf("%s: %d", path, w.Code)
+		}
+		body := w.Body.String()
+		if strings.Contains(strings.ToLower(body), "liikkuvautokorjaamo.fi") {
+			t.Errorf("old domain on %s", path)
+		}
+		if strings.Contains(body, "ZgotmplZ") {
+			t.Errorf("unsafe template output: %s", path)
+		}
+	}
+}
+func TestHoneypotHasNoConversionReceipt(t *testing.T) {
+	h := NewLeadHandler(Config{})
+	r := httptest.NewRequest("POST", "/lead", strings.NewReader("company=spam"))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	h.Submit(w, r)
+	var result APIResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.OK || result.SubmissionID != "" {
+		t.Fatal("spam could cause a conversion")
+	}
+}
+func TestEmailMIMEAndHeaderInjection(t *testing.T) {
+	cfg := Config{MailFrom: "Liikkuva Auto Korjaamo <service@liikkuvakorjaamo.fi>"}
+	raw, e := buildSMTPMessage(cfg, "owner@example.com", "Тест", "Plain text", "<p>HTML</p>", EmailAttachment{Name: "lasku.pdf", Data: []byte("pdf-content")})
+	if e != nil {
+		t.Fatal(e)
+	}
+	m, e := mail.ReadMessage(bytes.NewReader(raw))
+	if e != nil {
+		t.Fatal(e)
+	}
+	kind, params, e := mime.ParseMediaType(m.Header.Get("Content-Type"))
+	if e != nil || kind != "multipart/mixed" {
+		t.Fatal(kind, e)
+	}
+	r := multipart.NewReader(m.Body, params["boundary"])
+	if _, e = r.NextPart(); e != nil {
+		t.Fatal(e)
+	}
+	part, e := r.NextPart()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if part.FileName() != "lasku.pdf" {
+		t.Fatal(part.FileName())
+	}
+	body, _ := io.ReadAll(part)
+	if !strings.Contains(string(body), "cGRmLWNvbnRlbnQ=") {
+		t.Fatal(string(body))
+	}
+	if _, e := buildSMTPMessage(cfg, "owner@example.com", "x\r\nBcc: other@example.com", "", "", nil...); e == nil {
+		t.Fatal("header injection accepted")
+	}
+}
+func TestAdminOriginAndAuth(t *testing.T) {
+	cfg := Config{SiteURL: "https://liikkuvakorjaamo.fi"}
+	handler := liikkuvaSecurity(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) }))
+	for _, c := range []struct {
+		origin string
+		code   int
+	}{{"https://evil.example", 403}, {cfg.SiteURL, 204}} {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("POST", "https://internal.run.app/admin/save", nil)
+		r.Header.Set("Origin", c.origin)
+		handler.ServeHTTP(w, r)
+		if w.Code != c.code {
+			t.Fatal(c.origin, w.Code)
+		}
+	}
+	if adminCookieName != "__session" {
+		t.Fatal("Firebase session would be stripped")
+	}
+}
+func TestStandaloneEmailToken(t *testing.T) {
+	token, e := standaloneEmailToken("test-secret")
+	if e != nil || !validStandaloneEmailToken("test-secret", token) {
+		t.Fatal(e)
+	}
+	if validStandaloneEmailToken("different", token) {
+		t.Fatal("wrong secret accepted")
+	}
+	if e := validateStandaloneEmail("owner@example.com", "Subject", "Body"); e != nil {
+		t.Fatal(e)
+	}
+	if e := validateStandaloneEmail("owner@example.com", "Subject\nBcc: x", "Body"); e == nil {
+		t.Fatal("header injection")
+	}
+}
+
+func TestPrivatePhotoLink(t *testing.T) {
+	renderer, e := newTemplateRenderer()
+	if e != nil {
+		t.Fatal(e)
+	}
+	w := httptest.NewRecorder()
+	e = renderer.renderAdmin(w, AdminPageData{Settings: liikkuvaProDefaults(SiteSettings{}), ActiveTab: "leads", SelectedLead: &AdminLeadDetails{ID: "test-lead", PhotoURLs: []string{"gs://private-bucket/photo.jpg"}}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	body := w.Body.String()
+	if strings.Contains(body, "ZgotmplZ") || !strings.Contains(body, "/admin/photo?lead=test-lead") {
+		t.Fatal("private photo is not routed through authenticated handler")
+	}
+	w = httptest.NewRecorder()
+	liikkuvaAdminPhoto(Config{}, w, httptest.NewRequest("GET", "/admin/photo?lead=x&index=0", nil))
+	if w.Code != 401 {
+		t.Fatal("unauthenticated photo access")
+	}
+}

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.PageTitle}}</title>
+  <meta name="description" content="{{.MetaDescription}}">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="{{.CanonicalURL}}">
+  <link rel="icon" type="image/svg+xml" href="{{.FaviconSVGURL}}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{.Favicon32URL}}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{.Favicon16URL}}">
+  <link rel="shortcut icon" href="{{.FaviconICOURL}}">
+  <link rel="apple-touch-icon" href="{{.AppleTouchIconURL}}">
+  <link rel="stylesheet" href="/static/css/style.css?v=20260811-rel5">
+<link rel="stylesheet" href="/static/css/pro.css?v=20261025"><script src="/static/js/events.js?v=20261025" defer></script></head>
+<body class="secondary-screen review-screen">
+  <header class="subpage-header"><div class="container"><a class="brand" href="{{if eq .Lang "fi"}}/{{else}}/en{{end}}"><img src="{{.LogoURL}}" alt="" width="44" height="44"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span></a><div class="languages">{{if .LeadID}}<a href="/review?lead={{.LeadID}}&token={{.Token}}&lang=fi">FI</a><a href="/review?lead={{.LeadID}}&token={{.Token}}&lang=en">EN</a>{{end}}</div></div></header>
+
+  <main class="review-page">
+    <div class="container review-container">
+      <section class="review-card">
+        <div class="review-kicker">LIIKKUVA.FI</div>
+
+        {{if .Submitted}}
+          <div class="review-status-icon" aria-hidden="true">✓</div>
+          <h1>{{if eq .Lang "fi"}}Kiitos arvostelustasi!{{else}}Thank you for your review!{{end}}</h1>
+          <p>{{if eq .Lang "fi"}}Arvostelu on vastaanotettu ja odottaa hyväksyntää. Julkaisemme sen vasta tarkistuksen jälkeen.{{else}}Your review has been received and is awaiting approval. It will be published only after moderation.{{end}}</p>
+          <a class="btn btn-primary" href="{{if eq .Lang "fi"}}/{{else}}/en{{end}}">{{if eq .Lang "fi"}}Takaisin etusivulle{{else}}Back to the home page{{end}}</a>
+
+        {{else if .AlreadySubmitted}}
+          <div class="review-status-icon" aria-hidden="true">✓</div>
+          <h1>{{if eq .Lang "fi"}}Arvostelu on jo lähetetty{{else}}Review already submitted{{end}}</h1>
+          <p>{{if eq .Lang "fi"}}Kiitos palautteestasi. Yhdellä palvelupyynnöllä voi lähettää yhden arvostelun.{{else}}Thank you for your feedback. One review can be submitted for each service request.{{end}}</p>
+          <a class="btn btn-primary" href="{{if eq .Lang "fi"}}/{{else}}/en{{end}}">{{if eq .Lang "fi"}}Takaisin etusivulle{{else}}Back to the home page{{end}}</a>
+
+        {{else}}
+          <h1>{{if eq .Lang "fi"}}Arvostele palvelumme{{else}}Review our service{{end}}</h1>
+          <p>{{if eq .Lang "fi"}}Kirjoita lyhyt arvostelu työstämme. Vain hyväksytty arvostelu julkaistaan sivustolla.{{else}}Write a short review of our work. Only an approved review is published on the website.{{end}}</p>
+
+          <form method="post" action="/review" class="review-form">
+            <input type="hidden" name="lead_id" value="{{.LeadID}}">
+            <input type="hidden" name="token" value="{{.Token}}">
+
+            <div class="field">
+              <label for="reviewName">{{if eq .Lang "fi"}}Nimi, joka voidaan näyttää arvostelussa{{else}}Name that may appear with the review{{end}}</label>
+              <input id="reviewName" type="text" name="name" value="{{.Name}}" minlength="2" maxlength="80" autocomplete="name" required>
+              {{with index .Errors "name"}}<div class="review-field-error">{{.}}</div>{{end}}
+            </div>
+
+            <fieldset class="review-name-choice">
+              <legend>{{if eq .Lang "fi"}}Valitse julkaistava nimi{{else}}Choose the name to publish{{end}}</legend>
+              <label>
+                <input type="radio" name="name_mode" value="real" {{if ne .NameMode "alias"}}checked{{end}}>
+                <span>{{if eq .Lang "fi"}}Käytä yllä olevaa nimeä{{else}}Use the name above{{end}}</span>
+              </label>
+              <label>
+                <input type="radio" name="name_mode" value="alias" {{if eq .NameMode "alias"}}checked{{end}}>
+                <span>{{if eq .Lang "fi"}}Käytä muuta nimeä tai nimimerkkiä{{else}}Use another name or a nickname{{end}}</span>
+              </label>
+            </fieldset>
+
+            <div class="field review-alias-field" data-review-alias-field>
+              <label for="reviewAlias">{{if eq .Lang "fi"}}Muu nimi / nimimerkki{{else}}Other name / nickname{{end}}</label>
+              <input id="reviewAlias" type="text" name="alias" value="{{.Alias}}" minlength="2" maxlength="80" placeholder="{{if eq .Lang "fi"}}Esimerkiksi: Liikkuva-asiakas{{else}}For example: Liikkuva customer{{end}}">
+              <div class="field-help">{{if eq .Lang "fi"}}Voit käyttää keksittyä nimeä. Sähköpostia, puhelinta ja muita yhteystietoja ei julkaista.{{else}}You may use a made-up name. Your email, phone and other contact details are never published.{{end}}</div>
+              {{with index .Errors "alias"}}<div class="review-field-error">{{.}}</div>{{end}}
+            </div>
+
+            <fieldset class="review-rating-field">
+              <legend>{{if eq .Lang "fi"}}Tähdet{{else}}Stars{{end}}</legend>
+              <div class="review-rating-options">
+                <label><input type="radio" name="rating" value="1" {{if eq .Rating 1}}checked{{end}} required><span>★</span><small>1</small></label>
+                <label><input type="radio" name="rating" value="2" {{if eq .Rating 2}}checked{{end}}><span>★★</span><small>2</small></label>
+                <label><input type="radio" name="rating" value="3" {{if eq .Rating 3}}checked{{end}}><span>★★★</span><small>3</small></label>
+                <label><input type="radio" name="rating" value="4" {{if eq .Rating 4}}checked{{end}}><span>★★★★</span><small>4</small></label>
+                <label><input type="radio" name="rating" value="5" {{if or (eq .Rating 0) (eq .Rating 5)}}checked{{end}}><span>★★★★★</span><small>5</small></label>
+              </div>
+              {{with index .Errors "rating"}}<div class="review-field-error">{{.}}</div>{{end}}
+            </fieldset>
+
+            <div class="field">
+              <label for="reviewMessage">{{if eq .Lang "fi"}}Arvostelu{{else}}Review{{end}}</label>
+              <textarea id="reviewMessage" name="message" minlength="10" maxlength="1200" rows="6" placeholder="{{if eq .Lang "fi"}}Kerro, mikä palvelussa onnistui...{{else}}Tell us what went well...{{end}}" required>{{.Message}}</textarea>
+              {{with index .Errors "message"}}<div class="review-field-error">{{.}}</div>{{end}}
+            </div>
+
+            <div class="field">
+              <label for="reviewLanguage">{{if eq .Lang "fi"}}Arvostelun kieli{{else}}Review language{{end}}</label>
+              <select id="reviewLanguage" name="language">
+                <option value="fi" {{if eq .Lang "fi"}}selected{{end}}>Suomi</option>
+                <option value="en" {{if eq .Lang "en"}}selected{{end}}>English</option>
+              </select>
+            </div>
+
+            <label class="review-consent">
+              <input type="checkbox" name="publish_consent" value="1" {{if .PublishConsent}}checked{{end}} required>
+              <span>{{if eq .Lang "fi"}}Annan Liikkuvaille luvan julkaista valitsemani nimen tai nimimerkin, tähtiarvion ja arvostelun liikkuvakorjaamo.fi-sivustolla.{{else}}I allow Liikkuva to publish my selected name or nickname, star rating and review on liikkuvakorjaamo.fi.{{end}}</span>
+            </label>
+            {{with index .Errors "publish_consent"}}<div class="review-field-error">{{.}}</div>{{end}}
+
+            <button class="btn-submit" type="submit">{{if eq .Lang "fi"}}Lähetä arvostelu{{else}}Submit review{{end}}</button>
+          </form>
+        {{end}}
+      </section>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var choices = document.querySelectorAll('input[name="name_mode"]');
+      var aliasField = document.querySelector('[data-review-alias-field]');
+      var aliasInput = document.getElementById('reviewAlias');
+
+      function updateAliasField() {
+        var selected = document.querySelector('input[name="name_mode"]:checked');
+        var useAlias = selected && selected.value === 'alias';
+        if (aliasField) aliasField.hidden = !useAlias;
+        if (aliasInput) aliasInput.required = Boolean(useAlias);
+      }
+
+      choices.forEach(function (choice) {
+        choice.addEventListener('change', updateAliasField);
+      });
+      updateAliasField();
+    })();
+  </script>
+</body>
+</html>

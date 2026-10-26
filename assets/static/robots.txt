@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /internal/
+Disallow: /lead
+Disallow: /static/seo/
+
+Sitemap: https://liikkuvakorjaamo.fi/sitemap.xml

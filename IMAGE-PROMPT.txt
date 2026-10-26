@@ -1,0 +1,4 @@
+Project asset: assets/static/img/mobile-mechanic-v2.png
+Created with the built-in image generation tool; original PNG retained without resizing or lossy compression.
+Use case: photorealistic-natural. Final hero image for a Finnish mobile car repair website. A dark graphite compact passenger car, open hood, diagnostic scanner and neatly arranged tools on a Helsinki residential driveway. Landscape 3:2, crisp realistic details, soft daylight, pale timber house and subdued greenery. No people, faces, hands, text, logos or watermarks; centred subject for mobile cropping. Warm orange tool accents complement the off-white/graphite/terracotta website.
+The image illustrates a service; it is not a photograph of a specific employee or completed customer job.

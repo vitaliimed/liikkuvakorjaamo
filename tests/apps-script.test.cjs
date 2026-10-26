@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const token='a'.repeat(64);
+const ctx={PropertiesService:{getScriptProperties:()=>({getProperty:k=>k==='WEBHOOK_TOKEN'?token:null})},ContentService:{MimeType:{JSON:'json'},createTextOutput:s=>({setMimeType:()=>JSON.parse(s)})}};
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('apps-script/Code.gs','utf8'),ctx);
+assert.equal(vm.runInContext('HEADERS.length',ctx),22);
+for(const text of ['=IMPORTXML("x")','+123','@SUM(A1:A2)',' -4'])assert.equal(ctx.safe_(text),"'"+text);
+assert.equal(ctx.safe_('Normal text'),'Normal text');
+assert.equal(ctx.safe_(null),'');
+assert.equal(ctx.doPost({postData:{contents:'{}'}}).error,'Unauthorized');
+assert.equal(ctx.doPost({postData:{contents:JSON.stringify({script_token:token,site:'autohelp.fi'})}}).error,'Wrong site');
+assert.equal(ctx.doPost({postData:{contents:'x'.repeat(100001)}}).error,'Invalid payload');
+assert.equal(ctx.doGet().site,'liikkuvakorjaamo.fi');
+console.log('Apps Script: schema, formula escaping, authentication, site isolation and payload limits passed. No Google services called.');

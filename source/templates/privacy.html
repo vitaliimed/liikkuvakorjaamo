@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="{{.Lang}}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.PageTitle}}</title>
+  <meta name="description" content="{{.MetaDescription}}">
+  <meta name="robots" content="{{.RobotsMeta}}">
+
+  <link rel="canonical" href="{{.CanonicalURL}}">
+  <link rel="alternate" hreflang="fi" href="{{.HrefLangFI}}">
+  <link rel="alternate" hreflang="en" href="{{.HrefLangEN}}">
+
+  <meta property="og:title" content="{{.OGTitle}}">
+  <meta property="og:description" content="{{.OGDescription}}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{.OGURL}}">
+  <link rel="icon" type="image/svg+xml" href="{{.FaviconSVGURL}}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{.Favicon32URL}}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{.Favicon16URL}}">
+  <link rel="shortcut icon" href="{{.FaviconICOURL}}">
+  <link rel="apple-touch-icon" href="{{.AppleTouchIconURL}}">
+
+  <link rel="stylesheet" href="/static/css/style.css?v=20261025">
+
+
+{{if .EnableConsentMode}}
+  <script>
+    window.LIIKKUVA_TRACKING = {
+      primaryGoogleTagId: "{{.PrimaryGoogleTagID}}",
+      ga4MeasurementId: "{{.GA4MeasurementID}}",
+      googleAdsTagId: "{{.GoogleAdsTagID}}",
+      googleAdsLeadConversionLabel: "{{.GoogleAdsLeadConversionLabel}}",
+      metaPixelId: "{{.MetaPixelID}}",
+      linkedinPartnerId: "{{.LinkedInPartnerID}}",
+      linkedinLeadConversionID: "{{.LinkedInLeadConversionID}}",
+      tiktokPixelId: "{{.TikTokPixelID}}"
+    };
+
+    window.LIIKKUVA_CONSENT_UI = {
+      lang: "{{.Lang}}",
+      privacyUrl: "/privacy?lang={{.Lang}}",
+      texts: {
+        badge: {{if eq .Lang "fi"}}"Evästeet"{{else}}"Cookies"{{end}},
+        title: {{if eq .Lang "fi"}}"Käytämme välttämättömiä, analytiikka- ja mainosevästeitä"{{else}}"We use necessary, analytics and advertising cookies"{{end}},
+        text: {{if eq .Lang "fi"}}"Välttämättömät evästeet pitävät sivun toiminnassa. Analytiikka auttaa ymmärtämään sivun käyttöä ja kampanjoiden tehokkuutta. Mainonnan tagit aktivoituvat vain valintasi mukaan."{{else}}"Necessary cookies keep the site working. Analytics helps understand site usage and campaign performance. Advertising tags activate only according to your choice."{{end}},
+        settingsTitle: {{if eq .Lang "fi"}}"Evästeasetukset"{{else}}"Cookie settings"{{end}},
+        modalText: {{if eq .Lang "fi"}}"Voit sallia analytiikan ja mainonnan erikseen. Välttämättömät evästeet ovat aina käytössä, koska ilman niitä sivu ei toimi oikein."{{else}}"You can allow analytics and advertising separately. Necessary cookies are always enabled because the site cannot work properly without them."{{end}},
+        necessaryTitle: {{if eq .Lang "fi"}}"Välttämättömät"{{else}}"Necessary"{{end}},
+        necessaryText: {{if eq .Lang "fi"}}"Aina käytössä sivun perustoimintoihin."{{else}}"Always enabled for core site functionality."{{end}},
+        analyticsTitle: {{if eq .Lang "fi"}}"Analytiikka"{{else}}"Analytics"{{end}},
+        analyticsText: {{if eq .Lang "fi"}}"GA4-mittaus ja sivuston suorituskyvyn analyysi."{{else}}"GA4 measurement and site performance analytics."{{end}},
+        marketingTitle: {{if eq .Lang "fi"}}"Mainonta"{{else}}"Advertising"{{end}},
+        marketingText: {{if eq .Lang "fi"}}"Google Ads-, Meta-, LinkedIn- ja TikTok-tagit remarketingiin ja mainonnan mittaukseen."{{else}}"Google Ads, Meta, LinkedIn and TikTok tags for remarketing and ad measurement."{{end}},
+        acceptAll: {{if eq .Lang "fi"}}"Hyväksy kaikki"{{else}}"Accept all"{{end}},
+        rejectAll: {{if eq .Lang "fi"}}"Vain välttämättömät"{{else}}"Only necessary"{{end}},
+        settings: {{if eq .Lang "fi"}}"Asetukset"{{else}}"Settings"{{end}},
+        save: {{if eq .Lang "fi"}}"Tallenna valinta"{{else}}"Save selection"{{end}},
+        manage: {{if eq .Lang "fi"}}"Evästeasetukset"{{else}}"Cookie settings"{{end}},
+        privacy: {{if eq .Lang "fi"}}"Tietosuoja"{{else}}"Privacy policy"{{end}},
+        close: {{if eq .Lang "fi"}}"Sulje"{{else}}"Close"{{end}}
+      }
+    };
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+
+    window.LIIKKUVA_CONSENT_KEY = "liikkuva_consent_v1";
+    try {
+      var rawConsent = localStorage.getItem(window.LIIKKUVA_CONSENT_KEY);
+      var parsedConsent = rawConsent ? JSON.parse(rawConsent) : null;
+      var defaultConsent = {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        wait_for_update: 500
+      };
+
+      if (parsedConsent && parsedConsent.analytics) {
+        defaultConsent.analytics_storage = "granted";
+      }
+
+      if (parsedConsent && parsedConsent.marketing) {
+        defaultConsent.ad_storage = "granted";
+        defaultConsent.ad_user_data = "granted";
+        defaultConsent.ad_personalization = "granted";
+      }
+
+      gtag("consent", "default", defaultConsent);
+    } catch (error) {
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        wait_for_update: 500
+      });
+    }
+  </script>
+  {{if .PrimaryGoogleTagID}}
+  
+  {{end}}
+  {{end}}
+<script src="/static/js/surface.js" defer></script><link rel="stylesheet" href="/static/css/pro.css?v=20261025"><script src="/static/js/events.js?v=20261025" defer></script></head>{{if eq .Lang "en"}}<body><header class="subpage-header"><div class="container"><a href="/en" class="brand"><img src="{{.LogoURL}}" alt="" width="46" height="46"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span></a><a href="/en" class="text-link">Homepage ↗</a></div></header><main class="subpage-main"><div class="container"><article class="subpage-card"><span class="eyebrow">LIIKKUVAKORJAAMO.FI</span><h1>{{.PrivacyTitle}}</h1><p>{{.PrivacyIntro}}</p><div class="legal-sections"><h2>{{.Section1Title}}</h2><p>{{.Section1Text}}</p><h2>{{.Section2Title}}</h2><p>{{.Section2Text}}</p><h2>{{.Section3Title}}</h2><p>{{.Section3Text}}</p><h2>{{.Section4Title}}</h2><p>{{.Section4Text}}</p><h2>{{.Section5Title}}</h2><p>{{.Section5Text}}</p></div><section><h2>Analytics and cookies</h2><p>With your permission, Google Analytics 4 measures page visits and successful requests. Analytics is disabled until you allow it in Cookie settings. You can change your choice there. We do not send the contact details, vehicle registration, request text, photos or exact location entered in the form to GA4.</p></section></article></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=en">Privacy</a></footer>{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{else}}<body><header class="subpage-header"><div class="container"><a href="/" class="brand"><img src="{{.LogoURL}}" alt="" width="46" height="46"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span></a><a href="/" class="text-link">Etusivu ↗</a></div></header><main class="subpage-main"><div class="container"><article class="subpage-card"><span class="eyebrow">LIIKKUVAKORJAAMO.FI</span><h1>{{.PrivacyTitle}}</h1><p>{{.PrivacyIntro}}</p><div class="legal-sections"><h2>{{.Section1Title}}</h2><p>{{.Section1Text}}</p><h2>{{.Section2Title}}</h2><p>{{.Section2Text}}</p><h2>{{.Section3Title}}</h2><p>{{.Section3Text}}</p><h2>{{.Section4Title}}</h2><p>{{.Section4Text}}</p><h2>{{.Section5Title}}</h2><p>{{.Section5Text}}</p></div><section><h2>Analytiikka ja evästeet</h2><p>Luvallasi Google Analytics 4 mittaa sivukäyntejä ja onnistuneita yhteydenottoja. Analytiikka on pois käytöstä, kunnes sallit sen evästeasetuksissa. Voit muuttaa valintaasi samoista asetuksista. Emme lähetä lomakkeella annettuja yhteystietoja, rekisteritunnusta, viestiä, kuvia tai tarkkaa sijaintia GA4:ään.</p></section></article></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=fi">Tietosuoja</a></footer>{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{end}}</html>
