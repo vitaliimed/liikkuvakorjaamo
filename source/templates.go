@@ -57,7 +57,7 @@ func newTemplateRenderer() (*TemplateRenderer, error) {
 	if err != nil {
 		return nil, err
 	}
-	admin, err := template.ParseFiles(adminPath)
+	admin, err := template.New("admin.html").Funcs(template.FuncMap{"statusLabel": adminStatusLabel}).ParseFiles(adminPath)
 	if err != nil {
 		return nil, err
 	}

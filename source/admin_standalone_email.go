@@ -18,8 +18,8 @@ import (
 const standaloneEmailRoute = "/admin/email"
 
 type standaloneEmailData struct {
-	Token, To, Subject, Message, Error, From string
-	Sent, Enabled                            bool
+	Token, AccessCSRF, To, Subject, Message, Error, From string
+	Sent, Enabled                                        bool
 }
 type standaloneEmailSender func(Config, string, string, string, string, ...EmailAttachment) error
 
@@ -74,7 +74,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
-	if strings.TrimSpace(h.cfg.AdminPassword) == "" || !isAdminAuthenticated(h.cfg, r) {
+	if !isAdminAuthenticated(h.cfg, r) {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 		return
 	}
@@ -83,14 +83,14 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	data := standaloneEmailData{From: h.cfg.MailFrom, Enabled: mailNotificationsEnabled(h.cfg)}
+	data := standaloneEmailData{AccessCSRF: accessCSRF(r), From: h.cfg.MailFrom, Enabled: mailNotificationsEnabled(h.cfg)}
 	render := func(status int) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
 		_ = standaloneEmailTemplate.Execute(w, data)
 	}
 	if r.Method == http.MethodGet {
-		token, err := standaloneEmailToken(h.cfg.AdminPassword)
+		token, err := standaloneEmailToken(sessionToken(r))
 		if err != nil {
 			http.Error(w, "Cannot open email form", http.StatusInternalServerError)
 			return
@@ -115,7 +115,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 	data.Subject = strings.TrimSpace(r.PostFormValue("email_subject"))
 	data.Message = strings.TrimSpace(r.PostFormValue("email_message"))
 	data.Token = r.PostFormValue("csrf_token")
-	if !validStandaloneEmailToken(h.cfg.AdminPassword, data.Token) {
+	if !validStandaloneEmailToken(sessionToken(r), data.Token) {
 		data.Token = ""
 		data.Error = "Срок действия формы истёк или форма открыта в другой вкладке. Скопируйте текст и откройте новую форму."
 		render(http.StatusForbidden)
@@ -153,7 +153,7 @@ var standaloneEmailTemplate = template.Must(template.New("standalone-email").Par
 {{if .Sent}}<p class="ok" role="status">Почтовый сервер принял письмо. Доставка во входящие зависит от почтового сервиса получателя.</p>{{end}}
 {{if .Error}}<p class="err" role="alert">{{.Error}}</p>{{end}}{{if not .Enabled}}<p class="err">Отправка отключена: настройки почты не заполнены.</p>{{end}}
 <form method="post" action="/admin/email" enctype="multipart/form-data" id="compose">
-<input type="hidden" name="csrf_token" value="{{.Token}}">
+<input type="hidden" name="csrf_token" value="{{.Token}}"><input type="hidden" name="access_csrf" value="{{.AccessCSRF}}">
 <label for="to">Кому</label><input id="to" name="email_to" type="email" maxlength="254" required value="{{.To}}" placeholder="name@example.com">
 <label for="subject">Тема</label><input id="subject" name="email_subject" maxlength="200" required value="{{.Subject}}">
 <label for="message">Текст письма</label><textarea id="message" name="email_message" maxlength="20000" required>{{.Message}}</textarea>

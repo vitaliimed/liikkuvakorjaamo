@@ -30,6 +30,10 @@ type Config struct {
 	InternalProcessLeadURL     string
 	TasksServiceAccountEmail   string
 	AdminPassword              string
+	AdminRecoveryEmail         string
+	AdminStore                 adminAuthStore
+	SettingsStore              siteSettingsStore
+	AdminSend                  func(Config, string, string, string, string) error
 	ReviewTokenSecret          string
 	SiteSettingsCollection     string
 
@@ -71,6 +75,7 @@ func loadConfig() Config {
 		InternalProcessLeadURL:     processLeadURL,
 		TasksServiceAccountEmail:   getEnv("TASKS_SERVICE_ACCOUNT_EMAIL", ""),
 		AdminPassword:              getEnv("ADMIN_PASSWORD", ""),
+		AdminRecoveryEmail:         getEnv("ADMIN_RECOVERY_EMAIL", "medynikv@gmail.com"),
 		ReviewTokenSecret:          getEnv("REVIEW_TOKEN_SECRET", ""),
 		SiteSettingsCollection:     getEnv("SITE_SETTINGS_COLLECTION", "site_settings"),
 
@@ -109,6 +114,6 @@ func getEnvAsInt(key string, fallback int) int {
 func newServer(cfg Config, renderer *TemplateRenderer) *http.Server {
 	return &http.Server{
 		Addr:    ":" + cfg.AppPort,
-		Handler: liikkuvaPro(cfg, liikkuvaSecurity(cfg, loggingMiddleware(newRouter(cfg, renderer)))),
+		Handler: liikkuvaPro(cfg, adminAccessGuard(cfg, liikkuvaSecurity(cfg, loggingMiddleware(newRouter(cfg, renderer))))),
 	}
 }

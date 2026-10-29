@@ -15,6 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
+const releaseVersion = "2026.10.29-access-mobile"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -63,8 +64,8 @@ func validateLiikkuva(cfg Config) error {
 	if !strings.HasSuffix(cfg.GCSBucketName, "-liikkuva-files") {
 		return fmt.Errorf("separate Liikkuva photo bucket required")
 	}
-	if len(cfg.AdminPassword) < 24 || len(cfg.InternalTaskToken) < 32 || len(cfg.ReviewTokenSecret) < 32 {
-		return fmt.Errorf("separate admin, task and review secrets required")
+	if len(cfg.InternalTaskToken) < 32 || len(cfg.ReviewTokenSecret) < 32 {
+		return fmt.Errorf("separate task and review secrets required")
 	}
 	if !strings.HasPrefix(cfg.InternalProcessLeadURL, "https://liikkuva-landing-") || !strings.HasSuffix(cfg.InternalProcessLeadURL, ".run.app/internal/process-lead") {
 		return fmt.Errorf("worker must target the new Cloud Run service")
@@ -112,12 +113,14 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 			w.Header().Set("X-Robots-Tag", "noindex, follow")
 		}
 		if r.URL.Path == "/healthz" {
+			w.Header().Set("Cache-Control", "no-store")
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "site": liikkuvaDomain, "version": "2026.10.25-pro", "revision": os.Getenv("K_REVISION")})
+			json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "site": liikkuvaDomain, "version": releaseVersion, "revision": os.Getenv("K_REVISION")})
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/admin") {
 			w.Header().Set("Cache-Control", "no-store")
+			w.Header().Set("Referrer-Policy", "no-referrer")
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 		}
 		if strings.HasPrefix(r.URL.Path, "/admin") && r.Method == http.MethodPost {
@@ -145,7 +148,7 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 			fmt.Fprintf(w, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/css/style.css"><title>Liikkuva — review</title></head><body><header class="subpage-header"><div class="container"><a class="brand" href="/"><img src="/static/img/logo_liikkuva.svg" alt="" width="44" height="44"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span></a></div></header><main class="subpage-main"><div class="container"><article class="subpage-card"><h1>%s</h1><p>%s</p><a class="btn btn-orange" href="/">%s</a></article></div></main></body></html>`, title, text, button)
 			return
 		}
-		if os.Getenv("LIIKKUVA_BOOTSTRAP") == "1" && r.Method != "GET" {
+		if os.Getenv("LIIKKUVA_BOOTSTRAP") == "1" && r.Method != "GET" && !strings.HasPrefix(r.URL.Path, "/admin") {
 			http.Error(w, "Setup in progress", 503)
 			return
 		}

@@ -440,6 +440,7 @@ type PrivacyPageData struct {
 }
 
 type SiteSettings struct {
+	Revision                     int64 `firestore:"revision"`
 	ProVisitEUR                  int
 	ProDiagnosticEUR             int
 	ProFontSize                  int
@@ -850,13 +851,16 @@ type AdminReviewListItem struct {
 }
 
 type AdminPageData struct {
-	PageTitle     string
-	LoginRequired bool
-	Error         string
-	Saved         bool
-	MailEnabled   bool
-	Settings      SiteSettings
-	ActiveTab     string
+	CSRF           string
+	ReleaseVersion string
+	IntakePaused   bool
+	PageTitle      string
+	LoginRequired  bool
+	Error          string
+	Saved          bool
+	MailEnabled    bool
+	Settings       SiteSettings
+	ActiveTab      string
 
 	OverviewTotalLeads     int
 	OverviewFailedLeads    int

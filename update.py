@@ -1,29 +1,395 @@
 #!/usr/bin/env python3
-"""Build a release, deploy at zero traffic, check it, then promote that exact revision."""
-import argparse,json,subprocess,time,urllib.request
+"""Update the existing Liikkuva service; preserve configuration and check before promotion."""
+from __future__ import annotations
+
+import argparse
+import email.utils
+import getpass
+import json
+import os
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--project',default='seventh-chassis-247718');p.add_argument('--region',default='europe-north1');p.add_argument('--source',default=str(Path(__file__).resolve().parent/'source'));a=p.parse_args();src=Path(a.source).resolve()
-def run(*args,cwd=None):return subprocess.run(args,check=True,cwd=cwd,text=True,capture_output=True).stdout
-base=['--project='+a.project,'--region='+a.region,'--quiet']
-def service():return json.loads(run('gcloud','run','services','describe','liikkuva-landing',*base,'--format=json'))
-s=service()
-if s.get('metadata',{}).get('labels',{}).get('brand')!='liikkuvakorjaamo':raise SystemExit('Метка сервиса не совпадает. Обновление заблокировано.')
-if not (src/'liikkuva_brand.go').is_file() or 'liikkuvakorjaamo.fi' not in (src/'liikkuva_brand.go').read_text():raise SystemExit('Это не исходники Liikkuva Korjaamo.')
-print('Проверка исходников…',flush=True);run('go','test','./...',cwd=src)
-stamp=time.strftime('%Y%m%d-%H%M%S');image=a.region+'-docker.pkg.dev/'+a.project+'/liikkuva-images/site:'+stamp
-print('Сборка Cloud Build…',flush=True);run('gcloud','builds','submit','--project='+a.project,'--tag='+image,'--timeout=1200s',str(src),'--quiet')
-tag='check-'+stamp.lower()
-print('Новая ревизия пока без пользовательского трафика…',flush=True)
-run('gcloud','run','deploy','liikkuva-landing',*base,'--image='+image,'--no-traffic','--tag='+tag,'--format=json')
-current=service();entry=next(x for x in current['status']['traffic'] if x.get('tag')==tag);url=entry['url'];revision=entry['revisionName']
-with urllib.request.urlopen(url+'/healthz',timeout=45) as response:data=json.load(response)
-if data.get('site')!='liikkuvakorjaamo.fi' or data.get('ok') is not True:raise SystemExit('Проверка не пройдена. Старый сайт продолжает получать трафик.')
-with urllib.request.urlopen(url+'/',timeout=45) as response:
- landing=response.read().decode('utf-8')
- if 'liikkuvakorjaamo.fi' not in landing:raise SystemExit('Главная страница не прошла проверку. Старый сайт продолжает работать.')
-run('gcloud','run','services','update-traffic','liikkuva-landing',*base,'--to-revisions='+revision+'=100')
-result=service()
-if sum(x.get('percent',0) for x in result['status']['traffic'] if x.get('revisionName')==revision)!=100:raise SystemExit('Проверьте распределение трафика в Cloud Run.')
-run('gcloud','run','services','update-traffic','liikkuva-landing',*base,'--remove-tags='+tag)
-print('Обновлено. 100% трафика: '+revision+'. Настройки, секреты и заявки сохранены.')
-print('Предыдущие ревизии доступны в Cloud Run → Revisions → Manage traffic для отката.')
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+ROOT = Path(__file__).resolve().parent
+DOMAIN = 'https://liikkuvakorjaamo.fi'
+VERSION = '2026.10.29-access-mobile'
+DATABASE = 'liikkuvakorjaamo'
+SITE = 'liikkuva-liikkuva-korjaamo'
+SERVICES = {'liikkuva-preview', 'liikkuva-landing', 'liikkuvakorjaamo'}
+RULES = """rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All client access is mediated by the authenticated Go application.
+    // Server SDK operations authenticate with IAM and do not use these rules.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
+"""
+
+
+class UpdateError(RuntimeError):
+    pass
+
+
+class APIError(UpdateError):
+    def __init__(self, code, url):
+        self.code = code
+        super().__init__(f'Google API: HTTP {code}, {urllib.parse.urlsplit(url).path}.')
+
+
+def run(*args, input=None, cwd=None, env=None, check=True):
+    result = subprocess.run(args, input=input, cwd=cwd, env=env, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if check and result.returncode:
+        # Arguments never contain raw keys/passwords. Do not echo response
+        # bodies, environment snapshots or API credentials into terminal logs.
+        command = ' '.join(str(x) for x in args[:4])
+        reason = (result.stderr or '').strip()
+        if Path(str(args[0])).name == 'go':
+            reason = (result.stdout + '\n' + result.stderr).strip()
+        raise UpdateError(f'Не выполнена команда: {command}\n{reason[-2500:]}')
+    return result
+
+
+def env_entries(service):
+    return {entry['name']: entry for entry in
+            service.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [{}])[0].get('env', [])}
+
+
+def select_service(services, hosting_run=None, requested=None, region='europe-north1'):
+    names = {s['metadata']['name'] for s in services}
+    if hosting_run and hosting_run.get('region', region) != region:
+        raise UpdateError('Firebase использует другой регион. Укажите его через --region.')
+    bound = hosting_run.get('serviceId') if hosting_run else None
+    if requested:
+        if requested not in SERVICES and requested != bound:
+            raise UpdateError('Указанный сервис не распознан как Liikkuva. Проверьте привязку Hosting.')
+        if requested not in names:
+            raise UpdateError(f'Сервис {requested} не найден в выбранном проекте/регионе.')
+        if bound and requested != bound:
+            raise UpdateError(f'Домен привязан к {bound}, а указан {requested}. Обновление остановлено.')
+        return requested
+    if bound:
+        if bound not in names:
+            raise UpdateError(f'Сервис из Firebase ({bound}) не найден. Проверьте проект и регион.')
+        return bound
+    candidates = sorted(names & SERVICES)
+    if len(candidates) == 1:
+        return candidates[0]
+    raise UpdateError('Не удалось однозначно выбрать сервис. Повторите с --service ИМЯ. Найдены: ' + ', '.join(candidates))
+
+
+def validate_password(password):
+    if len(password) < 12 or len(password.encode('utf-8')) > 72 or '\n' in password or '\r' in password:
+        raise UpdateError('Пароль: от 12 символов, до 72 байт, одна строка.')
+
+
+def prompt_password():
+    password = getpass.getpass('Новый пароль кабинета (от 12 символов, ввод скрыт): ')
+    validate_password(password)
+    if password != getpass.getpass('Повторите новый пароль: '):
+        raise UpdateError('Пароли не совпадают.')
+    return password
+
+
+class Updater:
+    def __init__(self, args):
+        self.args = args
+        self.project = args.project
+        self.region = args.region
+        self.service = None
+        self.token = None
+        self.project_number = None
+        self.updates = {}
+        self.secret_updates = {}
+        self.hosting_run = None
+        self.snapshot = None
+        self.entries = {}
+
+    def gc(self, *args, **kwargs):
+        return run('gcloud', *args, '--project=' + self.project, '--quiet', **kwargs)
+
+    def api(self, url, method='GET', data=None, authenticated=True):
+        headers = {'Accept': 'application/json'}
+        if authenticated:
+            if not self.token:
+                self.token = self.gc('auth', 'print-access-token').stdout.strip()
+            headers['Authorization'] = 'Bearer ' + self.token
+        payload = None
+        if data is not None:
+            headers['Content-Type'] = 'application/json'
+            payload = json.dumps(data).encode('utf-8')
+        request = urllib.request.Request(url, data=payload, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                content = response.read()
+                return json.loads(content) if content else {}
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            raise UpdateError('Сервер вернул неожиданный ответ вместо JSON: ' + urllib.parse.urlsplit(url).hostname) from None
+        except urllib.error.HTTPError as exc:
+            raise APIError(exc.code, url) from None
+        except urllib.error.URLError as exc:
+            raise UpdateError(f'Нет соединения с {urllib.parse.urlsplit(url).hostname}: {exc.reason}') from None
+
+    def describe(self):
+        return json.loads(self.gc('run', 'services', 'describe', self.service,
+                                 '--region=' + self.region, '--format=json').stdout)
+
+    def discover(self):
+        services = json.loads(self.gc('run', 'services', 'list', '--region=' + self.region, '--format=json').stdout)
+        base = f'https://firebasehosting.googleapis.com/v1beta1/sites/{self.args.site}'
+        try:
+            live = self.api(base + '/channels/live')
+            version = live.get('release', {}).get('version', {})
+            if isinstance(version, str):
+                version = {'name': version}
+            if version.get('name') and 'config' not in version:
+                version = self.api('https://firebasehosting.googleapis.com/v1beta1/' + version['name'])
+            routes = [r['run'] for r in version.get('config', {}).get('rewrites', []) if 'run' in r]
+            service_ids = {r.get('serviceId') for r in routes}
+            if len(service_ids) > 1:
+                raise UpdateError('Hosting использует несколько Cloud Run сервисов. Укажите --service явно.')
+            if routes:
+                self.hosting_run = routes[0]
+        except APIError as exc:
+            if exc.code not in (403, 404):
+                raise
+            print('Не удалось прочитать привязку Hosting; проверяю список сервисов Cloud Run.', flush=True)
+        self.service = select_service(services, self.hosting_run, self.args.service, self.region)
+        self.snapshot = self.describe()
+        self.entries = env_entries(self.snapshot)
+        site_url = self.entries.get('SITE_URL', {}).get('value', '').rstrip('/')
+        service_urls = {self.snapshot.get('status', {}).get('url', '').rstrip('/')}
+        service_urls.update(r.get('url', '').rstrip('/') for r in self.snapshot.get('status', {}).get('traffic', []))
+        if site_url and site_url != DOMAIN and site_url not in service_urls:
+            raise UpdateError(f'SITE_URL выбранного сервиса отличается от {DOMAIN} и его технического адреса. Проверьте --service.')
+        db_project = self.entries.get('FIRESTORE_PROJECT_ID', {}).get('value', self.project)
+        if db_project and db_project != self.project:
+            raise UpdateError('База выбранного сервиса находится в другом проекте. Требуется проверить конфигурацию.')
+        self.project_number = self.gc('projects', 'describe', self.project, '--format=value(projectNumber)').stdout.strip()
+        self.runtime_account = self.snapshot['spec']['template']['spec'].get('serviceAccountName') or self.project_number + '-compute@developer.gserviceaccount.com'
+        self.updates = {'SITE_URL': DOMAIN}
+        if not self.entries.get('ADMIN_RECOVERY_EMAIL', {}).get('value'):
+            self.updates['ADMIN_RECOVERY_EMAIL'] = 'medynikv@gmail.com'
+        if not self.entries.get('FIRESTORE_PROJECT_ID', {}).get('value'):
+            self.updates['FIRESTORE_PROJECT_ID'] = self.project
+        print(f'Проект: {self.project}; регион: {self.region}; существующий сервис: {self.service}.', flush=True)
+
+    def prepare_storage(self):
+        self.gc('services', 'enable', 'firestore.googleapis.com', 'firebaserules.googleapis.com')
+        databases = json.loads(self.gc('firestore', 'databases', 'list', '--format=json').stdout)
+        if isinstance(databases, dict):
+            databases = databases.get('databases', [])
+        if not any(d.get('name', '').endswith('/' + DATABASE) for d in databases):
+            print('Создаю хранилище кабинета в europe-north1…', flush=True)
+            self.gc('firestore', 'databases', 'create', '--database=' + DATABASE,
+                    '--location=europe-north1', '--type=firestore-native')
+        # IAM is used by the server SDK. The web client has no direct DB access.
+        self.gc('projects', 'add-iam-policy-binding', self.project,
+                '--member=serviceAccount:' + self.runtime_account,
+                '--role=roles/datastore.user', '--condition=None', '--format=none')
+        self.secure_database()
+
+    def secure_database(self):
+        root = f'https://firebaserules.googleapis.com/v1/projects/{self.project}'
+        release_name = f'projects/{self.project}/releases/cloud.firestore/{DATABASE}'
+        current = None
+        try:
+            current = self.api('https://firebaserules.googleapis.com/v1/' + release_name)
+            existing = self.api('https://firebaserules.googleapis.com/v1/' + current['rulesetName'])
+            files = existing.get('source', {}).get('files', [])
+            if len(files) == 1 and files[0].get('content') == RULES:
+                return self.check_database_private()
+        except APIError as exc:
+            if exc.code != 404:
+                raise
+        print('Закрываю прямой клиентский доступ к базе Liikkuva; приложение работает через IAM…', flush=True)
+        ruleset = self.api(root + '/rulesets', 'POST', {
+            'source': {'files': [{'name': 'firestore.rules', 'content': RULES}]},
+            'attachment_point': f'firestore.googleapis.com/projects/{self.project_number}/databases/{DATABASE}'})
+        release = {'name': release_name, 'rulesetName': ruleset['name']}
+        if current:
+            self.api('https://firebaserules.googleapis.com/v1/' + release_name,
+                     'PATCH', {'release': release, 'updateMask': 'rulesetName'})
+        else:
+            self.api(root + '/releases', 'POST', release)
+        for attempt in range(7):
+            try:
+                return self.check_database_private()
+            except UpdateError:
+                if attempt == 6:
+                    raise
+                print('Ожидаю применения правил доступа…', flush=True)
+                time.sleep(10)
+
+    def check_database_private(self):
+        collection = self.entries.get('SITE_SETTINGS_COLLECTION', {}).get('value', 'site_settings') + '_private'
+        path = f'https://firestore.googleapis.com/v1/projects/{self.project}/databases/{DATABASE}/documents/{collection}/admin_access'
+        try:
+            self.api(path, authenticated=False)
+        except APIError as exc:
+            if exc.code in (401, 403):
+                return
+            raise UpdateError('Правила доступа ещё применяются. Повторите обновление через несколько минут.') from None
+        raise UpdateError('Прямой доступ к данным кабинета пока открыт. Обновление остановлено до защиты базы.')
+
+    def configure_email(self):
+        print('Укажите SMTP-данные подтверждённого отправителя. Пересылка входящих писем не заменяет SMTP.', flush=True)
+        host = input('SMTP host [smtp-relay.brevo.com]: ').strip() or 'smtp-relay.brevo.com'
+        port = input('SMTP port [587]: ').strip() or '587'
+        login = input('SMTP login: ').strip()
+        password = getpass.getpass('SMTP key / password (ввод скрыт): ')
+        address = input('Подтверждённый адрес отправителя [service@liikkuvakorjaamo.fi]: ').strip() or 'service@liikkuvakorjaamo.fi'
+        if not re.fullmatch(r'[A-Za-z0-9.-]+', host) or port not in ('465', '587') or not login or not password or '\n' in login or not re.fullmatch(r'[^\s@,<>]+@[^\s@,<>]+\.[^\s@,<>]+', address):
+            raise UpdateError('Проверьте SMTP host, порт, логин, ключ и адрес отправителя.')
+        self.gc('services', 'enable', 'secretmanager.googleapis.com')
+        for key, value in [('SMTP_USERNAME', login), ('SMTP_PASSWORD', password)]:
+            name = 'liikkuva-' + key.lower().replace('_', '-')
+            found = self.gc('secrets', 'describe', name, '--format=none', check=False).returncode == 0
+            if not found:
+                self.gc('secrets', 'create', name, '--replication-policy=automatic')
+            version = self.gc('secrets', 'versions', 'add', name, '--data-file=-', '--format=value(name)', input=value).stdout.strip().split('/')[-1]
+            self.gc('secrets', 'add-iam-policy-binding', name,
+                    '--member=serviceAccount:' + self.runtime_account,
+                    '--role=roles/secretmanager.secretAccessor', '--format=none')
+            self.secret_updates[key] = name + ':' + version
+        self.updates.update(SMTP_HOST=host, SMTP_PORT=port,
+                            MAIL_FROM=email.utils.formataddr(('Liikkuva Auto Korjaamo', address)), MAIL_REPLY_TO=address)
+
+    def check_intake(self):
+        required = ['INTERNAL_TASK_TOKEN', 'REVIEW_TOKEN_SECRET', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'GOOGLE_APPS_SCRIPT_URL', 'GOOGLE_APPS_SCRIPT_TOKEN', 'CLOUD_TASKS_PROJECT_ID', 'CLOUD_TASKS_LOCATION', 'CLOUD_TASKS_QUEUE', 'GCS_BUCKET_NAME', 'INTERNAL_PROCESS_LEAD_URL']
+        missing = [k for k in required if k not in self.entries]
+        if missing:
+            raise UpdateError('Приём заявок пока нельзя включить: отсутствуют ' + ', '.join(missing))
+        self.updates['LIIKKUVA_BOOTSTRAP'] = '0'
+
+    def build_cli(self, folder):
+        go = shutil.which('go')
+        if not go:
+            raise UpdateError('Go не найден. Выполните команду в Google Cloud Shell, где доступен Go.')
+        print('Проверяю Go-код и собираю приложение…', flush=True)
+        run(go, 'test', './...', cwd=ROOT / 'source')
+        binary = Path(folder) / 'liikkuva-server'
+        run(go, 'build', '-buildvcs=false', '-o', str(binary), '.', cwd=ROOT / 'source')
+        return binary
+
+    def set_password(self, binary, password):
+        self.token = self.gc('auth', 'print-access-token').stdout.strip()
+        env = dict(os.environ)
+        # Only the CLI sees this short-lived operator credential. The server
+        # never reads it, and it is not included in Cloud Run configuration.
+        for key, default in [('SITE_SETTINGS_COLLECTION', 'site_settings'), ('ADMIN_RECOVERY_EMAIL', 'medynikv@gmail.com')]:
+            env[key] = self.updates.get(key) or self.entries.get(key, {}).get('value') or default
+        env.update(FIRESTORE_PROJECT_ID=self.project, LIIKKUVA_OPERATOR_TOKEN=self.token,
+                   SITE_URL=DOMAIN, ADMIN_PASSWORD='')
+        env.setdefault('ADMIN_RECOVERY_EMAIL', 'medynikv@gmail.com')
+        run(str(binary), 'admin-password', input=password + '\n', env=env, cwd=ROOT / 'source')
+        print('Новый пароль сохранён. Старые сеансы завершены.', flush=True)
+
+    def deploy(self):
+        stamp = time.strftime('%Y%m%d-%H%M%S', time.gmtime())
+        tag = 'check-' + stamp
+        args = ['run', 'deploy', self.service, '--region=' + self.region,
+                '--source=' + str(ROOT / 'source'), '--no-traffic', '--tag=' + tag,
+                '--format=json']
+        # Update only the named keys. Preserve unrelated variables and secret refs.
+        delimiter = '~'
+        if any(delimiter in str(v) for v in self.updates.values()):
+            raise UpdateError('Недопустимый символ в публичных настройках.')
+        args.append('--update-env-vars=^' + delimiter + '^' + delimiter.join(k + '=' + v for k, v in self.updates.items()))
+        plain_to_secret = [k for k in self.secret_updates if 'value' in self.entries.get(k, {})]
+        secret_to_plain = [k for k in self.updates if 'valueFrom' in self.entries.get(k, {})]
+        if plain_to_secret:
+            args.append('--remove-env-vars=' + ','.join(plain_to_secret))
+        if secret_to_plain:
+            args.append('--remove-secrets=' + ','.join(secret_to_plain))
+        if self.secret_updates:
+            args.append('--update-secrets=' + ','.join(k + '=' + v for k, v in self.secret_updates.items()))
+        print('Собираю новую ревизию без пользовательского трафика. Сборка может занять несколько минут…', flush=True)
+        self.gc(*args)
+        deployed = self.describe()
+        route = next((r for r in deployed['status'].get('traffic', []) if r.get('tag') == tag), None)
+        if not route or not route.get('url') or not route.get('revisionName'):
+            raise UpdateError('Cloud Run не вернул проверочный адрес новой ревизии.')
+        url, revision = route['url'], route['revisionName']
+        health = self.api(url + '/healthz', authenticated=False)
+        if health.get('version') != VERSION or health.get('revision') != revision:
+            raise UpdateError('Новая ревизия не прошла проверку версии. Трафик пока не переключён.')
+        for path, marker in [('/admin', 'Войти в кабинет'), ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
+            with urllib.request.urlopen(url + path, timeout=45) as response:
+                if marker not in response.read().decode('utf-8'):
+                    raise UpdateError(f'Не прошла проверка {path}. Трафик пока не переключён.')
+        print('Проверки ревизии пройдены. Переключаю 100% трафика…', flush=True)
+        self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region, '--to-revisions=' + revision + '=100')
+        if self.hosting_run and self.hosting_run.get('tag'):
+            self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region,
+                    '--update-tags=' + self.hosting_run['tag'] + '=' + revision)
+        final = self.describe()
+        percent = sum(r.get('percent', 0) for r in final['status']['traffic'] if r.get('revisionName') == revision)
+        if percent != 100:
+            raise UpdateError('Cloud Run не подтвердил 100% трафика на новой ревизии.')
+        try:
+            live = self.api(DOMAIN + '/healthz?release=' + stamp, authenticated=False)
+            if live.get('version') != VERSION or live.get('revision') != revision:
+                raise UpdateError('Cloud Run обновлён, но домен пока отдаёт другую ревизию. Проверьте rewrite Hosting.')
+        except (APIError, urllib.error.URLError) as exc:
+            raise UpdateError('Cloud Run обновлён. Проверка домена не завершена: ' + str(exc)) from None
+        self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region, '--remove-tags=' + tag)
+        print('Обновлена ревизия: ' + revision, flush=True)
+
+
+def parse_args(argv=None):
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--project', default='liikkuva-korjaamo')
+    p.add_argument('--region', default='europe-north1')
+    p.add_argument('--site', default=SITE)
+    p.add_argument('--service', help='Normally detected from live Firebase Hosting configuration')
+    p.add_argument('--set-password', action='store_true', help='Set an owner password after deployment')
+    p.add_argument('--password-only', action='store_true', help='Set a password without deploying')
+    p.add_argument('--configure-email', action='store_true', help='Configure SMTP using hidden credential prompts')
+    p.add_argument('--enable-leads', action='store_true', help='Leave setup mode after integrations are configured')
+    return p.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    if args.password_only and (args.configure_email or args.enable_leads):
+        raise UpdateError('--password-only используется отдельно от настройки почты и приёма заявок.')
+    if not shutil.which('gcloud'):
+        raise UpdateError('Откройте Google Cloud Shell: https://shell.cloud.google.com/')
+    if not (ROOT / 'source' / 'admin_access.go').is_file():
+        raise UpdateError('Не найдены исходники этого обновления. Выполните git pull в папке репозитория.')
+    password = prompt_password() if args.set_password or args.password_only else None
+    updater = Updater(args)
+    updater.discover()
+    updater.prepare_storage()
+    if args.configure_email:
+        updater.configure_email()
+    if args.enable_leads:
+        updater.check_intake()
+    with tempfile.TemporaryDirectory(prefix='liikkuva-build-') as temp:
+        binary = updater.build_cli(temp)
+        if not args.password_only:
+            updater.deploy()
+        if password is not None:
+            updater.set_password(binary, password)
+    print('Кабинет: ' + DOMAIN + '/admin')
+    print('Почта восстановления по умолчанию: medynikv@gmail.com. Сохранённый в кабинете адрес имеет приоритет.')
+    if not (args.configure_email or all(k in updater.entries for k in ('SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'MAIL_FROM'))):
+        print('Для восстановления по почте подключите отправку: python3 update.py --configure-email')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (UpdateError, KeyboardInterrupt) as exc:
+        print('\nОбновление остановлено: ' + str(exc), file=sys.stderr)
+        sys.exit(1)

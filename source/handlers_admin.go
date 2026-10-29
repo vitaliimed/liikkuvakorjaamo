@@ -1,8 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -273,30 +272,14 @@ func normalizeAdminSettingsForTemplate(settings SiteSettings) SiteSettings {
 }
 
 func (h *AdminHandler) Show(w http.ResponseWriter, r *http.Request) {
-	if strings.TrimSpace(h.cfg.AdminPassword) == "" {
-		http.Error(w, "ADMIN_PASSWORD is not configured", http.StatusServiceUnavailable)
-		return
-	}
-
 	if !isAdminAuthenticated(h.cfg, r) {
-		if err := h.renderer.renderAdmin(w, AdminPageData{
-			PageTitle:     "Admin login",
-			LoginRequired: true,
-		}); err != nil {
-			http.Error(w, "failed to render admin login: "+err.Error(), http.StatusInternalServerError)
-		}
+		h.accessLogin(w, r)
 		return
 	}
 
 	settings, err := loadSiteSettings(r.Context(), h.cfg)
 	if err != nil {
-		if renderErr := h.renderer.renderAdmin(w, AdminPageData{
-			PageTitle: "Admin",
-			Error:     err.Error(),
-			ActiveTab: normalizeAdminTab(r.URL.Query().Get("tab"), false),
-		}); renderErr != nil {
-			http.Error(w, "failed to render admin error page: "+renderErr.Error(), http.StatusInternalServerError)
-		}
+		renderAccess(w, http.StatusServiceUnavailable, accessPageData{Mode: "unavailable", Error: "Не удалось загрузить настройки сайта. Повторите позже. Форма редактирования откроется после восстановления связи с хранилищем."})
 		return
 	}
 
@@ -307,8 +290,8 @@ func (h *AdminHandler) Show(w http.ResponseWriter, r *http.Request) {
 
 	records, err := listLeadRecords(r.Context(), h.cfg, 50, statusFilter)
 	if err != nil {
-		if renderErr := h.renderer.renderAdmin(w, AdminPageData{
-			PageTitle: "Admin",
+		if renderErr := h.renderAdmin(w, r, AdminPageData{
+			PageTitle: "Кабинет Liikkuva",
 			Error:     err.Error(),
 			Settings:  settings,
 			ActiveTab: normalizeAdminTab(r.URL.Query().Get("tab"), false),
@@ -333,8 +316,8 @@ func (h *AdminHandler) Show(w http.ResponseWriter, r *http.Request) {
 	if selectedLeadID != "" {
 		record, err := getLeadRecord(r.Context(), h.cfg, selectedLeadID)
 		if err != nil {
-			if renderErr := h.renderer.renderAdmin(w, AdminPageData{
-				PageTitle:    "Admin",
+			if renderErr := h.renderAdmin(w, r, AdminPageData{
+				PageTitle:    "Кабинет Liikkuva",
 				Error:        err.Error(),
 				Settings:     settings,
 				ActiveTab:    normalizeAdminTab(r.URL.Query().Get("tab"), true),
@@ -379,8 +362,8 @@ func (h *AdminHandler) Show(w http.ResponseWriter, r *http.Request) {
 		queryError += reviewError
 	}
 
-	if err := h.renderer.renderAdmin(w, AdminPageData{
-		PageTitle:              "Admin",
+	if err := h.renderAdmin(w, r, AdminPageData{
+		PageTitle:              "Кабинет Liikkuva",
 		Saved:                  r.URL.Query().Get("saved") == "1",
 		MailEnabled:            mailNotificationsEnabled(h.cfg),
 		Settings:               settings,
@@ -408,50 +391,10 @@ func (h *AdminHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-		return
-	}
-
-	if strings.TrimSpace(h.cfg.AdminPassword) == "" {
-		http.Error(w, "ADMIN_PASSWORD is not configured", http.StatusServiceUnavailable)
-		return
-	}
-
-	if strings.TrimSpace(r.FormValue("password")) != h.cfg.AdminPassword {
-		if err := h.renderer.renderAdmin(w, AdminPageData{
-			PageTitle:     "Admin login",
-			LoginRequired: true,
-			Error:         "Wrong password",
-		}); err != nil {
-			http.Error(w, "failed to render admin login error: "+err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     adminCookieName,
-		Value:    adminCookieValue(h.cfg),
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Secure:   strings.HasPrefix(strings.ToLower(strings.TrimSpace(h.cfg.SiteURL)), "https://"),
-		MaxAge:   60 * 60 * 12,
-	})
-
-	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	h.accessLogin(w, r)
 }
-
 func (h *AdminHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     adminCookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   -1,
-	})
-	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	h.accessLogout(w, r)
 }
 
 func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
@@ -467,7 +410,13 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 
 	activeTab := normalizeAdminTab(r.FormValue("active_tab"), false)
 
+	revision, revisionErr := strconv.ParseInt(r.FormValue("settings_revision"), 10, 64)
+	if revisionErr != nil || revision < 0 {
+		http.Error(w, "Обновите страницу кабинета перед сохранением.", http.StatusBadRequest)
+		return
+	}
 	settings := SiteSettings{
+		Revision:                  revision,
 		ProVisitEUR:               liikkuvaInt(r.FormValue("ProVisitEUR"), 70, 1, 2000),
 		ProDiagnosticEUR:          liikkuvaInt(r.FormValue("ProDiagnosticEUR"), 50, 1, 2000),
 		ProFontSize:               liikkuvaInt(r.FormValue("ProFontSize"), 18, 16, 22),
@@ -803,10 +752,16 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := saveSiteSettings(r.Context(), h.cfg, settings); err != nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		code := http.StatusServiceUnavailable
+		if errors.Is(err, errSiteSettingsConflict) {
+			code = http.StatusConflict
+		}
+		w.WriteHeader(code)
 		settings = normalizeAdminSettingsForTemplate(settings)
 
-		if renderErr := h.renderer.renderAdmin(w, AdminPageData{
-			PageTitle: "Admin",
+		if renderErr := h.renderAdmin(w, r, AdminPageData{
+			PageTitle: "Кабинет Liikkuva",
 			Error:     err.Error(),
 			Settings:  settings,
 			ActiveTab: activeTab,
@@ -956,16 +911,7 @@ func (h *AdminHandler) SendReadyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func isAdminAuthenticated(cfg Config, r *http.Request) bool {
-	cookie, err := r.Cookie(adminCookieName)
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(cookie.Value) == adminCookieValue(cfg)
-}
-
-func adminCookieValue(cfg Config) string {
-	sum := sha256.Sum256([]byte(strings.TrimSpace(cfg.AdminPassword)))
-	return hex.EncodeToString(sum[:])
+	return authenticateAdmin(cfg, r)
 }
 
 func normalizeAdminStatusFilter(value string) string {
@@ -1011,7 +957,7 @@ func normalizeAdminTab(value string, hasSelectedLead bool) string {
 	value = strings.ToLower(strings.TrimSpace(value))
 
 	switch value {
-	case "general", "assets", "visual", "landing-fi", "landing-en", "form-fi", "form-en", "promo", "testimonials", "services", "cases", "thankyou", "privacy", "seo", "leads", "reviews":
+	case "overview", "help", "general", "assets", "visual", "landing-fi", "landing-en", "form-fi", "form-en", "promo", "testimonials", "services", "cases", "thankyou", "privacy", "seo", "leads", "reviews":
 		return value
 	}
 
@@ -1019,7 +965,7 @@ func normalizeAdminTab(value string, hasSelectedLead bool) string {
 		return "leads"
 	}
 
-	return "general"
+	return "overview"
 }
 
 func countAdminMissingAssets(settings SiteSettings) int {
@@ -1332,4 +1278,14 @@ func padAdminCasePoints(items []AdminCaseItem) []AdminCaseItem {
 	}
 
 	return out
+}
+
+func adminStatusLabel(value string) string {
+	labels := map[string]string{
+		"new": "Новая", "contacted": "Связались", "scheduled": "Выезд назначен", "in_progress": "В работе", "waiting_parts": "Ожидаем запчасти", "ready_for_pickup": "Работа готова", "completed": "Завершено", "cancelled": "Отменено", "queued": "В очереди", "processing": "Обрабатывается", "done": "Обработано", "failed": "Ошибка", "pending": "Ожидает", "sent": "Отправлено", "not_sent": "Не отправлено", "not_applicable": "Не требуется", "success": "Доставлено", "approved": "Одобрено", "rejected": "Отклонено", "error": "Ошибка", "skipped": "Пропущено", "disabled": "Выключено",
+	}
+	if label, ok := labels[strings.ToLower(strings.TrimSpace(value))]; ok {
+		return label
+	}
+	return value
 }

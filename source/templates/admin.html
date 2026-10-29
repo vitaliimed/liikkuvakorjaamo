@@ -561,7 +561,7 @@
       .filter-link{padding:9px 11px;font-size:12px}
     }
   </style>
-<link rel="stylesheet" href="/static/css/pro.css?v=20261025"><script src="/static/js/events.js?v=20261025" defer></script><link rel="stylesheet" href="/static/css/admin-mobile.css"><script src="/static/js/admin-mobile.js" defer></script></head>
+<link rel="stylesheet" href="/static/css/pro.css?v=20261025"><link rel="stylesheet" href="/static/css/admin-mobile.css?v=20261029"><script src="/static/js/admin-mobile.js?v=20261029" defer></script></head>
 <body>
   <div class="wrap">
     {{if .LoginRequired}}
@@ -569,7 +569,7 @@
         <h1>Вход в управление</h1>
         <p class="panel-intro">Введите пароль для управления сайтом и заявками.</p>
         {{if .Error}}<div class="msg-err">{{.Error}}</div>{{end}}
-        <form method="post" action="/admin/login">
+        <form method="post" action="/admin/login"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
           <div class="field">
             <label>Пароль</label>
             <input type="password" name="password" required>
@@ -582,17 +582,17 @@
     {{else}}
       <div class="topbar">
         <div class="titlebox">
-          <h1>Управление сайтом</h1>
-          <p>Разделы сайта, заявки и настройки. Кнопка сохранения всегда доступна.</p>
-          <div class="quick-links"><a href="/admin/email">Новое письмо</a>
+          <h1>Кабинет Liikkuva</h1>
+          <p>Работа с клиентами, контент и настройки в одном месте.</p>
+          <details class="admin-tools"><summary>Быстрые ссылки: сайт и письма</summary><div class="quick-links"><a href="/admin/email">Новое письмо</a>
             <a href="/fi" target="_blank" rel="noopener noreferrer">Открыть сайт — FI</a>
             <a href="/en" target="_blank" rel="noopener noreferrer">Открыть сайт — EN</a>
             <a href="/thank-you-fi" target="_blank" rel="noopener noreferrer">После заявки — FI</a>
             <a href="/privacy?lang=fi" target="_blank" rel="noopener noreferrer">Конфиденциальность — FI</a>
-          </div>
+          </div></details>
         </div>
         <div class="top-actions">
-          <form method="post" action="/admin/logout">
+          <form method="post" action="/admin/logout"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
             <button type="submit" class="secondary-btn">Выйти</button>
           </form>
         </div>
@@ -610,8 +610,9 @@
       <div class="tabs-shell">
         <aside class="card tabs-nav">
           <h2>Разделы</h2>
-          <p>Выберите раздел. Последний открытый раздел сохраняется в браузере.</p>
+          <p>Начните с обзора или найдите нужную настройку через поиск.</p>
             <div class="tab-list">
+<a class="tab-button {{if eq .ActiveTab "overview"}}active{{end}}" href="/admin?tab=overview">Обзор <small>Заявки, письма и быстрые действия</small></a>
             <a class="tab-button {{if or (eq .ActiveTab "") (eq .ActiveTab "general")}}active{{end}}" href="/admin?tab=general">Основные настройки <small>Телефон, кнопка, логотип</small></a>
             <a class="tab-button {{if eq .ActiveTab "assets"}}active{{end}}" href="/admin?tab=assets">Изображения и оформление <small>Иконки, первый экран, карта, услуги</small></a>
             <a class="tab-button {{if eq .ActiveTab "landing-fi"}}active{{end}}" href="/admin?tab=landing-fi">Главная — финский <small>Основной текст на финском</small></a>
@@ -627,12 +628,27 @@
             <a class="tab-button {{if eq .ActiveTab "privacy"}}active{{end}}" href="/admin?tab=privacy">Конфиденциальность <small>Политика конфиденциальности</small></a>
             <a class="tab-button {{if eq .ActiveTab "seo"}}active{{end}}" href="/admin?tab=seo">SEO и индексация <small>Метатеги и robots.txt</small></a>
               <a class="tab-button {{if eq .ActiveTab "leads"}}active{{end}}" href="/admin?tab=leads">Заявки <small>Заявки, этапы и повторная обработка</small></a>
+<a class="tab-button" href="/admin/access">Доступ и почта <small>Пароль и адрес восстановления</small></a>
+<a class="tab-button {{if eq .ActiveTab "help"}}active{{end}}" href="/admin?tab=help">Помощь и термины <small>Как управлять сайтом и заявками</small></a>
           </div>
         </aside>
 
         <div class="panel-stack">
-          <form id="adminSettingsForm" method="post" action="/admin/save">
-            <input type="hidden" name="active_tab" value="{{if .ActiveTab}}{{.ActiveTab}}{{else}}general{{end}}">
+          <form id="adminSettingsForm" method="post" action="/admin/save"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
+            <input type="hidden" name="settings_revision" value="{{.Settings.Revision}}">
+<section class="card panel {{if eq .ActiveTab "overview"}}active{{end}}" data-panel="overview">
+ <span class="admin-eyebrow">РАБОЧИЙ КАБИНЕТ</span><h2>Что требует внимания</h2><p class="panel-intro">Показатели рассчитаны по загруженной выборке — до 50 последних заявок с текущими фильтрами. Для актуальных данных обновите страницу.</p>
+ <div class="admin-stats"><a href="/admin?tab=leads"><strong>{{.OverviewTotalLeads}}</strong><span>Заявок в выборке</span></a><a href="/admin?tab=leads&status=failed"><strong>{{.OverviewFailedLeads}}</strong><span>Ошибок обработки</span></a><a href="/admin?tab=reviews"><strong>{{.OverviewPendingReviews}}</strong><span>Отзывов на проверке</span></a><div><strong>{{if .MailEnabled}}Есть{{else}}Нет{{end}}</strong><span>Настройки отправки</span></div></div>
+ <h3>Быстрые действия</h3><div class="admin-shortcuts"><a href="/admin?tab=leads"><strong>Открыть заявки →</strong><span>Связаться с клиентом, назначить выезд, изменить этап работы</span></a><a href="/admin?tab=general"><strong>Изменить цены и контакты →</strong><span>Выезд, диагностика, телефон и данные компании</span></a><a href="/admin/email"><strong>Написать письмо →</strong><span>Отдельное письмо клиенту с вложениями</span></a><a href="/admin/access"><strong>Настроить доступ →</strong><span>Пароль и почта для восстановления</span></a></div>
+ <div class="admin-tip"><strong>Удобный порядок работы</strong><p>Новая заявка → связались с клиентом → назначили выезд → работа в процессе → завершено. Этап работы меняется вручную. Статус обработки показывает доставку уведомлений и запись в таблицу — это другой показатель.</p></div>
+ <div class="admin-tip"><strong>Готовность приёма заявок</strong><p>{{if .IntakePaused}}Приём заявок временно выключен режимом подготовки. Включите его командой обновления с параметром --enable-leads после подключения интеграций.{{else}}Режим подготовки выключен. Проверьте форму тестовой заявкой после обновления и убедитесь, что она появилась в кабинете.{{end}}</p><p>Версия приложения: {{.ReleaseVersion}}.</p></div>
+</section>
+<section class="card panel {{if eq .ActiveTab "help"}}active{{end}}" data-panel="help">
+ <span class="admin-eyebrow">СПРАВКА</span><h2>Помощь и термины</h2><p class="panel-intro">Короткие объяснения для владельца и сотрудников. Финские и английские тексты заполняются отдельно; подписи кабинета остаются на русском.</p>
+ <div class="admin-tip"><strong>Как изменить сайт</strong><p>Откройте нужный раздел, измените поля и нажмите «Сохранить изменения». При переключении разделов внутри кабинета введённые правки сохраняются в форме. Перед выходом браузер предупредит о несохранённых изменениях. Сохранение проверяет версию настроек, чтобы два открытых кабинета не затёрли правки друг друга.</p></div>
+ <dl class="admin-glossary"><div><dt>Первый экран</dt><dd>Верхняя часть главной страницы: заголовок, объяснение услуги, фотография и кнопка заявки.</dd></div><div><dt>Призыв к действию / CTA</dt><dd>Кнопка, которая предлагает посетителю следующий шаг: оставить заявку, позвонить или посмотреть услуги.</dd></div><div><dt>Заявка / лид</dt><dd>Обращение потенциального клиента через форму. Карточка содержит контакты, автомобиль, сообщение и фотографии.</dd></div><div><dt>Этап работы</dt><dd>Что происходит с клиентом: новая заявка, связались, назначили выезд, в работе, завершено или отменено.</dd></div><div><dt>Статус обработки</dt><dd>Техническая доставка заявки в Telegram и таблицу. Ошибка обработки не означает, что сама заявка потеряна: она остаётся в кабинете.</dd></div><div><dt>SEO-заголовок / Title</dt><dd>Название страницы во вкладке браузера и возможный заголовок результата поиска. Это отдельное поле от видимого заголовка H1.</dd></div><div><dt>Метаописание / Description</dt><dd>Краткое описание страницы для поисковых систем. Google может показать собственный вариант.</dd></div><div><dt>H1</dt><dd>Главный видимый заголовок страницы. Кратко объясняет услугу и географию работы.</dd></div><div><dt>Индексация и robots.txt</dt><dd>Инструкции поисковым роботам. Ограничение индексации не защищает закрытые данные — для этого нужен вход в кабинет.</dd></div><div><dt>GA4 и рекламные пиксели</dt><dd>Измерение посещений и полезных действий. Рекламные теги включаются с учётом настроек и согласия посетителя.</dd></div><div><dt>UTM-метки</dt><dd>Параметры рекламных ссылок, которые помогают узнать источник, кампанию и объявление, приведшие клиента.</dd></div><div><dt>SMTP</dt><dd>Подключение сервиса отправки писем. Пересылка входящей почты и отправка исходящих писем настраиваются отдельно.</dd></div><div><dt>Почта восстановления</dt><dd>Личный адрес владельца для получения ссылки на новый пароль. Меняется в разделе «Доступ и почта» после подтверждения.</dd></div><div><dt>Сеанс</dt><dd>Вход в кабинет в конкретном браузере. Пароль действует до изменения, а сеанс автоматически заканчивается через 12 часов.</dd></div></dl>
+</section>
+<input type="hidden" name="active_tab" value="{{if .ActiveTab}}{{.ActiveTab}}{{else}}general{{end}}">
             <section class="card panel {{if or (eq .ActiveTab "") (eq .ActiveTab "general")}}active{{end}}" data-panel="general"><div class="pro-settings"><h2>Цены и оформление</h2><p>Выезд и диагностика оплачиваются отдельно. Значения ниже применяются к стандартным ценовым блокам и новым заявкам. Если заполнить основной текст SEO-страницы, он заменит стандартные описания этой страницы. Разделяйте абзацы пустой строкой. В собственных текстах используйте {visit} и {diagnostic}, чтобы цены обновлялись автоматически.</p><label>Выезд, €<input type="number" name="ProVisitEUR" value="{{.Settings.ProVisitEUR}}" min="1" max="2000"></label><label>Диагностика от, €<input type="number" name="ProDiagnosticEUR" value="{{.Settings.ProDiagnosticEUR}}" min="1" max="2000"></label><label>Основной шрифт, px (16–22)<input type="number" name="ProFontSize" value="{{.Settings.ProFontSize}}" min="16" max="22"></label><label>Акцентный цвет (#2458d6)<input name="ProAccent" value="{{.Settings.ProAccent}}" pattern="#[0-9a-fA-F]{6}" placeholder="#2458d6"></label><label>Основной текст страницы «Цены» (финский)<textarea name="ProPricingText" rows="5">{{.Settings.ProPricingText}}</textarea></label><label>Основной текст страницы «Зона выезда» (финский)<textarea name="ProAreasText" rows="5">{{.Settings.ProAreasText}}</textarea></label><label>Основной текст страницы «Диагностика» (финский)<textarea name="ProDiagnosticsText" rows="5">{{.Settings.ProDiagnosticsText}}</textarea></label><label>Цены — SEO-заголовок (финский)<textarea name="ProPricingTitle" rows="5">{{.Settings.ProPricingTitle}}</textarea></label><label>Цены — Meta описание (финский)<textarea name="ProPricingDescription" rows="5">{{.Settings.ProPricingDescription}}</textarea></label><label>Цены — Заголовок H1 (финский)<textarea name="ProPricingHeading" rows="5">{{.Settings.ProPricingHeading}}</textarea></label><label>Зона выезда — SEO-заголовок (финский)<textarea name="ProAreasTitle" rows="5">{{.Settings.ProAreasTitle}}</textarea></label><label>Зона выезда — Meta описание (финский)<textarea name="ProAreasDescription" rows="5">{{.Settings.ProAreasDescription}}</textarea></label><label>Зона выезда — Заголовок H1 (финский)<textarea name="ProAreasHeading" rows="5">{{.Settings.ProAreasHeading}}</textarea></label><label>Диагностика — SEO-заголовок (финский)<textarea name="ProDiagnosticsTitle" rows="5">{{.Settings.ProDiagnosticsTitle}}</textarea></label><label>Диагностика — Meta описание (финский)<textarea name="ProDiagnosticsDescription" rows="5">{{.Settings.ProDiagnosticsDescription}}</textarea></label><label>Диагностика — Заголовок H1 (финский)<textarea name="ProDiagnosticsHeading" rows="5">{{.Settings.ProDiagnosticsHeading}}</textarea></label></div>
               <h2>Основные настройки</h2>
               <p class="panel-intro">Контакты, реквизиты и оформление шапки. Логотип задаётся ссылкой или путём к файлу.</p>
@@ -701,15 +717,15 @@
               <div class="section-title">Социальные сети</div>
 <div class="grid">
   <div class="field">
-    <label>Instagram URL</label>
+    <label>Ссылка на Instagram</label>
     <input type="text" name="instagram_url" value="{{.Settings.InstagramURL}}" placeholder="https://instagram.com/yourprofile">
   </div>
   <div class="field">
-    <label>TikTok URL</label>
+    <label>Ссылка на TikTok</label>
     <input type="text" name="tiktok_url" value="{{.Settings.TikTokURL}}" placeholder="https://www.tiktok.com/@yourprofile">
   </div>
   <div class="field full">
-    <label>Facebook group URL</label>
+    <label>Ссылка на группу Facebook</label>
     <input type="text" name="facebook_group_url" value="{{.Settings.FacebookGroupURL}}" placeholder="https://facebook.com/groups/yourgroup">
     <div class="field-hint">Если ссылка не задана, иконка внизу сайта и на странице подтверждения скрыта.</div>
   </div>
@@ -762,7 +778,7 @@
               <div class="section-title">Аналитика, реклама и согласие</div>
               <div class="grid">
                 <div class="field">
-                  <label>GA4 Measurement ID</label>
+                  <label>Идентификатор потока GA4</label>
                   <input type="text" name="ga4_measurement_id" value="{{.Settings.GA4MeasurementID}}" placeholder="G-XXXXXXXXXX">
                   <div class="field-hint">ID счётчика GA4. Сбор аналитики зависит от выбора посетителя в настройках cookies.</div>
                 </div>
@@ -777,22 +793,22 @@
                   <div class="field-hint">Необязательно. Вместе с Google Ads Tag ID включает конверсию после сохранения заявки при согласии на рекламу.</div>
                 </div>
                 <div class="field">
-                  <label>Meta Pixel ID</label>
+                  <label>Идентификатор пикселя Meta</label>
                   <input type="text" name="meta_pixel_id" value="{{.Settings.MetaPixelID}}" placeholder="123456789012345">
                   <div class="field-hint">Загружается при согласии на рекламу. События PageView и Lead после сохранения заявки.</div>
                 </div>
                 <div class="field">
-                  <label>LinkedIn Partner ID</label>
+                  <label>Идентификатор партнёра LinkedIn</label>
                   <input type="text" name="linkedin_partner_id" value="{{.Settings.LinkedInPartnerID}}" placeholder="123456">
                   <div class="field-hint">Необязательно. LinkedIn Insight Tag загружается при согласии на рекламу.</div>
                 </div>
                 <div class="field full">
-                  <label>LinkedIn lead conversion ID</label>
+                  <label>Идентификатор конверсии LinkedIn</label>
                   <input type="text" name="linkedin_lead_conversion_id" value="{{.Settings.LinkedInLeadConversionID}}" placeholder="1234567">
                   <div class="field-hint">Необязательно. ID конверсии LinkedIn для сохранённой заявки при согласии на рекламу.</div>
                 </div>
                 <div class="field full">
-                  <label>TikTok Pixel ID</label>
+                  <label>Идентификатор пикселя TikTok</label>
                   <input type="text" name="tiktok_pixel_id" value="{{.Settings.TikTokPixelID}}" placeholder="CXXXXXXXXXXXXXXXXX">
                   <div class="field-hint">Загружается при согласии на рекламу. События PageView и SubmitForm после сохранения заявки.</div>
                 </div>
@@ -812,19 +828,19 @@
               <div class="section-title">Иконки & приложения иконки</div>
               <div class="grid">
                 <div class="field">
-                  <label>Favicon SVG URL</label>
+                  <label>Значок сайта SVG — ссылка</label>
                   <input type="text" id="faviconSvgInput" name="favicon_svg_url" value="{{.Settings.FaviconSVGURL}}" placeholder="/static/img/favicon.svg">
                 </div>
                 <div class="field">
-                  <label>Favicon 32x32 URL</label>
+                  <label>Значок сайта 32×32 — ссылка</label>
                   <input type="text" name="favicon_32_url" value="{{.Settings.Favicon32URL}}" placeholder="/static/img/favicon-32x32.png">
                 </div>
                 <div class="field">
-                  <label>Favicon 16x16 URL</label>
+                  <label>Значок сайта 16×16 — ссылка</label>
                   <input type="text" name="favicon_16_url" value="{{.Settings.Favicon16URL}}" placeholder="/static/img/favicon-16x16.png">
                 </div>
                 <div class="field">
-                  <label>Favicon ICO URL</label>
+                  <label>Значок сайта ICO — ссылка</label>
                   <input type="text" name="favicon_ico_url" value="{{.Settings.FaviconICOURL}}" placeholder="/static/img/favicon.ico">
                 </div>
                 <div class="field full">
@@ -1400,20 +1416,20 @@
           </div>
 
           <div class="field">
-            <label>Title FI</label>
+            <label>Заголовок — финский</label>
             <input type="text" name="service_title_fi[]" value="{{.TitleFI}}">
           </div>
           <div class="field">
-            <label>Title EN</label>
+            <label>Заголовок — английский</label>
             <input type="text" name="service_title_en[]" value="{{.TitleEN}}">
           </div>
 
           <div class="field full">
-            <label>Text FI</label>
+            <label>Текст — финский</label>
             <textarea name="service_text_fi[]">{{.TextFI}}</textarea>
           </div>
           <div class="field full">
-            <label>Text EN</label>
+            <label>Текст — английский</label>
             <textarea name="service_text_en[]">{{.TextEN}}</textarea>
           </div>
 
@@ -1439,10 +1455,10 @@
         <div class="field"><label>Метка EN</label><input type="text" name="service_badge_en[]" placeholder="Popular"></div>
         <div class="field"><label>Цена FI</label><input type="text" name="service_price_fi[]" placeholder="alkaen 79 €"></div>
         <div class="field"><label>Цена EN</label><input type="text" name="service_price_en[]" placeholder="from €79"></div>
-        <div class="field"><label>Title FI</label><input type="text" name="service_title_fi[]"></div>
-        <div class="field"><label>Title EN</label><input type="text" name="service_title_en[]"></div>
-        <div class="field full"><label>Text FI</label><textarea name="service_text_fi[]"></textarea></div>
-        <div class="field full"><label>Text EN</label><textarea name="service_text_en[]"></textarea></div>
+        <div class="field"><label>Заголовок — финский</label><input type="text" name="service_title_fi[]"></div>
+        <div class="field"><label>Заголовок — английский</label><input type="text" name="service_title_en[]"></div>
+        <div class="field full"><label>Текст — финский</label><textarea name="service_text_fi[]"></textarea></div>
+        <div class="field full"><label>Текст — английский</label><textarea name="service_text_en[]"></textarea></div>
         <div class="field full"><label>Изображение URL</label><input type="text" name="service_image_url[]" placeholder="https://..."></div>
       </div>
     </div>
@@ -1509,20 +1525,20 @@
           </div>
 
           <div class="field">
-            <label>Title FI</label>
+            <label>Заголовок — финский</label>
             <input type="text" name="case_title_fi[]" value="{{.TitleFI}}">
           </div>
           <div class="field">
-            <label>Title EN</label>
+            <label>Заголовок — английский</label>
             <input type="text" name="case_title_en[]" value="{{.TitleEN}}">
           </div>
 
           <div class="field full">
-            <label>Text FI</label>
+            <label>Текст — финский</label>
             <textarea name="case_text_fi[]">{{.TextFI}}</textarea>
           </div>
           <div class="field full">
-            <label>Text EN</label>
+            <label>Текст — английский</label>
             <textarea name="case_text_en[]">{{.TextEN}}</textarea>
           </div>
 
@@ -1558,10 +1574,10 @@
       <div class="grid">
         <div class="field"><label>Метка FI</label><input type="text" name="case_tag_fi[]" placeholder="Tapaus"></div>
         <div class="field"><label>Метка EN</label><input type="text" name="case_tag_en[]" placeholder="Case"></div>
-        <div class="field"><label>Title FI</label><input type="text" name="case_title_fi[]"></div>
-        <div class="field"><label>Title EN</label><input type="text" name="case_title_en[]"></div>
-        <div class="field full"><label>Text FI</label><textarea name="case_text_fi[]"></textarea></div>
-        <div class="field full"><label>Text EN</label><textarea name="case_text_en[]"></textarea></div>
+        <div class="field"><label>Заголовок — финский</label><input type="text" name="case_title_fi[]"></div>
+        <div class="field"><label>Заголовок — английский</label><input type="text" name="case_title_en[]"></div>
+        <div class="field full"><label>Текст — финский</label><textarea name="case_text_fi[]"></textarea></div>
+        <div class="field full"><label>Текст — английский</label><textarea name="case_text_en[]"></textarea></div>
 
         <div class="lang-grid full">
           <div class="lang-card">
@@ -1625,11 +1641,11 @@
                     <textarea name="thankyou_seo_description_fi">{{.Settings.ThankYouSEODescriptionFI}}</textarea>
                   </div>
                   <div class="field">
-                    <label>Title FI</label>
+                    <label>Заголовок — финский</label>
                     <input type="text" name="thankyou_title_fi" value="{{.Settings.ThankYouTitleFI}}">
                   </div>
                   <div class="field">
-                    <label>Text FI</label>
+                    <label>Текст — финский</label>
                     <textarea name="thankyou_text_fi">{{.Settings.ThankYouTextFI}}</textarea>
                   </div>
                   <div class="field">
@@ -1652,11 +1668,11 @@
                     <textarea name="thankyou_seo_description_en">{{.Settings.ThankYouSEODescriptionEN}}</textarea>
                   </div>
                   <div class="field">
-                    <label>Title EN</label>
+                    <label>Заголовок — английский</label>
                     <input type="text" name="thankyou_title_en" value="{{.Settings.ThankYouTitleEN}}">
                   </div>
                   <div class="field">
-                    <label>Text EN</label>
+                    <label>Текст — английский</label>
                     <textarea name="thankyou_text_en">{{.Settings.ThankYouTextEN}}</textarea>
                   </div>
                   <div class="field">
@@ -1775,18 +1791,18 @@
 				  <div class="detail-box"><strong>Имя</strong>{{.Name}}</div>
 				  <div class="detail-box"><strong>Оценка</strong>{{.Stars}} ({{.Rating}}/5)</div>
 				  <div class="detail-box"><strong>Язык</strong>{{.Language}}</div>
-				  <div class="detail-box"><strong>Статус</strong><span class="badge {{if eq .Status "approved"}}ok{{else if eq .Status "rejected"}}bad{{else}}wait{{end}}">{{.Status}}</span></div>
+				  <div class="detail-box"><strong>Статус</strong><span class="badge {{if eq .Status "approved"}}ok{{else if eq .Status "rejected"}}bad{{else}}wait{{end}}">{{statusLabel .Status}}</span></div>
 				  <div class="detail-box"><strong>Заявка</strong><a class="mini-link" href="/admin?tab=leads&lead_id={{.LeadID}}">Открыть заявку</a></div>
 				</div>
 				<div class="section-title">Текст отзыва</div>
 				<div class="code-block">{{.Message}}</div>
 				<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-				  <form method="post" action="/admin/reviews/moderate">
+				  <form method="post" action="/admin/reviews/moderate"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
 					<input type="hidden" name="review_id" value="{{.ID}}">
 					<input type="hidden" name="action" value="approve">
 					<button type="submit" class="primary">Одобрить и опубликовать</button>
 				  </form>
-				  <form method="post" action="/admin/reviews/moderate">
+				  <form method="post" action="/admin/reviews/moderate"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
 					<input type="hidden" name="review_id" value="{{.ID}}">
 					<input type="hidden" name="action" value="reject">
 					<button type="submit" class="ghost-btn">Отклонить</button>
@@ -1822,18 +1838,18 @@
                     <h3>{{.SelectedLead.Name}}</h3>
                     <p>{{.SelectedLead.Car}} · {{.SelectedLead.CreatedAt}}</p>
                   </div>
-                  <span class="badge {{if eq .SelectedLead.ClientStatus "completed"}}ok{{else if eq .SelectedLead.ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.SelectedLead.ClientStatus}}</span>
+                  <span class="badge {{if eq .SelectedLead.ClientStatus "completed"}}ok{{else if eq .SelectedLead.ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{statusLabel .SelectedLead.ClientStatus}}</span>
                 </div>
 
-                <form class="lead-stage-form" method="post" action="/admin/leads/update-status">
+                <form class="lead-stage-form" method="post" action="/admin/leads/update-status"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                   <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
-                  <select name="client_status" aria-label="Client work status">
+                  <select name="client_status" aria-label="Этап работы с клиентом">
                     <option value="new" {{if eq .SelectedLead.ClientStatus "new"}}selected{{end}}>1. Новая заявка</option>
-                    <option value="contacted" {{if eq .SelectedLead.ClientStatus "contacted"}}selected{{end}}>2. Клиент связались</option>
+                    <option value="contacted" {{if eq .SelectedLead.ClientStatus "contacted"}}selected{{end}}>2. Связались с клиентом</option>
                     <option value="scheduled" {{if eq .SelectedLead.ClientStatus "scheduled"}}selected{{end}}>3. Выезд назначен</option>
                     <option value="in_progress" {{if eq .SelectedLead.ClientStatus "in_progress"}}selected{{end}}>4. Работа в процессе</option>
-                    <option value="waiting_parts" {{if eq .SelectedLead.ClientStatus "waiting_parts"}}selected{{end}}>5. Ожидание для запчасти</option>
-                    <option value="ready_for_pickup" {{if eq .SelectedLead.ClientStatus "ready_for_pickup"}}selected{{end}}>6. Готовность / выдача</option>
+                    <option value="waiting_parts" {{if eq .SelectedLead.ClientStatus "waiting_parts"}}selected{{end}}>5. Ожидаем запчасти</option>
+                    <option value="ready_for_pickup" {{if eq .SelectedLead.ClientStatus "ready_for_pickup"}}selected{{end}}>6. Работа готова</option>
                     <option value="completed" {{if eq .SelectedLead.ClientStatus "completed"}}selected{{end}}>7. Завершено</option>
                     <option value="cancelled" {{if eq .SelectedLead.ClientStatus "cancelled"}}selected{{end}}>Отменено</option>
                   </select>
@@ -1856,26 +1872,26 @@
                 </div>
 
                 <div class="lead-email-status">
-                  <div><strong>Request подтверждение</strong>{{.SelectedLead.ConfirmationEmailStatus}}</div>
-                  <div><strong>Письмо о готовности</strong>{{.SelectedLead.ReadyEmailStatus}}</div>
-                  <div><strong>Приглашение оставить отзыв</strong>{{.SelectedLead.ReviewInviteEmailStatus}}</div>
+                  <div><strong>Request подтверждение</strong>{{statusLabel .SelectedLead.ConfirmationEmailStatus}}</div>
+                  <div><strong>Письмо о готовности</strong>{{statusLabel .SelectedLead.ReadyEmailStatus}}</div>
+                  <div><strong>Приглашение оставить отзыв</strong>{{statusLabel .SelectedLead.ReviewInviteEmailStatus}}</div>
                 </div>
 
                 <div class="lead-email-actions">
-                  <form method="post" action="/admin/leads/retry">
+                  <form method="post" action="/admin/leads/retry"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                     <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                     <button type="submit" class="ghost-btn">Повторить обработку</button>
                   </form>
                   {{if ne .SelectedLead.Email "—"}}
-                    <form method="post" action="/admin/leads/send-confirmation-email">
+                    <form method="post" action="/admin/leads/send-confirmation-email"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                       <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                       <button type="submit" class="primary">Отправить подтверждение заявки</button>
                     </form>
-                    <form method="post" action="/admin/leads/send-ready-email">
+                    <form method="post" action="/admin/leads/send-ready-email"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                       <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                       <button type="submit" class="primary">Сообщить о готовности автомобиля</button>
                     </form>
-                    <form method="post" action="/admin/leads/send-review-email">
+                    <form method="post" action="/admin/leads/send-review-email"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                       <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                       <button type="submit" class="primary">Попросить отзыв</button>
                     </form>
@@ -1884,7 +1900,7 @@
 
                 {{if ne .SelectedLead.Email "—"}}
                   <div class="section-title">Текст письма клиенту</div>
-                  <form method="post" action="/admin/leads/send-custom-email" enctype="multipart/form-data" class="card" style="padding:18px; margin-top:12px;">
+                  <form method="post" action="/admin/leads/send-custom-email" enctype="multipart/form-data" class="card" style="padding:18px; margin-top:12px;"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                     <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
 
                     <div class="grid">
@@ -1935,7 +1951,7 @@
               {{range .Leads}}
                 <a class="mobile-lead-card" href="/admin?tab=leads&lead_id={{.ID}}&client_status={{$.ClientStatusFilter}}#selected-lead">
                   <div class="mobile-lead-card-top">
-                    <span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.ClientStatus}}</span>
+                    <span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{statusLabel .ClientStatus}}</span>
                     <span>{{.CreatedAt}}</span>
                   </div>
                   <h3>{{.Name}}{{if ne .Car "—"}} · {{.Car}}{{end}}</h3>
@@ -1967,8 +1983,8 @@
                       <td>{{.Name}}</td>
                       <td>{{.Car}}</td>
                       <td>{{.Phone}}</td>
-                      <td><span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{.ClientStatus}}</span></td>
-                      <td><span class="badge {{if eq .ProcessingStatus "done"}}ok{{else if eq .ProcessingStatus "failed"}}bad{{else}}wait{{end}}">{{.ProcessingStatus}}</span></td>
+                      <td><span class="badge {{if eq .ClientStatus "completed"}}ok{{else if eq .ClientStatus "cancelled"}}bad{{else}}wait{{end}}">{{statusLabel .ClientStatus}}</span></td>
+                      <td><span class="badge {{if eq .ProcessingStatus "done"}}ok{{else if eq .ProcessingStatus "failed"}}bad{{else}}wait{{end}}">{{statusLabel .ProcessingStatus}}</span></td>
                       <td><a class="mini-link" href="/admin?tab=leads&lead_id={{.ID}}&client_status={{$.ClientStatusFilter}}#selected-lead">Открыть</a></td>
                     </tr>
                   {{else}}
@@ -1996,33 +2012,33 @@
                   <div class="detail-box"><strong>Адрес</strong>{{.SelectedLead.Address}}</div>
                   <div class="detail-box"><strong>Как найти автомобиль</strong>{{.SelectedLead.AddressHint}}</div>
                   <div class="detail-box"><strong>Местоположение источник</strong>{{.SelectedLead.LocationSource}}</div>
-                  <div class="detail-box"><strong>Maps URL</strong>{{.SelectedLead.MapsURL}}</div>
+                  <div class="detail-box"><strong>Ссылка на карту</strong>{{.SelectedLead.MapsURL}}</div>
                   <div class="detail-box"><strong>Широта</strong>{{.SelectedLead.Latitude}}</div>
                   <div class="detail-box"><strong>Долгота</strong>{{.SelectedLead.Longitude}}</div>
                   <div class="detail-box"><strong>Автомобиль</strong>{{.SelectedLead.Car}}</div>
                   <div class="detail-box"><strong>Источник</strong>{{.SelectedLead.Source}}</div>
-                  <div class="detail-box"><strong>Статус обработки</strong>{{.SelectedLead.ProcessingStatus}}</div>
-                  <div class="detail-box"><strong>Статус Telegram</strong>{{.SelectedLead.TelegramStatus}}</div>
-                  <div class="detail-box"><strong>Статус таблицы</strong>{{.SelectedLead.SheetsStatus}}</div>
-                  <div class="detail-box"><strong>Статус клиента</strong>{{.SelectedLead.ClientStatus}}</div>
-                  <div class="detail-box"><strong>Готовность почта статус</strong>{{.SelectedLead.ReadyEmailStatus}}</div>
+                  <div class="detail-box"><strong>Статус обработки</strong>{{statusLabel .SelectedLead.ProcessingStatus}}</div>
+                  <div class="detail-box"><strong>Статус Telegram</strong>{{statusLabel .SelectedLead.TelegramStatus}}</div>
+                  <div class="detail-box"><strong>Статус таблицы</strong>{{statusLabel .SelectedLead.SheetsStatus}}</div>
+                  <div class="detail-box"><strong>Статус клиента</strong>{{statusLabel .SelectedLead.ClientStatus}}</div>
+                  <div class="detail-box"><strong>Готовность почта статус</strong>{{statusLabel .SelectedLead.ReadyEmailStatus}}</div>
                   <div class="detail-box"><strong>Готовность почта отправлено в</strong>{{.SelectedLead.ReadyEmailSentAt}}</div>
-				  <div class="detail-box"><strong>Подтверждение заявки</strong>{{.SelectedLead.ConfirmationEmailStatus}}</div>
+				  <div class="detail-box"><strong>Подтверждение заявки</strong>{{statusLabel .SelectedLead.ConfirmationEmailStatus}}</div>
 				  <div class="detail-box"><strong>Подтверждение отправлено в</strong>{{.SelectedLead.ConfirmationEmailSentAt}}</div>
-				  <div class="detail-box"><strong>Приглашение оставить отзыв</strong>{{.SelectedLead.ReviewInviteEmailStatus}}</div>
+				  <div class="detail-box"><strong>Приглашение оставить отзыв</strong>{{statusLabel .SelectedLead.ReviewInviteEmailStatus}}</div>
 				  <div class="detail-box"><strong>Отзыв приглашение отправлено в</strong>{{.SelectedLead.ReviewInviteEmailSentAt}}</div>
                   <div class="detail-box"><strong>Обработано</strong>{{.SelectedLead.ProcessedAt}}</div>
                   <div class="detail-box"><strong>Поставлено в очередь</strong>{{.SelectedLead.TaskEnqueuedAt}}</div>
                   <div class="detail-box"><strong>Обновлено</strong>{{.SelectedLead.UpdatedAt}}</div>
                   <div class="detail-box"><strong>Страница URL</strong>{{.SelectedLead.PageURL}}</div>
-                  <div class="detail-box"><strong>Referer</strong>{{.SelectedLead.Referer}}</div>
-                  <div class="detail-box"><strong>UTM Source</strong>{{.SelectedLead.UTMSource}}</div>
-                  <div class="detail-box"><strong>UTM Medium</strong>{{.SelectedLead.UTMMedium}}</div>
-                  <div class="detail-box"><strong>UTM Campaign</strong>{{.SelectedLead.UTMCampaign}}</div>
-                  <div class="detail-box"><strong>UTM Term</strong>{{.SelectedLead.UTMTerm}}</div>
-                  <div class="detail-box"><strong>UTM Content</strong>{{.SelectedLead.UTMContent}}</div>
+                  <div class="detail-box"><strong>Страница перехода</strong>{{.SelectedLead.Referer}}</div>
+                  <div class="detail-box"><strong>UTM: источник</strong>{{.SelectedLead.UTMSource}}</div>
+                  <div class="detail-box"><strong>UTM: канал</strong>{{.SelectedLead.UTMMedium}}</div>
+                  <div class="detail-box"><strong>UTM: кампания</strong>{{.SelectedLead.UTMCampaign}}</div>
+                  <div class="detail-box"><strong>UTM: ключевое слово</strong>{{.SelectedLead.UTMTerm}}</div>
+                  <div class="detail-box"><strong>UTM: вариант объявления</strong>{{.SelectedLead.UTMContent}}</div>
                   <div class="detail-box"><strong>IP</strong>{{.SelectedLead.IP}}</div>
-                  <div class="detail-box full"><strong>User Agent</strong>{{.SelectedLead.UserAgent}}</div>
+                  <div class="detail-box full"><strong>Браузер и устройство</strong>{{.SelectedLead.UserAgent}}</div>
                 </div>
 
                 <div class="section-title">Сообщение</div>
@@ -2069,17 +2085,17 @@
                   {{end}}
                 </div>
                 <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap;">
-                  <form method="post" action="/admin/leads/retry">
+                  <form method="post" action="/admin/leads/retry"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                     <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                     <button type="submit" class="primary">Повторить обработку</button>
                   </form>
 
                   {{if ne .SelectedLead.Email "—"}}
-                  <form method="post" action="/admin/leads/send-ready-email">
+                  <form method="post" action="/admin/leads/send-ready-email"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
                     <input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
                     <button type="submit" class="primary">Сообщить о готовности</button>
                   </form>
-				  <form method="post" action="/admin/leads/send-review-email">
+				  <form method="post" action="/admin/leads/send-review-email"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
 					<input type="hidden" name="lead_id" value="{{.SelectedLead.ID}}">
 					<button type="submit" class="primary">Попросить отзыв</button>
 				  </form>
