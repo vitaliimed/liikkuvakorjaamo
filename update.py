@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,21 @@ service cloud.firestore {
 
 class UpdateError(RuntimeError):
     pass
+
+
+class EndpointError(UpdateError):
+    """A serving URL error, distinct from the Google management API."""
+    def __init__(self, code, url):
+        self.code = code
+        self.url = url
+        detail = 'сетевая ошибка' if code == 0 else f'HTTP {code}'
+        super().__init__(f'{detail}, {url}')
+
+
+class NoEndpointRedirect(urllib.request.HTTPRedirectHandler):
+    # Never forward an operator identity token to a redirect destination.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 class APIError(UpdateError):
@@ -113,6 +129,8 @@ class Updater:
         self.hosting_run = None
         self.snapshot = None
         self.entries = {}
+        self.identity_token = None
+        self.identity_attempted = False
 
     def gc(self, *args, **kwargs):
         return run('gcloud', *args, '--project=' + self.project, '--quiet', **kwargs)
@@ -135,7 +153,9 @@ class Updater:
         except (json.JSONDecodeError, UnicodeDecodeError):
             raise UpdateError('Сервер вернул неожиданный ответ вместо JSON: ' + urllib.parse.urlsplit(url).hostname) from None
         except urllib.error.HTTPError as exc:
-            raise APIError(exc.code, url) from None
+            code = exc.code
+            exc.close()
+            raise APIError(code, url) from None
         except urllib.error.URLError as exc:
             raise UpdateError(f'Нет соединения с {urllib.parse.urlsplit(url).hostname}: {exc.reason}') from None
 
@@ -275,7 +295,7 @@ class Updater:
         go = shutil.which('go')
         if not go:
             raise UpdateError('Go не найден. Выполните команду в Google Cloud Shell, где доступен Go.')
-        print('Проверяю Go-код и собираю приложение…', flush=True)
+        print('Проверяю Go-код и собираю локальный инструмент доступа…', flush=True)
         run(go, 'test', './...', cwd=ROOT / 'source')
         binary = Path(folder) / 'liikkuva-server'
         run(go, 'build', '-buildvcs=false', '-o', str(binary), '.', cwd=ROOT / 'source')
@@ -314,19 +334,192 @@ class Updater:
         if self.secret_updates:
             args.append('--update-secrets=' + ','.join(k + '=' + v for k, v in self.secret_updates.items()))
         print('Собираю новую ревизию без пользовательского трафика. Сборка может занять несколько минут…', flush=True)
-        self.gc(*args)
-        deployed = self.describe()
-        route = next((r for r in deployed['status'].get('traffic', []) if r.get('tag') == tag), None)
-        if not route or not route.get('url') or not route.get('revisionName'):
-            raise UpdateError('Cloud Run не вернул проверочный адрес новой ревизии.')
-        url, revision = route['url'], route['revisionName']
-        health = self.api(url + '/healthz', authenticated=False)
-        if health.get('version') != VERSION or health.get('revision') != revision:
-            raise UpdateError('Новая ревизия не прошла проверку версии. Трафик пока не переключён.')
-        for path, marker in [('/admin', 'Войти в кабинет'), ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
-            with urllib.request.urlopen(url + path, timeout=45) as response:
-                if marker not in response.read().decode('utf-8'):
-                    raise UpdateError(f'Не прошла проверка {path}. Трафик пока не переключён.')
+        result = self.gc(*args)
+        try:
+            deployed = json.loads(result.stdout)
+        except (ValueError, TypeError):
+            deployed = {}
+        expected = deployed.get('status', {}).get('latestCreatedRevisionName')
+        if not expected:
+            expected = self.describe().get('status', {}).get('latestCreatedRevisionName')
+        if not expected:
+            raise UpdateError('Cloud Run не вернул имя созданной ревизии. Трафик не переключён.')
+        self.check_and_promote(tag, expected)
+
+    def endpoint(self, url, identity_token=None, timeout=12):
+        headers = {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}
+        if identity_token:
+            parsed = urllib.parse.urlsplit(url)
+            if parsed.scheme != 'https' or not parsed.hostname or not parsed.hostname.endswith('.run.app'):
+                raise UpdateError('Токен проверки разрешён только для HTTPS-адреса Cloud Run.')
+            headers['X-Serverless-Authorization'] = 'Bearer ' + identity_token
+        request = urllib.request.Request(url, headers=headers)
+        opener = urllib.request.build_opener(NoEndpointRedirect())
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                return response.read(512 * 1024).decode('utf-8')
+        except urllib.error.HTTPError as exc:
+            code = exc.code
+            exc.close()
+            raise EndpointError(code, url) from None
+        except (urllib.error.URLError, TimeoutError, socket.timeout, ConnectionError):
+            raise EndpointError(0, url) from None
+        except UnicodeDecodeError:
+            raise UpdateError('Проверочный адрес вернул ответ в неожиданной кодировке.') from None
+
+    def operator_identity(self):
+        if not self.identity_attempted:
+            self.identity_attempted = True
+            result = self.gc('auth', 'print-identity-token', check=False)
+            if result.returncode == 0:
+                self.identity_token = result.stdout.strip() or None
+        return self.identity_token
+
+    def candidate_urls(self, route, deployed):
+        candidates = [route.get('url')]
+        status = deployed.get('status', {})
+        for base in [status.get('url'), status.get('address', {}).get('url')]:
+            if base:
+                parsed = urllib.parse.urlsplit(base)
+                candidates.append('https://' + route['tag'] + '---' + parsed.netloc)
+        if self.project_number and str(self.project_number).isdigit():
+            label = route['tag'] + '---' + self.service + '-' + str(self.project_number)
+            if len(label) <= 63:
+                candidates.append(f'https://{label}.{self.region}.run.app')
+        result = []
+        for url in candidates:
+            if not url:
+                continue
+            parsed = urllib.parse.urlsplit(url)
+            if (parsed.scheme != 'https' or not parsed.hostname or not parsed.hostname.endswith('.run.app')
+                    or parsed.username or parsed.password or parsed.port or parsed.query or parsed.fragment
+                    or parsed.path not in ('', '/')):
+                continue
+            value = url.rstrip('/')
+            if value not in result:
+                result.append(value)
+        return result
+
+    def route_ready(self, deployed, tag, revision):
+        state = deployed.get('status', {})
+        created = state.get('latestCreatedRevisionName')
+        if created and created != revision:
+            raise UpdateError('Во время проверки появилась другая ревизия. Трафик не переключён; проверьте параллельное обновление.')
+        conditions = {c['type']: c.get('status') for c in state.get('conditions', [])}
+        if conditions.get('Ready') != 'True' or conditions.get('RoutesReady') != 'True':
+            return None
+        if state.get('latestReadyRevisionName') != revision:
+            return None
+        generation = deployed.get('metadata', {}).get('generation')
+        observed = state.get('observedGeneration')
+        if generation is not None and observed is not None and int(observed) < int(generation):
+            return None
+        return next((r for r in state.get('traffic', []) if r.get('tag') == tag and r.get('revisionName') == revision), None)
+
+    @staticmethod
+    def health_matches(body, revision):
+        try:
+            health = json.loads(body)
+        except (ValueError, TypeError):
+            return False
+        if not isinstance(health, dict):
+            return False
+        if health.get('revision') == revision and health.get('version') != VERSION:
+            raise UpdateError('Ревизия отвечает, но версия приложения отличается от ожидаемой. Трафик не переключён.')
+        return (health.get('ok') is True and health.get('site') == 'liikkuvakorjaamo.fi'
+                and health.get('version') == VERSION and health.get('revision') == revision)
+
+    def probe_revision(self, tag, revision):
+        deadline = time.monotonic() + self.args.check_timeout
+        attempt = 0
+        last = 'маршрут ещё не готов'
+        deployed = self.snapshot or {}
+        while time.monotonic() < deadline:
+            deployed = self.describe()
+            route = self.route_ready(deployed, tag, revision)
+            if route:
+                metadata = deployed.get('metadata', {}).get('annotations', {})
+                if str(metadata.get('run.googleapis.com/default-url-disabled', '')).lower() == 'true':
+                    last = 'в настройках сервиса выключены технические адреса run.app'
+                    break
+                urls = self.candidate_urls(route, deployed)
+                if not urls:
+                    last = 'Cloud Run не вернул допустимый адрес проверочного тега'
+                    break
+                for url in urls:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    token = None
+                    try:
+                        try:
+                            body = self.endpoint(url + '/healthz', timeout=min(12, remaining))
+                        except EndpointError as exc:
+                            if exc.code not in (401, 403, 404):
+                                raise
+                            token = self.operator_identity()
+                            if not token:
+                                raise
+                            body = self.endpoint(url + '/healthz', identity_token=token,
+                                                 timeout=min(12, max(0.1, deadline - time.monotonic())))
+                        if self.health_matches(body, revision):
+                            for path, marker in [('/admin', 'Войти в кабинет'),
+                                                 ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
+                                page = self.endpoint(url + path, identity_token=token)
+                                if marker not in page:
+                                    raise UpdateError(f'Ревизия отвечает, но не прошла проверка {path}. Трафик не переключён.')
+                            return url
+                        last = 'адрес пока не подтверждает ожидаемые версию и ревизию: ' + url
+                    except EndpointError as exc:
+                        last = str(exc)
+                        if exc.code not in (0, 401, 403, 404, 408, 429, 500, 502, 503, 504):
+                            raise UpdateError('Не прошла проверка ревизии: ' + last) from None
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            print('Ожидаю готовности проверочного маршрута: ' + last, flush=True)
+            time.sleep(min(10, 2 ** min(attempt + 1, 4), remaining))
+            attempt += 1
+        self.print_probe_diagnostics(deployed, tag, revision)
+        raise UpdateError('Ревизия создана, но её проверочный адрес недоступен. Трафик не переключён. '
+                          + last + '\nДля повторной проверки без новой сборки: python3 update.py --resume --set-password')
+
+    def print_probe_diagnostics(self, deployed, tag, revision):
+        # Whitelist only routing fields; never print the environment or tokens.
+        metadata = deployed.get('metadata', {})
+        annotations = metadata.get('annotations', {})
+        state = deployed.get('status', {})
+        safe = {'project': self.project, 'service': self.service, 'revision': revision, 'tag': tag,
+                'ingress': annotations.get('run.googleapis.com/ingress', 'not reported'),
+                'default_url_disabled': annotations.get('run.googleapis.com/default-url-disabled', 'not reported'),
+                'conditions': [{'type': c.get('type'), 'status': c.get('status'), 'reason': c.get('reason')}
+                               for c in state.get('conditions', [])],
+                'routes': [{'tag': r.get('tag'), 'revision': r.get('revisionName'), 'url': r.get('url')}
+                           for r in state.get('traffic', []) if r.get('tag') == tag]}
+        print('Диагностика маршрута (без паролей и ключей):\n' + json.dumps(safe, ensure_ascii=False, indent=2), flush=True)
+
+    def verify_public_revision(self, revision):
+        deadline = time.monotonic() + min(90, self.args.check_timeout)
+        last = 'домен пока возвращает другую ревизию'
+        while time.monotonic() < deadline:
+            try:
+                body = self.endpoint(DOMAIN + '/healthz?revision=' + urllib.parse.quote(revision),
+                                     timeout=min(12, max(0.1, deadline - time.monotonic())))
+                if self.health_matches(body, revision):
+                    return
+            except EndpointError as exc:
+                last = str(exc)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            print('Проверяю обновление через основной домен…', flush=True)
+            time.sleep(min(5, remaining))
+        raise UpdateError('Cloud Run уже переключён на ' + revision + ', но проверка домена не завершена: '
+                          + last + '. Новый пароль ещё не установлен.')
+
+    def check_and_promote(self, tag, revision):
+        print('Проверяю готовую ревизию ' + revision + '…', flush=True)
+        self.probe_revision(tag, revision)
         print('Проверки ревизии пройдены. Переключаю 100% трафика…', flush=True)
         self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region, '--to-revisions=' + revision + '=100')
         if self.hosting_run and self.hosting_run.get('tag'):
@@ -336,14 +529,22 @@ class Updater:
         percent = sum(r.get('percent', 0) for r in final['status']['traffic'] if r.get('revisionName') == revision)
         if percent != 100:
             raise UpdateError('Cloud Run не подтвердил 100% трафика на новой ревизии.')
-        try:
-            live = self.api(DOMAIN + '/healthz?release=' + stamp, authenticated=False)
-            if live.get('version') != VERSION or live.get('revision') != revision:
-                raise UpdateError('Cloud Run обновлён, но домен пока отдаёт другую ревизию. Проверьте rewrite Hosting.')
-        except (APIError, urllib.error.URLError) as exc:
-            raise UpdateError('Cloud Run обновлён. Проверка домена не завершена: ' + str(exc)) from None
+        self.verify_public_revision(revision)
         self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region, '--remove-tags=' + tag)
         print('Обновлена ревизия: ' + revision, flush=True)
+
+    def resume(self):
+        deployed = self.describe()
+        state = deployed.get('status', {})
+        revision = state.get('latestCreatedRevisionName')
+        routes = [r for r in state.get('traffic', []) if r.get('revisionName') == revision
+                  and re.fullmatch(r'check-\d{8}-\d{6}', r.get('tag', ''))]
+        if not revision or not routes:
+            raise UpdateError('У последней созданной ревизии нет проверочного тега этого обновления. '
+                              'Для обычного обновления: python3 update.py --set-password')
+        route = max(routes, key=lambda r: r['tag'])
+        print('Использую уже созданную ревизию. Повторная сборка в Cloud Build не требуется.', flush=True)
+        self.check_and_promote(route['tag'], revision)
 
 
 def parse_args(argv=None):
@@ -352,6 +553,8 @@ def parse_args(argv=None):
     p.add_argument('--region', default='europe-north1')
     p.add_argument('--site', default=SITE)
     p.add_argument('--service', help='Normally detected from live Firebase Hosting configuration')
+    p.add_argument('--resume', action='store_true', help='Check and promote the latest existing check-tagged revision without rebuilding')
+    p.add_argument('--check-timeout', type=int, default=150, help='Maximum seconds to wait for revision routing (30–600)')
     p.add_argument('--set-password', action='store_true', help='Set an owner password after deployment')
     p.add_argument('--password-only', action='store_true', help='Set a password without deploying')
     p.add_argument('--configure-email', action='store_true', help='Configure SMTP using hidden credential prompts')
@@ -361,13 +564,17 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
+    if not 30 <= args.check_timeout <= 600:
+        raise UpdateError('--check-timeout должен быть от 30 до 600 секунд.')
+    if args.resume and (args.password_only or args.configure_email or args.enable_leads):
+        raise UpdateError('--resume используется отдельно от смены конфигурации и --password-only.')
     if args.password_only and (args.configure_email or args.enable_leads):
         raise UpdateError('--password-only используется отдельно от настройки почты и приёма заявок.')
     if not shutil.which('gcloud'):
         raise UpdateError('Откройте Google Cloud Shell: https://shell.cloud.google.com/')
     if not (ROOT / 'source' / 'admin_access.go').is_file():
         raise UpdateError('Не найдены исходники этого обновления. Выполните git pull в папке репозитория.')
-    password = prompt_password() if args.set_password or args.password_only else None
+    needs_password = args.set_password or args.password_only
     updater = Updater(args)
     updater.discover()
     updater.prepare_storage()
@@ -376,11 +583,15 @@ def main(argv=None):
     if args.enable_leads:
         updater.check_intake()
     with tempfile.TemporaryDirectory(prefix='liikkuva-build-') as temp:
-        binary = updater.build_cli(temp)
-        if not args.password_only:
+        binary = updater.build_cli(temp) if needs_password or not args.resume else None
+        if args.resume:
+            updater.resume()
+        elif not args.password_only:
             updater.deploy()
-        if password is not None:
-            updater.set_password(binary, password)
+        if needs_password:
+            # Ask only after successful verification, so a failed health check
+            # does not make the user enter a password which was never applied.
+            updater.set_password(binary, prompt_password())
     print('Кабинет: ' + DOMAIN + '/admin')
     print('Почта восстановления по умолчанию: medynikv@gmail.com. Сохранённый в кабинете адрес имеет приоритет.')
     if not (args.configure_email or all(k in updater.entries for k in ('SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'MAIL_FROM'))):
