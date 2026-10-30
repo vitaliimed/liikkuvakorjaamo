@@ -58,7 +58,7 @@ class UpdateTests(unittest.TestCase):
         updater.describe = describe
         def endpoint(url, identity_token=None, **kwargs):
             events.append(('check', url, identity_token))
-            if '/healthz' in url:
+            if '/api/health' in url:
                 return json.dumps({'ok': True, 'site': 'liikkuvakorjaamo.fi', 'version': update.VERSION if health_ok else 'old-version', 'revision': revision})
             return 'Войти в кабинет' if '/admin' in url else '.hero .hero-layout'
         updater.endpoint = endpoint
@@ -135,7 +135,7 @@ class UpdateTests(unittest.TestCase):
         original = updater.endpoint
         attempts = []
         def endpoint(url, **kwargs):
-            if '.run.app/healthz' in url:
+            if '.run.app/api/health' in url:
                 attempts.append(url)
                 if len(attempts) <= 2:
                     raise update.EndpointError(404, url)
@@ -239,7 +239,7 @@ class UpdateTests(unittest.TestCase):
             return original(url, **kwargs)
         updater.endpoint = endpoint
         updater.deploy()
-        self.assertTrue(any('---liikkuva-preview-test.europe-north1.run.app/healthz' in u for u in calls))
+        self.assertTrue(any('---liikkuva-preview-test.europe-north1.run.app/api/health' in u for u in calls))
         self.assertFalse(any(u.startswith('https://liikkuva-preview-test.europe-north1.run.app/') for u in calls))
 
     def test_endpoint_identity_is_only_sent_to_run_app(self):
@@ -248,11 +248,11 @@ class UpdateTests(unittest.TestCase):
         opener.open.return_value = io.BytesIO(b'OK')
         transport = update.Updater.endpoint.__get__(updater)
         with patch.object(update.urllib.request, 'build_opener', return_value=opener):
-            self.assertEqual(transport('https://check---svc.run.app/healthz', identity_token='synthetic.jwt.token'), 'OK')
+            self.assertEqual(transport('https://check---svc.run.app/api/health', identity_token='synthetic.jwt.token'), 'OK')
             request = opener.open.call_args.args[0]
             self.assertEqual(request.get_header('X-serverless-authorization'), 'Bearer synthetic.jwt.token')
             with self.assertRaises(update.UpdateError):
-                transport('https://untrusted.example/healthz', identity_token='synthetic.jwt.token')
+                transport('https://untrusted.example/api/health', identity_token='synthetic.jwt.token')
         self.assertEqual(opener.open.call_count, 1)
 
     def test_endpoint_does_not_follow_redirects(self):
@@ -260,7 +260,7 @@ class UpdateTests(unittest.TestCase):
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
                 hits.append(self.path)
-                if self.path == '/healthz':
+                if self.path == '/api/health':
                     self.send_response(302)
                     self.send_header('Location', '/other')
                     self.end_headers()
@@ -277,9 +277,9 @@ class UpdateTests(unittest.TestCase):
         transport = update.Updater.endpoint.__get__(updater)
         try:
             with self.assertRaises(update.EndpointError) as caught:
-                transport(f'http://127.0.0.1:{server.server_port}/healthz')
+                transport(f'http://127.0.0.1:{server.server_port}/api/health')
             self.assertEqual(caught.exception.code, 302)
-            self.assertEqual(hits, ['/healthz'])
+            self.assertEqual(hits, ['/api/health'])
         finally:
             server.shutdown()
             server.server_close()
@@ -292,7 +292,7 @@ class UpdateTests(unittest.TestCase):
                              'revision': 'liikkuva-preview-00042-test'})
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
-                if self.path == '/healthz':
+                if self.path == '/api/health':
                     health_reads.append(1)
                     code, body = (404, 'not ready') if len(health_reads) <= 2 else (200, health)
                 elif self.path == '/admin':
@@ -329,7 +329,7 @@ class UpdateTests(unittest.TestCase):
         original = updater.endpoint
         calls = []
         def endpoint(url, **kwargs):
-            if '.run.app/healthz' in url:
+            if '.run.app/api/health' in url:
                 calls.append(1)
                 if len(calls) == 1:
                     return json.dumps({'ok': True, 'site': 'liikkuvakorjaamo.fi', 'version': update.VERSION,
@@ -362,6 +362,68 @@ class UpdateTests(unittest.TestCase):
                 update.main(['--resume', '--set-password'])
             prompt.assert_not_called()
             updater.set_password.assert_not_called()
+
+    def test_password_prompt_follows_successful_verification(self):
+        updater = Mock(entries={})
+        events = []
+        updater.resume.side_effect = lambda: events.append('verified')
+        updater.set_password.side_effect = lambda *args: events.append('password saved')
+        def prompt():
+            events.append('password prompt')
+            return 'synthetic-new-password'
+        with patch.object(update, 'Updater', return_value=updater), patch.object(update.shutil, 'which', return_value='/bin/gcloud'), patch.object(update, 'prompt_password', side_effect=prompt), patch('sys.stdout', io.StringIO()):
+            update.main(['--resume', '--set-password'])
+        self.assertEqual(events, ['verified', 'password prompt', 'password saved'])
+
+    def test_error_commands_use_this_checkout_even_from_old_folder(self):
+        command = update.update_command('--resume', '--set-password')
+        self.assertEqual(update.shlex.split(command), ['python3', str(ROOT / 'update.py'), '--resume', '--set-password'])
+
+    def test_blocked_legacy_health_path_does_not_block_new_deployment(self):
+        updater, events = self.make_updater()
+        hits = []
+        health = json.dumps({'ok': True, 'site': 'liikkuvakorjaamo.fi', 'version': update.VERSION,
+                             'revision': 'liikkuva-preview-00042-test'})
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                hits.append(self.path)
+                if self.path == '/healthz':
+                    code, body = 404, '<html>Google frontend 404</html>'
+                elif self.path == '/api/health':
+                    code, body = 200, health
+                elif self.path == '/admin':
+                    code, body = 200, 'Войти в кабинет'
+                else:
+                    code, body = 200, '.hero .hero-layout'
+                self.send_response(code)
+                self.end_headers()
+                self.wfile.write(body.encode())
+            def log_message(self, *args):
+                pass
+        server = HTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f'http://127.0.0.1:{server.server_port}'
+        updater.candidate_urls = lambda route, deployed: [base]
+        transport = update.Updater.endpoint.__get__(updater)
+        public_checks = []
+        def endpoint(url, **kwargs):
+            if url.startswith(update.DOMAIN):
+                public_checks.append(url)
+                return health
+            return transport(url, **kwargs)
+        updater.endpoint = endpoint
+        try:
+            with self.assertRaises(update.EndpointError):
+                transport(base + '/healthz')
+            updater.deploy()
+            self.assertEqual(hits, ['/healthz', '/api/health', '/admin', '/static/css/responsive.css?v=20261029'])
+            self.assertTrue(public_checks and all('/api/health?' in u for u in public_checks))
+            self.assertTrue(any(e[0] == 'gcloud' and any(a.startswith('--to-revisions=') for a in e[1]) for e in events))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join()
 
 
 class FakeClock:

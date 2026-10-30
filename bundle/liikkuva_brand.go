@@ -60,7 +60,7 @@ func liikkuvaSecurity(cfg Config,next http.Handler) http.Handler {
  w.Header().Set("Content-Type","text/html; charset=utf-8");http.ServeFile(w,r,"static/seo"+r.URL.Path+".html");return
  }
  if strings.HasPrefix(r.URL.Path,"/thank-you") || r.URL.Path=="/privacy" || r.URL.Path=="/review" {w.Header().Set("X-Robots-Tag","noindex, follow")}
- if r.URL.Path=="/healthz" {w.Header().Set("Content-Type","application/json");json.NewEncoder(w).Encode(map[string]interface{}{"ok":true,"site":liikkuvaDomain,"version":"2026.10.25-pro","revision":os.Getenv("K_REVISION")});return}
+ if r.URL.Path=="/api/health" || r.URL.Path=="/healthz" {w.Header().Set("Cache-Control","no-store");w.Header().Set("Content-Type","application/json");json.NewEncoder(w).Encode(map[string]interface{}{"ok":true,"site":liikkuvaDomain,"version":"2026.10.25-pro","revision":os.Getenv("K_REVISION")});return}
   if strings.HasPrefix(r.URL.Path,"/admin") {w.Header().Set("Cache-Control","no-store");w.Header().Set("X-Robots-Tag","noindex, nofollow")}
   if strings.HasPrefix(r.URL.Path,"/admin") && r.Method==http.MethodPost {
    if origin:=r.Header.Get("Origin");origin!="" {u,err:=url.Parse(origin);if err!=nil || !strings.EqualFold(u.Host,r.Host) && !strings.EqualFold(origin,strings.TrimRight(cfg.SiteURL,"/")){http.Error(w,"Forbidden",403);return}}

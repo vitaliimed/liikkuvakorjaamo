@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.10.29-access-mobile"
+const releaseVersion = "2026.10.30-health-route"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -112,7 +112,9 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 		if strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/privacy" || r.URL.Path == "/review" {
 			w.Header().Set("X-Robots-Tag", "noindex, follow")
 		}
-		if r.URL.Path == "/healthz" {
+		// The serving frontend returns its own 404 for /healthz in production.
+		// Keep that alias for local tools; deployment checks use /api/health.
+		if r.URL.Path == "/api/health" || r.URL.Path == "/healthz" {
 			w.Header().Set("Cache-Control", "no-store")
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]interface{}{"ok": true, "site": liikkuvaDomain, "version": releaseVersion, "revision": os.Getenv("K_REVISION")})

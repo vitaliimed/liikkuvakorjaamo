@@ -65,6 +65,45 @@ func TestProPublicRoutes(t *testing.T) {
 		}
 	}
 }
+
+func TestApplicationHealthThroughServer(t *testing.T) {
+	t.Setenv("K_REVISION", "liikkuva-preview-00003-health-test")
+	renderer, err := newTemplateRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// No Firestore or mail configuration: readiness must not touch either.
+	server := httptest.NewServer(newServer(Config{}, renderer).Handler)
+	defer server.Close()
+	for _, path := range []string{"/api/health", "/api/health?revision=test", "/healthz"} {
+		t.Run(path, func(t *testing.T) {
+			response, err := server.Client().Get(server.URL + path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer response.Body.Close()
+			if response.StatusCode != http.StatusOK || response.Header.Get("Content-Type") != "application/json" {
+				t.Fatalf("unexpected health response: %d, %s", response.StatusCode, response.Header.Get("Content-Type"))
+			}
+			if response.Header.Get("Cache-Control") != "no-store" {
+				t.Fatal("readiness response can be cached")
+			}
+			var body struct {
+				OK       bool   `json:"ok"`
+				Site     string `json:"site"`
+				Version  string `json:"version"`
+				Revision string `json:"revision"`
+			}
+			if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+				t.Fatal(err)
+			}
+			if !body.OK || body.Site != liikkuvaDomain || body.Version != releaseVersion || body.Revision != "liikkuva-preview-00003-health-test" {
+				t.Fatalf("wrong health identity: %+v", body)
+			}
+		})
+	}
+}
+
 func TestHoneypotHasNoConversionReceipt(t *testing.T) {
 	h := NewLeadHandler(Config{})
 	r := httptest.NewRequest("POST", "/lead", strings.NewReader("company=spam"))

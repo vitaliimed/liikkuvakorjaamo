@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import socket
 import subprocess
@@ -21,7 +22,8 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.29-access-mobile'
+VERSION = '2026.10.30-health-route'
+HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'
 SERVICES = {'liikkuva-preview', 'liikkuva-landing', 'liikkuvakorjaamo'}
@@ -114,6 +116,12 @@ def prompt_password():
     if password != getpass.getpass('Повторите новый пароль: '):
         raise UpdateError('Пароли не совпадают.')
     return password
+
+
+def update_command(*flags):
+    # A subshell returns to the caller's previous directory. Always print a
+    # command for this checkout, not a same-named script in an older folder.
+    return shlex.join(['python3', str(ROOT / 'update.py'), *flags])
 
 
 class Updater:
@@ -453,14 +461,14 @@ class Updater:
                     token = None
                     try:
                         try:
-                            body = self.endpoint(url + '/healthz', timeout=min(12, remaining))
+                            body = self.endpoint(url + HEALTH_PATH, timeout=min(12, remaining))
                         except EndpointError as exc:
                             if exc.code not in (401, 403, 404):
                                 raise
                             token = self.operator_identity()
                             if not token:
                                 raise
-                            body = self.endpoint(url + '/healthz', identity_token=token,
+                            body = self.endpoint(url + HEALTH_PATH, identity_token=token,
                                                  timeout=min(12, max(0.1, deadline - time.monotonic())))
                         if self.health_matches(body, revision):
                             for path, marker in [('/admin', 'Войти в кабинет'),
@@ -482,7 +490,10 @@ class Updater:
             attempt += 1
         self.print_probe_diagnostics(deployed, tag, revision)
         raise UpdateError('Ревизия создана, но её проверочный адрес недоступен. Трафик не переключён. '
-                          + last + '\nДля повторной проверки без новой сборки: python3 update.py --resume --set-password')
+                          + last + '\nДля повторной проверки той же версии без новой сборки: '
+                          + update_command('--resume', '--set-password')
+                          + '\nЕсли ревизия создана старым кодом, соберите актуальную версию: '
+                          + update_command('--set-password'))
 
     def print_probe_diagnostics(self, deployed, tag, revision):
         # Whitelist only routing fields; never print the environment or tokens.
@@ -503,7 +514,7 @@ class Updater:
         last = 'домен пока возвращает другую ревизию'
         while time.monotonic() < deadline:
             try:
-                body = self.endpoint(DOMAIN + '/healthz?revision=' + urllib.parse.quote(revision),
+                body = self.endpoint(DOMAIN + HEALTH_PATH + '?revision=' + urllib.parse.quote(revision),
                                      timeout=min(12, max(0.1, deadline - time.monotonic())))
                 if self.health_matches(body, revision):
                     return
@@ -541,7 +552,7 @@ class Updater:
                   and re.fullmatch(r'check-\d{8}-\d{6}', r.get('tag', ''))]
         if not revision or not routes:
             raise UpdateError('У последней созданной ревизии нет проверочного тега этого обновления. '
-                              'Для обычного обновления: python3 update.py --set-password')
+                              'Для обычного обновления: ' + update_command('--set-password'))
         route = max(routes, key=lambda r: r['tag'])
         print('Использую уже созданную ревизию. Повторная сборка в Cloud Build не требуется.', flush=True)
         self.check_and_promote(route['tag'], revision)
@@ -595,7 +606,7 @@ def main(argv=None):
     print('Кабинет: ' + DOMAIN + '/admin')
     print('Почта восстановления по умолчанию: medynikv@gmail.com. Сохранённый в кабинете адрес имеет приоритет.')
     if not (args.configure_email or all(k in updater.entries for k in ('SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'MAIL_FROM'))):
-        print('Для восстановления по почте подключите отправку: python3 update.py --configure-email')
+        print('Для восстановления по почте подключите отправку: ' + update_command('--configure-email'))
 
 
 if __name__ == '__main__':

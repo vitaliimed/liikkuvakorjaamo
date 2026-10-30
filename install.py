@@ -147,7 +147,7 @@ class Installer:
    landing=response.read().decode('utf-8')
    if 'liikkuvakorjaamo.fi' not in landing or 'G-MXX9XCNCRB' not in landing:raise RuntimeError('Главная страница не прошла проверку')
   if json.dumps(self.describe(self.source_service)['spec'],sort_keys=True)!=before:raise RuntimeError('AutoHelp изменился параллельно. Этот установщик его не изменяет; проверьте параллельные действия')
-  with urllib.request.urlopen(url+'/healthz',timeout=45) as r:health=json.load(r)
+  with urllib.request.urlopen(url+'/api/health',timeout=45) as r:health=json.load(r)
   if health.get('site')!=DOMAIN or health.get('ok') is not True:raise RuntimeError('Проверка нового сервиса не прошла')
   (ROOT/'installation-result.json').write_text(json.dumps({'project':self.project,'region':self.region,'service':SERVICE,'url':url,'target':str(target),'image':image,'admin_secret':refs['ADMIN_PASSWORD']},indent=2))
   print('\nСайт работает: '+url+'\nАдминка: '+url+'/admin')
