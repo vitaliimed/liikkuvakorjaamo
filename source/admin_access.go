@@ -37,6 +37,11 @@ import (
 const adminSessionLifetime = 12 * time.Hour
 const adminRecoveryLifetime = 30 * time.Minute
 
+// no-referrer makes browser form navigations send Origin: null, which our
+// request-origin check correctly rejects. strict-origin preserves that proof
+// while keeping recovery tokens and other URL paths out of the Referer header.
+const adminReferrerPolicy = "strict-origin"
+
 type adminSession struct {
 	Expires time.Time `firestore:"expires"`
 }
@@ -286,7 +291,7 @@ func adminAccessGuard(cfg Config, next http.Handler) http.Handler {
 			return
 		}
 		w.Header().Set("Cache-Control", "no-store, private")
-		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Referrer-Policy", adminReferrerPolicy)
 		w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 		w.Header().Set("X-Frame-Options", "DENY")
 		authenticated := authenticateAdmin(cfg, r)
@@ -308,7 +313,7 @@ func adminAccessGuard(cfg Config, next http.Handler) http.Handler {
 			}
 			u, err := url.Parse(origin)
 			if origin == "" || err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || (u.Host != r.Host && strings.TrimRight(origin, "/") != strings.TrimRight(cfg.SiteURL, "/")) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
-				http.Error(w, "Откройте форму на сайте и повторите действие.", 403)
+				rejectAdminForm(w, r, "Не удалось подтвердить страницу отправки. Откройте форму заново и повторите действие.")
 				return
 			}
 			limit := int64(2 << 20)
@@ -329,12 +334,20 @@ func adminAccessGuard(cfg Config, next http.Handler) http.Handler {
 				return
 			}
 			if !adminPublicPath(r.URL.Path) && (accessCSRF(r) == "" || subtle.ConstantTimeCompare([]byte(r.PostFormValue("access_csrf")), []byte(accessCSRF(r))) != 1) {
-				http.Error(w, "Срок действия формы истёк. Обновите страницу и повторите действие.", 403)
+				rejectAdminForm(w, r, "Срок действия формы истёк. Обновите страницу и повторите действие.")
 				return
 			}
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func rejectAdminForm(w http.ResponseWriter, r *http.Request, message string) {
+	mode := "request-error"
+	if r.URL.Path == "/admin" || r.URL.Path == "/admin/login" {
+		mode = "login"
+	}
+	renderAccess(w, http.StatusForbidden, accessPageData{Mode: mode, Error: message})
 }
 
 //go:embed admin-access.html
@@ -343,14 +356,16 @@ var adminAccessTemplate = template.Must(template.New("access").Funcs(template.Fu
 
 type accessPageData struct {
 	Mode, Error, Message, Token, CSRF, RecoveryEmail, PendingEmail string
+	ReleaseVersion                                                 string
 	MailEnabled, HasPassword                                       bool
 	Audit                                                          []adminAuditEvent
 }
 
 func renderAccess(w http.ResponseWriter, code int, data accessPageData) {
+	data.ReleaseVersion = releaseVersion
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store, private")
-	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Referrer-Policy", adminReferrerPolicy)
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
 	w.WriteHeader(code)
 	if err := adminAccessTemplate.Execute(w, data); err != nil {

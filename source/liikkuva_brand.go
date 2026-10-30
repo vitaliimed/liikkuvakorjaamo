@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.10.30-health-route"
+const releaseVersion = "2026.10.30-admin-login"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -122,7 +122,7 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 		}
 		if strings.HasPrefix(r.URL.Path, "/admin") {
 			w.Header().Set("Cache-Control", "no-store")
-			w.Header().Set("Referrer-Policy", "no-referrer")
+			w.Header().Set("Referrer-Policy", adminReferrerPolicy)
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 		}
 		if strings.HasPrefix(r.URL.Path, "/admin") && r.Method == http.MethodPost {
