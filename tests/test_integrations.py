@@ -84,3 +84,44 @@ class IntegrationTests(unittest.TestCase):
     def test_setup_flags_cannot_be_combined_with_resume(self):
         with self.assertRaises(update.UpdateError): update.main(['--resume', '--configure-telegram'])
         with self.assertRaises(update.UpdateError): update.main(['--check-integrations', '--configure-telegram'])
+
+    def test_media_creates_only_private_bucket_in_target_project(self):
+        updater = self.updater()
+        updater.project_number = '123456'
+        calls = []
+        updater.gc = Mock()
+        def api(url, method='GET', data=None):
+            calls.append((url, method, data))
+            if method == 'GET':
+                raise update.APIError(404, url)
+            return {'projectNumber': '123456'}
+        updater.api = api
+        updater.configure_media()
+        self.assertEqual(updater.updates['GCS_BUCKET_NAME'], 'liikkuva-korjaamo-liikkuva-files')
+        created = next(data for url, method, data in calls if method == 'POST')
+        self.assertEqual(created['iamConfiguration']['publicAccessPrevention'], 'enforced')
+        self.assertTrue(created['iamConfiguration']['uniformBucketLevelAccess']['enabled'])
+        binding = updater.gc.call_args_list[-1].args
+        self.assertIn('--member=serviceAccount:liikkuva-runtime@example.test', binding)
+        self.assertIn('--role=roles/storage.objectUser', binding)
+        self.assertNotIn('allUsers', str(updater.gc.call_args_list))
+
+    def test_media_does_not_grant_access_to_foreign_or_shared_bucket(self):
+        for entries, metadata in [
+            ({'GCS_BUCKET_NAME': {'value': 'autohelp-private-files'}}, {}),
+            ({'GCS_BUCKET_NAME': {'value': 'foreign-liikkuva-files'}}, {'projectNumber': '999999'}),
+        ]:
+            updater = self.updater()
+            updater.project_number = '123456'
+            updater.entries = entries
+            updater.gc = Mock()
+            updater.api = Mock(return_value=metadata)
+            with self.assertRaises(update.UpdateError):
+                updater.configure_media()
+            self.assertFalse(any('add-iam-policy-binding' in call.args for call in updater.gc.call_args_list))
+            self.assertNotIn('GCS_BUCKET_NAME', updater.updates)
+
+    def test_media_setup_is_separate_from_resume_and_read_only_report(self):
+        for flags in [['--resume', '--configure-media'], ['--check-integrations', '--configure-media'], ['--password-only', '--configure-media']]:
+            with self.assertRaises(update.UpdateError):
+                update.main(flags)

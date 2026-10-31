@@ -1,495 +1,170 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html"
-
+	"io"
+	"net/http"
 	"net/mail"
-
+	"net/url"
 	"strings"
+	"time"
 )
 
 func mailNotificationsEnabled(cfg Config) bool {
-	return strings.TrimSpace(cfg.SMTPHost) != "" &&
-		strings.TrimSpace(cfg.SMTPPort) != "" &&
-		strings.TrimSpace(cfg.SMTPUsername) != "" &&
-		strings.TrimSpace(cfg.SMTPPassword) != "" &&
-		strings.TrimSpace(cfg.MailFrom) != ""
+	return strings.TrimSpace(cfg.SMTPHost) != "" && strings.TrimSpace(cfg.SMTPPort) != "" && strings.TrimSpace(cfg.SMTPUsername) != "" && strings.TrimSpace(cfg.SMTPPassword) != "" && strings.TrimSpace(cfg.MailFrom) != ""
 }
 
+func liikkuvaEmailDefaults(s SiteSettings) SiteSettings {
+	defaults := []struct {
+		value    *string
+		fallback string
+	}{
+		{&s.EmailLogoURL, "/static/img/icon-192x192.png"},
+		{&s.EmailConfirmationSubjectFI, "Liikkuva: Kiitos yhteydenotostasi"},
+		{&s.EmailConfirmationSubjectEN, "Liikkuva: Thank you for your request"},
+		{&s.EmailConfirmationTextFI, "Kiitos pyynnöstäsi, {name}! Olemme vastaanottaneet yhteydenottosi.\n\nAsiakaspalvelumme soittaa sinulle vahvistaakseen tilanteen ja sopiakseen käynnistä. Odotathan yhteydenottoamme.\n\nAika ja työn sisältö vahvistetaan kanssasi ennen käyntiä."},
+		{&s.EmailConfirmationTextEN, "Thank you for your request, {name}! We have received it successfully.\n\nOur service manager will call you to discuss the situation and arrange a visit. Please wait for our call.\n\nWe will confirm the appointment and scope of work with you before the visit."},
+		{&s.EmailReadySubjectFI, "Liikkuva: Ajoneuvosi on valmis"},
+		{&s.EmailReadySubjectEN, "Liikkuva: Your vehicle is ready"},
+		{&s.EmailReadyTextFI, "Ajoneuvosi on valmis.\n\nVoit vastata tähän viestiin tai ottaa meihin yhteyttä sopiaksesi auton luovutuksesta ja työn yksityiskohdista. Kiitos, että valitsit Liikkuvan!"},
+		{&s.EmailReadyTextEN, "Your vehicle is ready.\n\nReply to this email or contact us to arrange the handover and discuss the completed work. Thank you for choosing Liikkuva!"},
+		{&s.EmailSignatureFI, "Ystävällisin terveisin,\nLiikkuva Auto Korjaamo"},
+		{&s.EmailSignatureEN, "Best regards,\nLiikkuva Auto Korjaamo"},
+	}
+	for _, d := range defaults {
+		if strings.TrimSpace(*d.value) == "" {
+			*d.value = d.fallback
+		}
+	}
+	return liikkuvaProDefaults(s)
+}
+
+// Read the current CMS once per email. No browser or third-party credentials are involved.
+func withEmailSettings(cfg Config) Config {
+	if cfg.EmailSettings != nil {
+		return cfg
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s, err := loadSiteSettings(ctx, cfg)
+	if err != nil {
+		s = SiteSettings{}
+	}
+	s = liikkuvaEmailDefaults(s)
+	cfg.EmailSettings = &s
+	return cfg
+}
+func emailSettings(cfg Config) SiteSettings {
+	if cfg.EmailSettings != nil {
+		return liikkuvaEmailDefaults(*cfg.EmailSettings)
+	}
+	return liikkuvaEmailDefaults(SiteSettings{})
+}
+func emailLanguage(lang string) string {
+	if lang == "fi" || lang == "ru" {
+		return lang
+	}
+	return "en"
+}
+func emailTemplateText(value string, lead Lead, s SiteSettings) string {
+	return strings.NewReplacer("{name}", clientEmailName(lead), "{car}", lead.Car, "{visit}", fmt.Sprint(liikkuvaLeadFee(lead)), "{diagnostic}", fmt.Sprint(s.ProDiagnosticEUR)).Replace(value)
+}
+func emailSignature(cfg Config, lang string) string {
+	s := emailSettings(cfg)
+	if lang == "fi" {
+		return s.EmailSignatureFI
+	}
+	if lang == "ru" {
+		return "Liikkuva Auto Korjaamo"
+	}
+	return s.EmailSignatureEN
+}
+func emailGreeting(lead Lead) string {
+	if lead.Language == "fi" {
+		return "Hei " + clientEmailName(lead) + ","
+	}
+	return "Hello " + clientEmailName(lead) + ","
+}
+func emailSubject(value string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(value, "\r", " "), "\n", " ")
+}
+func emailTextFooter(cfg Config, lang string) string {
+	return "\n\n" + emailSignature(cfg, lang) + "\n" + serviceVisibleEmail(cfg) + "\n" + strings.TrimRight(cfg.SiteURL, "/")
+}
 func sendReadyForPickupEmail(cfg Config, lead Lead) error {
 	if !mailNotificationsEnabled(cfg) {
 		return fmt.Errorf("mail config is incomplete")
 	}
-
-	to := strings.TrimSpace(lead.Email)
-	if to == "" {
+	if strings.TrimSpace(lead.Email) == "" {
 		return fmt.Errorf("client email is empty")
 	}
-
-	subject := buildReadyEmailSubject(lead.Language, lead)
-	textBody := buildReadyEmailTextBody(cfg, lead)
-	htmlBody := buildReadyEmailHTMLBody(cfg, lead)
-
-	return sendSMTPMail(cfg, to, subject, textBody, htmlBody)
+	cfg = withEmailSettings(cfg)
+	s := emailSettings(cfg)
+	subject := s.EmailReadySubjectEN
+	if lead.Language == "fi" {
+		subject = s.EmailReadySubjectFI
+	}
+	return sendSMTPMail(cfg, lead.Email, emailSubject(emailTemplateText(subject, lead, s)), buildReadyEmailTextBody(cfg, lead), buildReadyEmailHTMLBody(cfg, lead))
 }
-
 func buildReadyEmailSubject(lang string, lead Lead) string {
-	car := strings.TrimSpace(lead.Car)
-
-	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
-		if car != "" {
-			return "🚗 Liikkuva Auto Korjaamo: Ajoneuvo " + car + " on valmis"
-		}
-		return "🚗 Liikkuva Auto Korjaamo: Ajoneuvosi on valmis"
+	s := liikkuvaEmailDefaults(SiteSettings{})
+	if lang == "fi" {
+		return s.EmailReadySubjectFI
 	}
-
-	if car != "" {
-		return "🚗 Liikkuva Auto Korjaamo: Vehicle " + car + " is ready"
-	}
-	return "🚗 Liikkuva Auto Korjaamo: Your vehicle is ready"
+	return s.EmailReadySubjectEN
 }
-
+func readyMessage(cfg Config, lead Lead) string {
+	s := emailSettings(cfg)
+	value := s.EmailReadyTextEN
+	if lead.Language == "fi" {
+		value = s.EmailReadyTextFI
+	}
+	return emailTemplateText(value, lead, s)
+}
 func buildReadyEmailTextBody(cfg Config, lead Lead) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-			name = "asiakas"
-		} else {
-			name = "customer"
-		}
-	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
-	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		lines := []string{
-			"Hei " + name + ",",
-			"",
-			"✅ Ajoneuvosi on valmis.",
-		}
-
-		if car != "" {
-			lines = append(lines, "🚘 Rekisterinumero: "+car)
-		}
-
-		lines = append(lines,
-			"",
-			"Voit vastata tähän viestiin tai ottaa meihin yhteyttä sopiaksesi luovutuksesta.",
-		)
-
-		if serviceEmail != "" {
-			lines = append(lines, "📧 Service email: "+serviceEmail)
-		}
-		if website != "" {
-			lines = append(lines, "🌐 Website: "+website)
-		}
-
-		lines = append(lines,
-			"",
-			"Ystävällisin terveisin,",
-			"Liikkuva Auto Korjaamo",
-		)
-
-		return strings.Join(lines, "\n")
-	}
-
-	lines := []string{
-		"Hello " + name + ",",
-		"",
-		"✅ Your vehicle is ready.",
-	}
-
-	if car != "" {
-		lines = append(lines, "🚘 Vehicle registration: "+car)
-	}
-
-	lines = append(lines,
-		"",
-		"You can reply to this email or contact us to arrange pickup or handover.",
-	)
-
-	if serviceEmail != "" {
-		lines = append(lines, "📧 Service email: "+serviceEmail)
-	}
-	if website != "" {
-		lines = append(lines, "🌐 Website: "+website)
-	}
-
-	lines = append(lines,
-		"",
-		"Best regards,",
-		"Liikkuva Auto Korjaamo",
-	)
-
-	return strings.Join(lines, "\n")
+	return emailGreeting(lead) + "\n\n" + readyMessage(cfg, lead) + plateText(lead) + emailTextFooter(cfg, lead.Language)
 }
-
 func buildReadyEmailHTMLBody(cfg Config, lead Lead) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-			name = "asiakas"
-		} else {
-			name = "customer"
-		}
+	title := "Your vehicle is ready"
+	if lead.Language == "fi" {
+		title = "Ajoneuvosi on valmis"
 	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
-	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		return `<!DOCTYPE html>
-<html lang="fi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">🚗 Ajoneuvosi on valmis</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hei ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 18px 0;">
-                    <div style="background:#f8fafc;border:1px solid #dbe7f3;border-radius:16px;padding:18px 18px;font-size:18px;line-height:1.6;color:#0f172a;font-weight:700;">
-                      ✅ Ajoneuvosi on valmis.
-                    </div>
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0 0 20px 0;">
-                    Voit vastata tähän viestiin tai ottaa meihin yhteyttä sopiaksesi luovutuksesta.
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Ystävällisin terveisin,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
-	}
-
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">🚗 Your vehicle is ready</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hello ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 18px 0;">
-                    <div style="background:#f8fafc;border:1px solid #dbe7f3;border-radius:16px;padding:18px 18px;font-size:18px;line-height:1.6;color:#0f172a;font-weight:700;">
-                      ✅ Your vehicle is ready.
-                    </div>
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0 0 20px 0;">
-                    You can reply to this email or contact us to arrange pickup or handover.
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Best regards,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+	return buildBrandedActionEmailHTML(cfg, lead, title, `<p style="margin:0;">`+nl2br(html.EscapeString(readyMessage(cfg, lead)))+`</p>`, "", "")
 }
-
-func optionalInfoRowHTML(icon, label, value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return ""
-	}
-
-	escapedLabel := html.EscapeString(label)
-	escapedValue := html.EscapeString(value)
-
-	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
-	}
-
-	if strings.Contains(value, "@") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="mailto:` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
-	}
-
-	return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> ` + escapedValue + `</div>`
-}
-
-func optionalPlateRowHTML(value string, lang string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return ""
-	}
-
-	label := "Vehicle registration"
-	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
-		label = "Rekisterinumero"
-	}
-
-	return `<tr>
-		<td style="padding:0 0 14px 0;">
-			<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;">
-				<div style="font-size:13px;line-height:1.4;color:#1d4ed8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">🚘 ` + html.EscapeString(label) + `</div>
-				<div style="font-size:22px;line-height:1.3;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div>
-			</div>
-		</td>
-	</tr>`
-}
-
 func sendSMTPMail(cfg Config, to, subject, textBody, htmlBody string, attachments ...EmailAttachment) error {
 	return liikkuvaSendSMTP(cfg, to, subject, textBody, htmlBody, attachments...)
 }
-
 func sendCustomClientEmail(cfg Config, lead Lead, subject, message string, attachments ...EmailAttachment) error {
 	if !mailNotificationsEnabled(cfg) {
 		return fmt.Errorf("mail config is incomplete")
 	}
-
-	to := strings.TrimSpace(lead.Email)
-	if to == "" {
-		return fmt.Errorf("client email is empty")
+	if err := validateStandaloneEmail(strings.TrimSpace(lead.Email), strings.TrimSpace(subject), strings.TrimSpace(message)); err != nil {
+		return err
 	}
-
-	subject = strings.TrimSpace(subject)
-	message = strings.TrimSpace(message)
-
-	if subject == "" {
-		return fmt.Errorf("subject is empty")
-	}
-	if message == "" {
-		return fmt.Errorf("message is empty")
-	}
-
-	textBody := buildCustomEmailTextBody(cfg, lead, message)
-	htmlBody := buildCustomEmailHTMLBody(cfg, lead, subject, message)
-
-	return sendSMTPMail(cfg, to, subject, textBody, htmlBody, attachments...)
+	cfg = withEmailSettings(cfg)
+	return sendSMTPMail(cfg, lead.Email, subject, buildCustomEmailTextBody(cfg, lead, message), buildCustomEmailHTMLBody(cfg, lead, subject, message), attachments...)
 }
-
 func buildCustomEmailTextBody(cfg Config, lead Lead, message string) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-			name = "asiakas"
-		} else {
-			name = "customer"
-		}
-	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
-	lines := []string{
-		"Hello " + name + ",",
-		"",
-		message,
-	}
-
-	if car != "" {
-		lines = append(lines, "", "Vehicle registration: "+car)
-	}
-
-	if serviceEmail != "" {
-		lines = append(lines, "", "Service email: "+serviceEmail)
-	}
-	if website != "" {
-		lines = append(lines, "Website: "+website)
-	}
-
-	lines = append(lines, "", "Best regards,", "Liikkuva Auto Korjaamo")
-	return strings.Join(lines, "\n")
+	return emailGreeting(lead) + "\n\n" + message + plateText(lead) + emailTextFooter(cfg, lead.Language)
 }
-
+func buildCustomEmailHTMLBody(cfg Config, lead Lead, subject, message string) string {
+	return buildBrandedActionEmailHTML(cfg, lead, subject, `<div style="overflow-wrap:anywhere;">`+nl2br(html.EscapeString(message))+`</div>`, "", "")
+}
 func extractAddress(value string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
+	parsed, err := mail.ParseAddress(strings.TrimSpace(value))
+	if err != nil {
 		return ""
 	}
-
-	parsed, err := mail.ParseAddress(value)
-	if err == nil && parsed != nil {
-		return strings.TrimSpace(parsed.Address)
-	}
-
-	if strings.Contains(value, "@") && !strings.ContainsAny(value, " <>") {
-		return value
-	}
-
-	return ""
+	return parsed.Address
 }
-
 func serviceVisibleEmail(cfg Config) string {
+	if cfg.EmailSettings != nil && strings.TrimSpace(cfg.EmailSettings.ServiceEmail) != "" {
+		return extractAddress(cfg.EmailSettings.ServiceEmail)
+	}
 	return extractAddress(cfg.MailFrom)
 }
-
-func buildCustomEmailHTMLBody(cfg Config, lead Lead, subject, message string) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		name = "customer"
-	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
-	messageHTML := nl2br(html.EscapeString(message))
-
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">📩 ` + html.EscapeString(subject) + `</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hello ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.8;color:#334155;padding:0 0 20px 0;">
-                    ` + messageHTML + `
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Best regards,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
-}
-
 func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
 	if !mailNotificationsEnabled(cfg) {
 		return fmt.Errorf("mail config is incomplete")
@@ -497,153 +172,153 @@ func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
 	if strings.TrimSpace(lead.Email) == "" {
 		return fmt.Errorf("client email is empty")
 	}
-
-	return sendSMTPMail(
-		cfg,
-		lead.Email,
-		buildLeadConfirmationSubject(lead.Language),
-		buildLeadConfirmationText(cfg, lead),
-		buildLeadConfirmationHTML(cfg, lead),
-	)
+	cfg = withEmailSettings(cfg)
+	s := emailSettings(cfg)
+	subject := s.EmailConfirmationSubjectEN
+	if lead.Language == "fi" {
+		subject = s.EmailConfirmationSubjectFI
+	}
+	return sendSMTPMail(cfg, lead.Email, emailSubject(emailTemplateText(subject, lead, s)), buildLeadConfirmationText(cfg, lead), buildLeadConfirmationHTML(cfg, lead))
 }
-
 func buildLeadConfirmationSubject(lang string) string {
-	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
-		return "Liikkuva Auto Korjaamo: Pyyntö vastaanotettu"
+	s := liikkuvaEmailDefaults(SiteSettings{})
+	if lang == "fi" {
+		return s.EmailConfirmationSubjectFI
 	}
-	return "Liikkuva Auto Korjaamo: Request received"
+	return s.EmailConfirmationSubjectEN
 }
-
+func confirmationMessage(cfg Config, lead Lead) string {
+	s := emailSettings(cfg)
+	value := s.EmailConfirmationTextEN
+	if lead.Language == "fi" {
+		value = s.EmailConfirmationTextFI
+	}
+	return emailTemplateText(value, lead, s)
+}
+func confirmationPrice(lead Lead) string {
+	if lead.Language == "fi" {
+		return fmt.Sprintf("Asentajan käynti %d €. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.", liikkuvaLeadFee(lead))
+	}
+	return fmt.Sprintf("Mechanic visit €%d. Diagnostics, repairs and spare parts are agreed and charged separately.", liikkuvaLeadFee(lead))
+}
 func buildLeadConfirmationText(cfg Config, lead Lead) string {
-	name := clientEmailName(lead)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		lines := []string{
-			"Hei " + name + ",",
-			"",
-			"Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.",
-			"",
-			fmt.Sprintf("Asentajan käynti maksaa %d €.", liikkuvaLeadFee(lead)),
-			"Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.",
-			"Varaosat ja laajemmat työt eivät sisälly käyntimaksuun. Niistä sovitaan kanssasi ennen työn aloittamista.",
-			"",
-			"Odota viestiämme. Ilmoitamme, kun asentajamme on valmis lähtemään luoksesi, ja vahvistamme ajan.",
-		}
-		if lead.Car != "" {
-			lines = append(lines, "", "Rekisterinumero: "+lead.Car)
-		}
-		if website != "" {
-			lines = append(lines, "", "Verkkosivu: "+website)
-		}
-		return strings.Join(append(lines, "", "Ystävällisin terveisin,", "Liikkuva Auto Korjaamo"), "\n")
-	}
-
-	lines := []string{
-		"Hello " + name + ",",
-		"",
-		"Thank you for your request. We have received it successfully.",
-		"",
-		fmt.Sprintf("The mechanic visit costs €%d.", liikkuvaLeadFee(lead)),
-		"The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.",
-		"Parts and more extensive work are not included in the visit fee. We agree them with you before starting the work.",
-		"",
-		"Please wait for our message. We will let you know when our mechanic is ready to leave for your location and confirm the time.",
-	}
-	if lead.Car != "" {
-		lines = append(lines, "", "Vehicle registration: "+lead.Car)
-	}
-	if website != "" {
-		lines = append(lines, "", "Website: "+website)
-	}
-	return strings.Join(append(lines, "", "Best regards,", "Liikkuva Auto Korjaamo"), "\n")
+	return emailGreeting(lead) + "\n\n" + confirmationMessage(cfg, lead) + "\n\n" + confirmationPrice(lead) + plateText(lead) + emailTextFooter(cfg, lead.Language)
 }
-
 func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
-	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.</p>
-		<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:18px;margin:0 0 18px;">
-			<div style="font-size:24px;font-weight:800;color:#0f172a;">Asentajan käynti ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
-			<p style="margin:10px 0 0;">Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.</p>
-		</div>
-		<p style="margin:0 0 16px;">Varaosat ja laajemmat työt sovitaan ja veloitetaan erikseen ennen työn aloittamista.</p>
-		<p style="margin:0;font-weight:700;">Odota viestiämme. Ilmoitamme, kun asentajamme on valmis lähtemään luoksesi, ja vahvistamme ajan.</p>`
-		return buildBrandedActionEmailHTML(cfg, lead, "Pyyntö vastaanotettu", content, "", "")
+	title := "Thank you for your request"
+	if lead.Language == "fi" {
+		title = "Kiitos yhteydenotostasi"
 	}
-
-	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully.</p>
-	<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:18px;margin:0 0 18px;">
-		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
-		<p style="margin:10px 0 0;">The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.</p>
-	</div>
-	<p style="margin:0 0 16px;">Parts and more extensive work are agreed and charged separately before work begins.</p>
-	<p style="margin:0;font-weight:700;">Please wait for our message. We will confirm when our mechanic is ready to leave for your location.</p>`
-	return buildBrandedActionEmailHTML(cfg, lead, "Request received", content, "", "")
+	content := `<div style="overflow-wrap:anywhere;">` + nl2br(html.EscapeString(confirmationMessage(cfg, lead))) + `</div><p style="background:#eef3ff;border-radius:12px;padding:18px;color:#183365;margin:24px 0 0;">` + html.EscapeString(confirmationPrice(lead)) + `</p>`
+	return buildBrandedActionEmailHTML(cfg, lead, title, content, "", "")
 }
-
 func sendReviewInvitationEmail(cfg Config, lead Lead, reviewURL string) error {
-	if !mailNotificationsEnabled(cfg) {
-		return fmt.Errorf("mail config is incomplete")
+	if !mailNotificationsEnabled(cfg) || lead.Email == "" || reviewURL == "" {
+		return fmt.Errorf("mail config, recipient or review URL is empty")
 	}
-	if strings.TrimSpace(lead.Email) == "" {
-		return fmt.Errorf("client email is empty")
+	cfg = withEmailSettings(cfg)
+	subject, button, message := "Liikkuva: Tell us about your experience", "Leave a review", "Thank you for choosing Liikkuva. We would appreciate your feedback. Reviews are published only after approval."
+	if lead.Language == "fi" {
+		subject, button, message = "Liikkuva: Kerro kokemuksestasi", "Jätä arvostelu", "Kiitos, että valitsit Liikkuvan. Arvostaisimme palautettasi palvelustamme. Arvostelu julkaistaan vasta hyväksynnän jälkeen."
 	}
-	if strings.TrimSpace(reviewURL) == "" {
-		return fmt.Errorf("review URL is empty")
-	}
-
-	lang := sanitizeLanguage(lead.Language, "fi")
-	subject := "Liikkuva Auto Korjaamo: Kerro kokemuksestasi"
-	button := "Jätä arvostelu"
-	textBody := "Hei " + clientEmailName(lead) + ",\n\nKiitos, että valitsit palvelumme. Arvostaisimme palautettasi palvelustamme.\n\nJätä arvostelu tästä linkistä:\n" + reviewURL + "\n\nArvostelu julkaistaan vasta hyväksynnän jälkeen.\n\nYstävällisin terveisin,\nLiikkuva"
-	content := `<p style="margin:0 0 16px;">Kiitos, että valitsit palvelumme. Arvostaisimme palautettasi palvelustamme.</p><p style="margin:0;">Arvostelu julkaistaan vasta hyväksynnän jälkeen.</p>`
-	if lang == "en" {
-		subject = "Liikkuva Auto Korjaamo: Tell us about your experience"
-		button = "Leave a review"
-		textBody = "Hello " + clientEmailName(lead) + ",\n\nThank you for choosing Liikkuva Auto Korjaamo. We would appreciate your feedback about our service.\n\nLeave your review using this link:\n" + reviewURL + "\n\nThe review is published only after approval.\n\nBest regards,\nLiikkuva"
-		content = `<p style="margin:0 0 16px;">Thank you for choosing Liikkuva Auto Korjaamo. We would appreciate your feedback about our service.</p><p style="margin:0;">The review is published only after approval.</p>`
-	}
-
-	return sendSMTPMail(cfg, lead.Email, subject, textBody, buildBrandedActionEmailHTML(cfg, lead, subject, content, button, reviewURL))
+	return sendSMTPMail(cfg, lead.Email, subject, emailGreeting(lead)+"\n\n"+message+"\n"+reviewURL+emailTextFooter(cfg, lead.Language), buildBrandedActionEmailHTML(cfg, lead, subject, `<p>`+html.EscapeString(message)+`</p>`, button, reviewURL))
 }
-
 func clientEmailName(lead Lead) string {
-	name := strings.TrimSpace(lead.Name)
-	if name != "" {
+	if name := strings.TrimSpace(lead.Name); name != "" {
 		return name
 	}
-	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
+	if lead.Language == "fi" {
 		return "asiakas"
 	}
 	return "customer"
 }
-
-func buildBrandedActionEmailHTML(cfg Config, lead Lead, title, contentHTML, buttonLabel, buttonURL string) string {
-	buttonHTML := ""
-	if strings.TrimSpace(buttonLabel) != "" && strings.TrimSpace(buttonURL) != "" {
-		buttonHTML = `<p style="margin:22px 0 0;"><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;font-size:16px;font-weight:800;padding:14px 22px;border-radius:14px;">` + html.EscapeString(buttonLabel) + `</a></p>`
-	}
-
-	return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Liikkuva Auto Korjaamo</title></head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#fff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#0b3b66;padding:24px 28px;color:#fff;"><div style="font-size:12px;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div><div style="font-size:30px;line-height:1.2;font-weight:800;margin-top:10px;">` + html.EscapeString(title) + `</div></td></tr>
-<tr><td style="padding:28px 24px;font-size:16px;line-height:1.75;color:#334155;"><p style="margin:0 0 18px;font-size:18px;color:#0f172a;">` + html.EscapeString(clientEmailName(lead)) + `,</p>` + optionalPlateBlockHTML(lead.Car, lead.Language) + contentHTML + buttonHTML + `<p style="margin:24px 0 0;">Liikkuva Auto Korjaamo<br><a href="` + html.EscapeString(strings.TrimRight(cfg.SiteURL, "/")) + `" style="color:#0369a1;">` + html.EscapeString(strings.TrimRight(cfg.SiteURL, "/")) + `</a></p></td></tr>
-</table></td></tr></table></body></html>`
-}
-
-func optionalPlateBlockHTML(value, lang string) string {
-	value = strings.TrimSpace(value)
-	if value == "" {
+func plateText(lead Lead) string {
+	if lead.Car == "" {
 		return ""
 	}
 	label := "Vehicle registration"
-	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
+	if lead.Language == "fi" {
 		label = "Rekisterinumero"
 	}
-	return `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:0 0 18px;"><div style="font-size:13px;color:#1d4ed8;font-weight:700;text-transform:uppercase;">` + html.EscapeString(label) + `</div><div style="font-size:22px;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div></div>`
+	return "\n\n" + label + ": " + lead.Car
 }
+func safeEmailImage(value, siteURL string) string {
+	if strings.HasPrefix(value, "/") && !strings.HasPrefix(value, "//") {
+		value = strings.TrimRight(siteURL, "/") + value
+	}
+	u, err := url.Parse(value)
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil {
+		return ""
+	}
+	return value
+}
+func brandedEmailShell(cfg Config, lang, title, content, buttonLabel, buttonURL string) string {
+	s := emailSettings(cfg)
+	brand := s.ProAccent
+	image := safeEmailImage(s.EmailLogoURL, cfg.SiteURL)
+	logo := ""
+	if image != "" {
+		logo = `<img src="` + html.EscapeString(image) + `" width="48" height="48" alt="" style="display:block;width:48px;height:48px;object-fit:contain;background:#fff;border-radius:12px;">`
+	}
+	button := ""
+	u, err := url.Parse(buttonURL)
+	if buttonLabel != "" && err == nil && u.Scheme == "https" && u.Host != "" {
+		button = `<p style="margin:24px 0;"><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;padding:14px 22px;border-radius:9px;background:` + brand + `;color:#fff;font-weight:700;text-decoration:none;">` + html.EscapeString(buttonLabel) + `</a></p>`
+	}
+	contact := ""
+	if email := serviceVisibleEmail(cfg); email != "" {
+		contact = `<br><a style="color:#2458d6;" href="mailto:` + html.EscapeString(email) + `">` + html.EscapeString(email) + `</a>`
+	}
+	website := strings.TrimRight(cfg.SiteURL, "/")
+	if website == "" {
+		website = "https://liikkuvakorjaamo.fi"
+	}
+	return `<!doctype html><html lang="` + emailLanguage(lang) + `"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>` + html.EscapeString(title) + ` — Liikkuva</title></head><body style="margin:0;background:#eef3fb;color:#10213a;font-family:Arial,Helvetica,sans-serif;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eef3fb;"><tr><td align="center" style="padding:28px 12px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#fff;border:1px solid #dbe3f1;border-radius:18px;overflow:hidden;"><tr><td style="padding:24px 28px;background:` + brand + `;color:#fff;"><table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:14px;">` + logo + `</td><td style="font-size:25px;line-height:1.1;font-weight:800;">Liikkuva<br><span style="font-size:12px;font-weight:600;letter-spacing:1px;">AUTO KORJAAMO</span></td></tr></table></td></tr><tr><td style="padding:30px 28px;font-size:16px;line-height:1.75;"><h1 style="font-size:28px;line-height:1.25;margin:0 0 24px;color:#10213a;">` + html.EscapeString(title) + `</h1>` + content + button + `<div style="margin-top:28px;padding-top:22px;border-top:1px solid #dbe3f1;color:#52657f;font-size:14px;">` + nl2br(html.EscapeString(emailSignature(cfg, lang))) + contact + `<br><a style="color:#2458d6;" href="` + html.EscapeString(website) + `">liikkuvakorjaamo.fi</a></div></td></tr></table></td></tr></table></body></html>`
+}
+func brandedPlainEmailHTML(cfg Config, lang, subject, message string) string {
+	return brandedEmailShell(cfg, lang, subject, `<div style="overflow-wrap:anywhere;">`+nl2br(html.EscapeString(message))+`</div>`, "", "")
+}
+func buildBrandedActionEmailHTML(cfg Config, lead Lead, title, contentHTML, buttonLabel, buttonURL string) string {
+	return brandedEmailShell(cfg, lead.Language, title, `<p style="margin:0 0 20px;">`+html.EscapeString(emailGreeting(lead))+`</p>`+optionalPlateBlockHTML(lead.Car, lead.Language)+contentHTML, buttonLabel, buttonURL)
+}
+func optionalPlateBlockHTML(value, lang string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	label := "Vehicle registration"
+	if lang == "fi" {
+		label = "Rekisterinumero"
+	}
+	return `<div style="background:#eef3ff;border-radius:10px;padding:12px 16px;margin:0 0 20px;font-size:14px;">` + label + `: <strong>` + html.EscapeString(value) + `</strong></div>`
+}
+func nl2br(value string) string { return strings.ReplaceAll(value, "\n", "<br>") }
 
-func nl2br(value string) string {
-	return strings.ReplaceAll(value, "\n", "<br>")
+func (h *AdminHandler) EmailPreview(w http.ResponseWriter, r *http.Request) {
+	if !isAdminAuthenticated(h.cfg, r) {
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+	if r.Method != "GET" {
+		w.Header().Set("Allow", "GET")
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+	s, err := loadSiteSettings(r.Context(), h.cfg)
+	if err != nil {
+		http.Error(w, "Не удалось загрузить настройки", 503)
+		return
+	}
+	s = liikkuvaEmailDefaults(s)
+	cfg := h.cfg
+	cfg.EmailSettings = &s
+	lang := sanitizeLanguage(r.URL.Query().Get("lang"), "fi")
+	lead := Lead{Name: "Asiakas", Language: lang, Car: "TEST-123", VisitPriceEUR: liikkuvaVisitFee(s)}
+	body := buildLeadConfirmationHTML(cfg, lead)
+	if r.URL.Query().Get("kind") == "ready" {
+		body = buildReadyEmailHTMLBody(cfg, lead)
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' https:; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'self'")
+	io.WriteString(w, body)
 }

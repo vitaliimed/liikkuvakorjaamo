@@ -73,8 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   const areasBounds = [
-    [59.75, 22.9],
-    [61.55, 26.9]
+    [60.12, 24.62],
+    [60.35, 25.15]
   ];
 
   let hasTrackedFormStart = false;
@@ -86,27 +86,19 @@ document.addEventListener("DOMContentLoaded", function () {
   let leafletReadyPromise = null;
   let areasLiveMap = null;
   let areasResizeTimer = null;
+  let fittingAreasMap = false;
   let selectedFiles = [];
 
   function trackEvent(name, params) {
-    const payload = Object.assign({site_brand:"liikkuva",site_domain:"liikkuvakorjaamo.fi"}, params || {});
-    const consent = typeof window.liikkuvaConsentState === "function" ? window.liikkuvaConsentState() : {};
-
-    if (consent.analytics && typeof window.gtag === "function") {
-      window.gtag("event", name, payload);
-    }
-
-    if (typeof window.liikkuvaTrackCustomEvent === "function") {
-      window.liikkuvaTrackCustomEvent(name, payload);
-    }
+    if (typeof window.liikkuvaTrackEvent === 'function') return window.liikkuvaTrackEvent(name, params);
+    return false;
   }
 
   function trackFormStart() {
     const c=typeof window.liikkuvaConsentState === "function" ? window.liikkuvaConsentState() : {};
-    if(!c.analytics && !c.marketing) return;
+    if(!c.analytics) return;
     if (hasTrackedFormStart) return;
-    hasTrackedFormStart = true;
-    trackEvent("lead_form_start", {
+    hasTrackedFormStart = trackEvent("lead_form_start", {
       page_language: i18n.lang
     });
   }
@@ -438,8 +430,11 @@ document.addEventListener("DOMContentLoaded", function () {
   function fitAreasMap() {
     if (!areasLiveMap || !window.L) return;
     const bounds = window.L.latLngBounds(areasBounds);
-    areasLiveMap.invalidateSize();
-    areasLiveMap.fitBounds(bounds, { padding: [24, 24] });
+    fittingAreasMap = true;
+    try {
+      areasLiveMap.invalidateSize();
+      areasLiveMap.fitBounds(bounds, { padding: [20, 20], maxZoom: 11, animate: false });
+    } finally { fittingAreasMap = false; }
   }
 
   async function initAreasLiveMap() {
@@ -471,6 +466,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }).addTo(areasLiveMap);
 
     fitAreasMap();
+    areasLiveMap.on('zoomstart', () => { if (!fittingAreasMap) trackEvent('service_area_map_interaction', {action: 'zoom'}); });
+    areasLiveMap.on('dragstart', () => trackEvent('service_area_map_interaction', {action: 'move'}));
     areasShell.classList.add("is-live-map");
 
     window.addEventListener("resize", function () {
@@ -678,6 +675,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const carValue = carInput ? carInput.value.trim() : "";
 
     if (!nameValue) {
+      trackEvent("lead_validation_error", {field_name: "name"});
       showMessage(i18n.nameRequired, "error");
       setSubmitState(false);
       if (nameInput) nameInput.focus();
@@ -685,6 +683,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (!phoneValue) {
+      trackEvent("lead_validation_error", {field_name: "phone"});
       showMessage(i18n.contactRequired, "error");
       setSubmitState(false);
       if (phoneInput) phoneInput.focus();
@@ -692,6 +691,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (phoneValue && !isValidPhone(phoneValue)) {
+      trackEvent("lead_validation_error", {field_name: "phone"});
       showMessage(i18n.phoneInvalid, "error");
       setSubmitState(false);
       if (phoneInput) phoneInput.focus();
@@ -699,6 +699,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (emailValue && !isValidEmail(emailValue)) {
+      trackEvent("lead_validation_error", {field_name: "email"});
       showMessage(i18n.emailInvalid, "error");
       setSubmitState(false);
       if (emailInput) emailInput.focus();
@@ -706,6 +707,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (carValue && !isValidRegistrationNumber(carValue)) {
+      trackEvent("lead_validation_error", {field_name: "car"});
       showMessage(i18n.registrationInvalid, "error");
       setSubmitState(false);
       if (carInput) carInput.focus();
@@ -809,8 +811,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   [nameInput, phoneInput, emailInput, addressInput, addressHintInput, carInput, messageInput].forEach(function (input) {
     if (!input) return;
-    input.addEventListener("focus", trackFormStart, { once: true });
-    input.addEventListener("input", trackFormStart, { once: true });
+    input.addEventListener("focus", trackFormStart);
+    input.addEventListener("input", trackFormStart);
   });
 
   if (useLocationBtn) {
@@ -928,23 +930,6 @@ document.addEventListener("DOMContentLoaded", function () {
       focusFirstUsefulField();
     });
   }
-
-  document.querySelectorAll('a[href^="tel:"]').forEach(function (link) {
-    link.addEventListener("click", function () {
-      trackEvent("phone_click", {
-        page_language: i18n.lang
-      });
-    });
-  });
-
-  document.querySelectorAll(".lang-link, .languages a").forEach(function (link) {
-    link.addEventListener("click", function () {
-      trackEvent("language_switch", {
-        page_language: i18n.lang,
-        target_url: link.getAttribute("href") || ""
-      });
-    });
-  });
 
   form.addEventListener("submit", handleSubmit);
 });

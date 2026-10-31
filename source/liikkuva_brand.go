@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.10.31-integrations-theme"
+const releaseVersion = "2026.10.31-client-experience"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -210,4 +210,34 @@ func liikkuvaSettings(settings SiteSettings) SiteSettings {
 		settings.RobotsTXT = defaults.RobotsTXT
 	}
 	return settings
+}
+
+// Retire the previous language-promotion block even when its defaults were saved in the CMS.
+func oldLanguageClaim(value string) bool {
+	value = strings.ToLower(value)
+	return strings.Contains(value, "fi · en · ru") || strings.Contains(value, "neljällä kielellä") || strings.Contains(value, "four languages") || strings.Contains(value, "ukrainaksi") || strings.Contains(value, "ukrainian service") || strings.Contains(value, "palveletteko vain suomeksi") || strings.Contains(value, "work only in finnish")
+}
+func withoutLanguageClaims(content LandingContent) LandingContent {
+	cards := content.Hero.TrustCards[:0]
+	for _, card := range content.Hero.TrustCards {
+		if !oldLanguageClaim(card.Title + " " + card.Text) {
+			cards = append(cards, card)
+		}
+	}
+	content.Hero.TrustCards = cards
+	items := content.TrustPanel.Items[:0]
+	for _, item := range content.TrustPanel.Items {
+		if !oldLanguageClaim(item) {
+			items = append(items, item)
+		}
+	}
+	content.TrustPanel.Items = items
+	faq := content.FAQ.Items[:0]
+	for _, item := range content.FAQ.Items {
+		if !oldLanguageClaim(item.Question) {
+			faq = append(faq, item)
+		}
+	}
+	content.FAQ.Items = faq
+	return content
 }

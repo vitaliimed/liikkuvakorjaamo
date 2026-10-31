@@ -17,7 +17,7 @@ let proxy, browser;
 const pause = ms => new Promise(resolve => setTimeout(resolve,ms));
 async function ready(url) { for(let i=0;i<100;i++){try{const r=await fetch(url);if(r.ok)return;}catch{} await pause(100);}throw Error('Local server did not become ready'); }
 function bounds() {
- const hero=document.querySelector('.hero-copy'); const h1=document.querySelector('.hero h1'); const cta=document.querySelector('.hero-actions .btn');
+ const hero=document.querySelector('.hero-copy'); const h1=document.querySelector('.hero h1'); const cta=document.querySelector('.hero-request button[type=submit]');
  const rect=h1?.getBoundingClientRect(); const range=document.createRange();if(h1)range.selectNodeContents(h1);
  return {width:innerWidth,scroll:document.documentElement.scrollWidth,hero:hero?{height:hero.clientHeight,scroll:hero.scrollHeight}:null,
   title:rect?{x:rect.x,right:rect.right,y:rect.y,bottom:rect.bottom}:null,
@@ -68,7 +68,7 @@ function bounds() {
  if(fixtureDir){
   for(const width of [320,390,768,1440,2560]){
    const context=await browser.newContext({viewport:{width,height:900}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   for(const tab of ['overview','general','assets','leads','help','seo']){
+   for(const tab of ['overview','general','assets','analytics','emails','leads','help','seo']){
     await page.goto(base+'/admin?tab='+tab);const b=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));assert(b.scroll<=width+1,`Admin ${tab} overflows ${width}: ${b.scroll}`);
     if(width===390&&['overview','general'].includes(tab))await page.screenshot({path:path.join(artifactDir,`admin-${tab}-${width}.png`)});
    }
