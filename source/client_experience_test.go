@@ -12,6 +12,8 @@ import (
 	"mime/multipart"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -175,5 +177,63 @@ func TestAdminCanSaveWithoutPhoneAndShowsActualGA4Defaults(t *testing.T) {
 	}
 	if f.request("GET", "/admin/email-preview?kind=ready&lang=fi", nil, cookie).Code != 200 {
 		t.Fatal("preview unavailable")
+	}
+}
+
+func TestTwoFormsUseUniqueMarkupAndReviewsStayVisible(t *testing.T) {
+	f := newAccessFixture(t, fixtureAdminPassword)
+	f.cfg.SettingsStore = &memorySettingsStore{state: SiteSettings{Testimonials: []AdminTestimonialItem{
+		{Name: "Testiasiakas 1", QuoteFI: "Testiarvostelu: selkeä yhteydenpito ja sovittu aika.", QuoteEN: "Sample review: clear communication and an agreed appointment.", Rating: 5},
+		{Name: "Testiasiakas 2", QuoteFI: "Testiarvostelu: auton tilanne käytiin ymmärrettävästi läpi.", QuoteEN: "Sample review: the condition of the car was explained clearly.", Rating: 4},
+		{Name: "Testiasiakas 3", QuoteFI: "Testiarvostelu: palvelu tuli auton luokse.", QuoteEN: "Sample review: the service came to the vehicle.", Rating: 5},
+	}}}
+	renderer, err := newTemplateRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.handler = newServer(f.cfg, renderer).Handler
+	for _, language := range []string{"fi", "en"} {
+		target := "/"
+		if language == "en" {
+			target = "/en"
+		}
+		response := f.request("GET", target, nil, nil)
+		if response.Code != 200 {
+			t.Fatal(response.Code)
+		}
+		body := response.Body.String()
+		if strings.Count(body, "data-lead-form") != 2 || strings.Contains(body, "request-details") {
+			t.Fatal("forms must both render without collapsed fields")
+		}
+		for _, id := range []string{"leadForm", "leadFormBottom", "phone", "bottom-phone", "car", "bottom-car", "mapPickerModal", "bottom-mapPickerModal"} {
+			if strings.Count(body, `id="`+id+`"`) != 1 {
+				t.Fatal("missing or repeated form ID: " + id)
+			}
+		}
+		start := strings.Index(body, `<section class="section reviews">`)
+		if start < 0 {
+			t.Fatal("approved review cards are missing")
+		}
+		end := strings.Index(body[start:], "</section>") + start
+		reviews := body[start:end]
+		if strings.Count(reviews, `class="testimonial-card"`) != 3 || strings.Contains(reviews, "<details") || strings.Contains(reviews, "data-testimonial-slider") {
+			t.Fatal("reviews should be directly visible cards")
+		}
+		if dir := os.Getenv("LIIKKUVA_QA_DIR"); dir != "" {
+			if err := os.MkdirAll(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "landing-reviews-"+language+".html"), []byte(body), 0600); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	for _, plate := range []string{"ABC-1", "ABC-12", "AB-123", "ABCD-123"} {
+		if isValidRegistrationNumber(plate) {
+			t.Fatal("registration must contain three letters and three digits: " + plate)
+		}
+	}
+	if !isValidRegistrationNumber("ABC-123") {
+		t.Fatal("valid masked registration rejected")
 	}
 }

@@ -28,6 +28,6 @@ func liikkuvaThemeHTML(body string, settings SiteSettings) string {
 		start := strings.Index(block, "<img")
 		return block[:start] + `<img src="` + html.EscapeString(light) + `" data-logo-light="` + html.EscapeString(light) + `" data-logo-dark="` + html.EscapeString(settings.LogoDarkURL) + `" alt="" width="46" height="46">`
 	})
-	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261031-client"><script src="/static/js/theme.js?v=20261031-client"></script>`
+	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261031-compact2"><script src="/static/js/theme.js?v=20261031-client"></script>`
 	return strings.Replace(body, "</head>", assets+"</head>", 1)
 }

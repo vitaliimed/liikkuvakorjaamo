@@ -395,7 +395,7 @@ func isValidRegistrationNumber(value string) bool {
 	if value == "" {
 		return true
 	}
-	return regexp.MustCompile(`^[A-Z]{3}-[0-9]{1,3}$`).MatchString(value)
+	return regexp.MustCompile(`^[A-Z]{3}-[0-9]{3}$`).MatchString(value)
 }
 
 func minInt(a, b int) int {

@@ -22,7 +22,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.31-client-experience'
+VERSION = '2026.10.31-compact-forms'
 HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'
@@ -568,7 +568,7 @@ class Updater:
                                                  timeout=min(12, max(0.1, deadline - time.monotonic())))
                         if self.health_matches(body, revision):
                             for path, marker in [('/admin', 'Войти в кабинет'),
-                                                 ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
+                                                 ('/static/css/responsive.css?v=20261031-compact2', '.hero-form-panel')]:
                                 page = self.endpoint(url + path, identity_token=token)
                                 if marker not in page:
                                     raise UpdateError(f'Ревизия отвечает, но не прошла проверка {path}. Трафик не переключён.')

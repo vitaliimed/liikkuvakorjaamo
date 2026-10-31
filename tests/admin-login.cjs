@@ -75,10 +75,9 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       const inputColors = await publicPage.locator('#lead-form input[name="name"]').evaluate(input => ({background: getComputedStyle(input).backgroundColor, color: getComputedStyle(input).color}));
       assert.equal(inputColors.background, 'rgb(17, 28, 46)');
       assert.equal(inputColors.color, 'rgb(237, 244, 255)');
-      await publicPage.waitForFunction(() => getComputedStyle(document.querySelector('#lead-form .inline-actions .btn')).backgroundColor === 'rgb(28, 42, 64)');
-      const actionColors = await publicPage.locator('#lead-form .inline-actions .btn').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
-      assert.equal(actionColors.background, 'rgb(28, 42, 64)');
-      assert.equal(actionColors.color, 'rgb(237, 244, 255)');
+      const actionColors = await publicPage.locator('#lead-form .location-action').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
+      assert.equal(actionColors.background, 'rgba(0, 0, 0, 0)');
+      assert.equal(actionColors.color, 'rgb(178, 202, 255)');
       if (process.env.LIIKKUVA_THEME_SCREENSHOTS) {
         const fs = require('node:fs'), path = require('node:path');
         fs.mkdirSync(process.env.LIIKKUVA_THEME_SCREENSHOTS, {recursive: true});

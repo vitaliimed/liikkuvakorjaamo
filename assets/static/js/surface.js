@@ -10,12 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (message && !message.value.trim()) { message.value = a.dataset.service + ': '; message.dispatchEvent(new Event('input', {bubbles: true})); }
   }));
   const sticky = document.querySelector('.mobile-cta');
-  const request = document.querySelector('#lead-form');
-  if (sticky && request && window.IntersectionObserver) {
-    new IntersectionObserver(entries => {
-      const visible = entries.some(entry => entry.isIntersecting);
-      sticky.classList.toggle('request-visible', visible);
-    }, {rootMargin: '-90px 0px 0px 0px', threshold: 0}).observe(request);
+  const requests = document.querySelectorAll('.request-card[data-form-position]');
+  if (sticky && requests.length && window.IntersectionObserver) {
+    const visible = new Set();
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => { if(entry.isIntersecting)visible.add(entry.target);else visible.delete(entry.target); });
+      sticky.classList.toggle('request-visible', visible.size > 0);
+    }, {rootMargin: '-90px 0px 0px 0px', threshold: 0});
+    requests.forEach(request => observer.observe(request));
   }
   const faq = document.querySelectorAll('.faq-list details');
   faq.forEach(el => el.addEventListener('toggle', () => { if (el.open) faq.forEach(other => { if (other !== el) other.open = false; }); }));

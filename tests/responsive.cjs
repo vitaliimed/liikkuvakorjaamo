@@ -11,7 +11,7 @@ const artifactDir = process.env.ARTIFACT_DIR || path.join(root, '.qa-artifacts')
 const fixtureDir = process.env.LIIKKUVA_QA_DIR;
 const localBinary = process.env.LIIKKUVA_TEST_BINARY;
 let base = process.env.BASE_URL || 'http://127.0.0.1:8080';
-const sizes = [[320,568],[360,800],[375,667],[390,844],[430,932],[768,1024],[1024,768],[1101,800],[1200,800],[1366,768],[1440,900],[1920,1080],[2560,1440],[3840,2160]];
+const sizes = [[320,568],[360,800],[375,667],[390,844],[430,932],[768,1024],[1024,768],[1101,800],[1200,800],[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440],[3840,2160]];
 const children = [];
 let proxy, browser;
 const pause = ms => new Promise(resolve => setTimeout(resolve,ms));
@@ -21,7 +21,7 @@ function bounds() {
  const rect=h1?.getBoundingClientRect(); const range=document.createRange();if(h1)range.selectNodeContents(h1);
  return {width:innerWidth,scroll:document.documentElement.scrollWidth,hero:hero?{height:hero.clientHeight,scroll:hero.scrollHeight}:null,
   title:rect?{x:rect.x,right:rect.right,y:rect.y,bottom:rect.bottom}:null,
-  textRects:h1?[...range.getClientRects()].map(r=>({x:r.x,right:r.right})):[],cta:cta?cta.getBoundingClientRect().toJSON():null};
+  form:document.querySelector('.hero-request')?.getBoundingClientRect().toJSON(),textRects:h1?[...range.getClientRects()].map(r=>({x:r.x,right:r.right})):[],cta:cta?cta.getBoundingClientRect().toJSON():null};
 }
 (async()=>{
  fs.mkdirSync(artifactDir,{recursive:true});
@@ -42,13 +42,20 @@ function bounds() {
  }
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH||undefined,args:['--no-sandbox']});
  const report=[];
- for(const [width,height] of sizes){
+ for(const [width,height] of (process.env.LIIKKUVA_FORMS_ONLY ? [] : sizes)){
   const context=await browser.newContext({viewport:{width,height},isMobile:width<600,hasTouch:width<600});
   await context.route('**/*',r=>r.request().url().startsWith(base)||r.request().url().startsWith('data:')?r.continue():r.abort());
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   for(const lang of ['fi','en']){
    await page.goto(base+(lang==='fi'?'/':'/en'),{waitUntil:'load'});await page.evaluate(()=>document.fonts.ready);
    const b=await page.evaluate(bounds);
+   assert.equal(await page.locator('form[data-lead-form]').count(),2,'Both complete forms must render');
+   assert.equal(await page.locator('.request-card details').count(),0,'Request fields must never collapse');
+   const duplicates=await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(x=>x.id);return ids.filter((id,i)=>ids.indexOf(id)!==i);});
+   assert.deepEqual(duplicates,[],'Repeated form introduced duplicate IDs');
+   if(width>=981&&height>=720){assert(b.form.y>=0&&b.form.bottom<=height-4,`Desktop form does not fit ${width}x${height}: bottom ${b.form.bottom}`);}
+   for(const input of ['name','phone','email','car','address','message','photosTrigger'])assert(await page.locator('#'+input).isVisible(),`Initial field ${input} is hidden at ${width}`);
+
    assert(b.scroll<=width+1,`Public ${lang} ${width}: horizontal overflow ${b.scroll}`);
    assert(b.hero.scroll<=b.hero.height+1,`Hero content clipped at ${width}`);
    assert(b.title.x>=-1&&b.title.right<=width+1,`Title outside screen at ${width}`);
@@ -65,6 +72,7 @@ function bounds() {
   assert.deepEqual(errors,[],`Public JS error ${width}`);
   await context.close();
  }
+ await require('./compact-forms.cjs')(browser,base,artifactDir);
  if(fixtureDir){
   for(const width of [320,390,768,1440,2560]){
    const context=await browser.newContext({viewport:{width,height:900}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
