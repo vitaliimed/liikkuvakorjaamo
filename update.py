@@ -22,7 +22,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.31-integrations-theme'
+VERSION = '2026.10.31-compact-forms'
 HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'
@@ -225,6 +225,31 @@ class Updater:
                 '--member=serviceAccount:' + self.runtime_account,
                 '--role=roles/datastore.user', '--condition=None', '--format=none')
         self.secure_database()
+
+    def configure_media(self):
+        """Use a private, isolated bucket; website assets are served through the app."""
+        bucket = self.entries.get('GCS_BUCKET_NAME', {}).get('value') or self.project + '-liikkuva-files'
+        if not bucket.endswith('-liikkuva-files') or not re.fullmatch(r'[a-z0-9][a-z0-9.-]{2,221}', bucket):
+            raise UpdateError('Хранилище не распознано как отдельное хранилище Liikkuva. Настройки не изменены.')
+        self.gc('services', 'enable', 'storage.googleapis.com')
+        root = 'https://storage.googleapis.com/storage/v1/b'
+        try:
+            metadata = self.api(root + '/' + bucket)
+        except APIError as exc:
+            if exc.code != 404:
+                raise
+            print('Создаю закрытое хранилище изображений Liikkuva…', flush=True)
+            metadata = self.api(root + '?project=' + urllib.parse.quote(self.project), method='POST', data={
+                'name': bucket, 'location': self.region, 'storageClass': 'STANDARD',
+                'iamConfiguration': {'uniformBucketLevelAccess': {'enabled': True},
+                                     'publicAccessPrevention': 'enforced'}})
+        if str(metadata.get('projectNumber')) != str(self.project_number):
+            raise UpdateError('Хранилище принадлежит другому проекту. Доступ не изменён.')
+        self.gc('storage', 'buckets', 'add-iam-policy-binding', 'gs://' + bucket,
+                '--member=serviceAccount:' + self.runtime_account,
+                '--role=roles/storage.objectUser', '--format=none')
+        self.updates['GCS_BUCKET_NAME'] = bucket
+        print('Изображения сайта: отдельная папка site-assets; фото заявок остаются закрытыми.', flush=True)
 
     def secure_database(self):
         root = f'https://firebaserules.googleapis.com/v1/projects/{self.project}'
@@ -543,7 +568,7 @@ class Updater:
                                                  timeout=min(12, max(0.1, deadline - time.monotonic())))
                         if self.health_matches(body, revision):
                             for path, marker in [('/admin', 'Войти в кабинет'),
-                                                 ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
+                                                 ('/static/css/responsive.css?v=20261031-compact2', '.hero-form-panel')]:
                                 page = self.endpoint(url + path, identity_token=token)
                                 if marker not in page:
                                     raise UpdateError(f'Ревизия отвечает, но не прошла проверка {path}. Трафик не переключён.')
@@ -640,6 +665,7 @@ def parse_args(argv=None):
     p.add_argument('--set-password', action='store_true', help='Set an owner password after deployment')
     p.add_argument('--password-only', action='store_true', help='Set a password without deploying')
     p.add_argument('--configure-email', action='store_true', help='Configure SMTP using hidden credential prompts')
+    p.add_argument('--configure-media', action='store_true', help='Connect private durable storage for website image uploads')
     p.add_argument('--configure-telegram', action='store_true', help='Configure an existing Telegram bot using hidden credential prompts')
     p.add_argument('--check-integrations', action='store_true', help='Read configuration status without changing cloud resources')
     p.add_argument('--enable-leads', action='store_true', help='Leave setup mode after integrations are configured')
@@ -650,11 +676,11 @@ def main(argv=None):
     args = parse_args(argv)
     if not 30 <= args.check_timeout <= 600:
         raise UpdateError('--check-timeout должен быть от 30 до 600 секунд.')
-    if args.check_integrations and (args.resume or args.password_only or args.set_password or args.configure_email or args.configure_telegram or args.enable_leads):
+    if args.check_integrations and (args.resume or args.password_only or args.set_password or args.configure_email or args.configure_telegram or args.configure_media or args.enable_leads):
         raise UpdateError('--check-integrations используется отдельно от обновления и изменения конфигурации.')
-    if args.resume and (args.password_only or args.configure_email or args.configure_telegram or args.enable_leads):
+    if args.resume and (args.password_only or args.configure_email or args.configure_telegram or args.configure_media or args.enable_leads):
         raise UpdateError('--resume используется отдельно от смены конфигурации и --password-only.')
-    if args.password_only and (args.configure_email or args.configure_telegram or args.enable_leads):
+    if args.password_only and (args.configure_email or args.configure_telegram or args.configure_media or args.enable_leads):
         raise UpdateError('--password-only используется отдельно от настройки почты и приёма заявок.')
     if not shutil.which('gcloud'):
         raise UpdateError('Откройте Google Cloud Shell: https://shell.cloud.google.com/')
@@ -667,6 +693,8 @@ def main(argv=None):
         updater.integration_report()
         return
     updater.prepare_storage()
+    if args.configure_media:
+        updater.configure_media()
     if args.configure_email:
         updater.configure_email()
     if args.configure_telegram:

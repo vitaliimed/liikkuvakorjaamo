@@ -87,7 +87,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 				return
 			}
 			s = liikkuvaSettings(s)
-			b, _ := json.Marshal(map[string]string{"ga4MeasurementId": s.GA4MeasurementID, "googleAdsTagId": s.GoogleAdsTagID, "googleAdsLeadConversionLabel": s.GoogleAdsLeadConversionLabel, "metaPixelId": s.MetaPixelID, "linkedinPartnerId": s.LinkedInPartnerID, "linkedinLeadConversionID": s.LinkedInLeadConversionID, "tiktokPixelId": s.TikTokPixelID})
+			b, _ := json.Marshal(trackingConfig(s))
 			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 			w.Header().Set("Cache-Control", "no-cache")
 			fmt.Fprintf(w, "window.LIIKKUVA_TRACKING=%s;", b)
@@ -119,6 +119,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 		}
 		body := liikkuvaPriceText(rec.Body.String(), settings)
 		body = liikkuvaThemeHTML(body, settings)
+		body = liikkuvaTrackingHTML(body, settings)
 		css := fmt.Sprintf(`<style>:root{--brand:%s;--blue:%s}html{font-size:%dpx}.btn-orange,.btn-primary{background:%s}</style>`, settings.ProAccent, settings.ProAccent, settings.ProFontSize, settings.ProAccent)
 		body = strings.Replace(body, "</head>", css+"</head>", 1)
 		extra := ""

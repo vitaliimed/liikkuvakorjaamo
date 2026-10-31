@@ -1,0 +1,38 @@
+{{define "request-form"}}
+<div class="request-card {{if eq .Position "hero"}}hero-request{{else}}bottom-request{{end}}" id="{{.AnchorID}}" data-form-position="{{.Position}}">
+  <div class="request-card-heading"><h2>{{.Content.Form.Title}}</h2></div>
+  <form id="{{.FormID}}" data-lead-form data-form-position="{{.Position}}" data-id-prefix="{{.Prefix}}" action="/lead" method="post" enctype="multipart/form-data"
+    data-success-message="{{.Content.Form.SuccessMessage}}" data-error-message="{{.Content.Form.ErrorMessage}}" data-submit-loading-text="{{.Content.Form.SubmitLoadingText}}"
+    data-name-required="{{.Content.Form.NameRequiredMessage}}" data-contact-required="{{.Content.Form.ContactRequiredMessage}}" data-phone-invalid="{{.Content.Form.PhoneInvalidMessage}}"
+    data-email-invalid="{{.Content.Form.EmailInvalidMessage}}" data-registration-invalid="{{.Content.Form.RegistrationInvalidMessage}}" data-photos-too-many="{{.Content.Form.PhotosTooManyMessage}}"
+    data-photos-type="{{.Content.Form.PhotosTypeMessage}}" data-photos-size="{{.Content.Form.PhotosSizeMessage}}" data-geo-unsupported="{{.Content.Form.GeoUnsupportedMessage}}"
+    data-geo-loading="{{.Content.Form.GeoLoadingText}}" data-geo-added="{{.Content.Form.GeoAddedText}}" data-geo-failed="{{.Content.Form.GeoFailedMessage}}"
+    data-map-pick-first="{{.Content.Form.MapPickFirstMessage}}" data-map-point-added="{{.Content.Form.MapPointAddedText}}" data-reverse-geocode-failed="{{.Content.Form.ReverseGeocodeFailedMessage}}"
+    data-network-error="{{.Content.Form.NetworkErrorMessage}}" data-lang="{{.Lang}}">
+    <input type="hidden" name="language" value="{{.Lang}}"><input type="hidden" name="source" value="liikkuvakorjaamo.fi">
+    <input type="hidden" name="page_url" id="{{.Prefix}}pageUrl"><input type="hidden" name="referer" id="{{.Prefix}}refererField">
+    <input type="hidden" name="utm_source" id="{{.Prefix}}utmSource"><input type="hidden" name="utm_medium" id="{{.Prefix}}utmMedium"><input type="hidden" name="utm_campaign" id="{{.Prefix}}utmCampaign"><input type="hidden" name="utm_term" id="{{.Prefix}}utmTerm"><input type="hidden" name="utm_content" id="{{.Prefix}}utmContent">
+    <input type="hidden" name="location_source" id="{{.Prefix}}locationSource"><input type="hidden" name="latitude" id="{{.Prefix}}latitude"><input type="hidden" name="longitude" id="{{.Prefix}}longitude"><input type="hidden" name="maps_url" id="{{.Prefix}}mapsUrl"><input type="hidden" name="address_hint" id="{{.Prefix}}addressHint">
+    <div class="hp-wrap" aria-hidden="true"><label for="{{.Prefix}}company">Company</label><input id="{{.Prefix}}company" type="text" name="company" tabindex="-1" autocomplete="off"></div>
+    <div class="form-grid form-grid-modern">
+      <div class="field"><label for="{{.Prefix}}name">{{.Content.Form.LabelName}}</label><input id="{{.Prefix}}name" name="name" type="text" placeholder="{{.Content.Form.PlaceholderName}}" autocomplete="name" maxlength="100" required></div>
+      <div class="field"><label for="{{.Prefix}}phone">{{.Content.Form.LabelPhone}}</label><input id="{{.Prefix}}phone" name="phone" type="tel" placeholder="+358 40 123 45 67" autocomplete="tel" inputmode="tel" maxlength="17" required></div>
+      <div class="field email-field"><label for="{{.Prefix}}email">{{.Content.Form.LabelEmail}}</label><div class="input-with-symbol"><span aria-hidden="true">@</span><input id="{{.Prefix}}email" name="email" type="email" placeholder="email@example.com" autocomplete="email" inputmode="email" maxlength="254"></div></div>
+      <div class="field reg-field"><label for="{{.Prefix}}car">{{.Content.Form.LabelCar}}</label><input id="{{.Prefix}}car" name="car" type="text" placeholder="ABC-123" pattern="[A-Za-z]{3}-[0-9]{3}" maxlength="7" autocapitalize="characters" autocomplete="off" aria-label="{{.Content.Form.LabelCar}}: ABC-123"></div>
+      <div class="field field-span-2 address-field"><label for="{{.Prefix}}address">{{.Content.Form.LabelAddress}}</label><input id="{{.Prefix}}address" name="address" type="text" placeholder="{{.Content.Form.PlaceholderAddress}}" autocomplete="street-address" maxlength="300">
+        <div class="inline-actions location-choice"><button type="button" id="{{.Prefix}}useLocationBtn" class="location-action"><svg class="icon" aria-hidden="true"><use href="#pin"></use></svg>{{.Content.Form.UseLocationButton}}</button><span>{{if eq .Lang "fi"}}tai{{else}}or{{end}}</span><button type="button" id="{{.Prefix}}pickMapBtn" class="location-action">{{.Content.Form.PickMapButton}}</button></div>
+      </div>
+      <div class="field field-span-2 message-field"><label for="{{.Prefix}}message">{{.Content.Form.LabelMessage}}</label><textarea id="{{.Prefix}}message" name="message" placeholder="{{.Content.Form.PlaceholderMessage}}" rows="2" maxlength="4000"></textarea></div>
+      <div class="field field-span-2 photo-field"><input id="{{.Prefix}}photos" class="photos-input-native" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label="{{.Content.Form.LabelPhotos}}"><button type="button" id="{{.Prefix}}photosTrigger" class="photo-dropzone compact-photo" aria-controls="{{.Prefix}}photos" title="{{.Content.Form.PhotosHint}}"><span class="photo-dropzone-icon" aria-hidden="true">+</span><span class="photo-dropzone-text">{{.Content.Form.UploadButtonText}}</span><span class="photo-count" data-photo-count aria-live="polite">0 / 3</span></button><div id="{{.Prefix}}photoPreviewList" class="photo-preview-list"></div></div>
+      <div class="submit-row field-span-2"><button type="submit" class="btn-submit">{{.Content.Form.SubmitButton}}</button><p id="{{.Prefix}}formMessage" class="form-message" role="status" aria-live="polite"></p></div>
+    </div>
+  </form>
+  <p class="form-privacy">{{if eq .Lang "fi"}}Tietojasi käytetään pyyntösi käsittelyyn. <a href="/privacy?lang=fi">Tietosuoja</a>{{else}}We use your details to handle your request. <a href="/privacy?lang=en">Privacy</a>{{end}}</p>
+</div>
+{{end}}
+
+{{define "request-map"}}
+<div id="{{.Prefix}}mapPickerModal" class="map-modal" role="dialog" aria-modal="true" aria-label="{{if eq .Lang "fi"}}Valitse auton sijainti{{else}}Select car location{{end}}" data-leaflet-css="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" data-leaflet-js="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  <div class="map-modal-dialog"><div class="map-modal-header"><h3>{{if eq .Lang "fi"}}Valitse auton sijainti{{else}}Select car location{{end}}</h3><button type="button" id="{{.Prefix}}closeMapModal" class="map-close-btn" aria-label="{{if eq .Lang "fi"}}Sulje{{else}}Close{{end}}">×</button></div><div id="{{.Prefix}}mapPickerCanvas" class="map-canvas"></div><div class="map-modal-actions"><button type="button" id="{{.Prefix}}confirmMapPoint" class="btn btn-orange">{{if eq .Lang "fi"}}Käytä tätä sijaintia{{else}}Use this location{{end}}</button><p class="map-attribution">Map data © OpenStreetMap contributors</p></div></div>
+</div>
+{{end}}
