@@ -22,7 +22,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.30-admin-login'
+VERSION = '2026.10.31-integrations-theme'
 HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'
@@ -280,21 +280,92 @@ class Updater:
             raise UpdateError('Проверьте SMTP host, порт, логин, ключ и адрес отправителя.')
         self.gc('services', 'enable', 'secretmanager.googleapis.com')
         for key, value in [('SMTP_USERNAME', login), ('SMTP_PASSWORD', password)]:
-            name = 'liikkuva-' + key.lower().replace('_', '-')
-            found = self.gc('secrets', 'describe', name, '--format=none', check=False).returncode == 0
-            if not found:
-                self.gc('secrets', 'create', name, '--replication-policy=automatic')
-            version = self.gc('secrets', 'versions', 'add', name, '--data-file=-', '--format=value(name)', input=value).stdout.strip().split('/')[-1]
-            self.gc('secrets', 'add-iam-policy-binding', name,
-                    '--member=serviceAccount:' + self.runtime_account,
-                    '--role=roles/secretmanager.secretAccessor', '--format=none')
-            self.secret_updates[key] = name + ':' + version
+            self.save_secret(key, value)
         self.updates.update(SMTP_HOST=host, SMTP_PORT=port,
                             MAIL_FROM=email.utils.formataddr(('Liikkuva Auto Korjaamo', address)), MAIL_REPLY_TO=address)
 
+    def save_secret(self, key, value):
+        name = 'liikkuva-' + key.lower().replace('_', '-')
+        found = self.gc('secrets', 'describe', name, '--format=none', check=False).returncode == 0
+        if not found:
+            self.gc('secrets', 'create', name, '--replication-policy=automatic')
+        version = self.gc('secrets', 'versions', 'add', name, '--data-file=-',
+                          '--format=value(name)', input=value).stdout.strip().split('/')[-1]
+        if not version.isdigit():
+            raise UpdateError('Secret Manager не вернул номер версии секрета. Настройка остановлена.')
+        self.gc('secrets', 'add-iam-policy-binding', name,
+                '--member=serviceAccount:' + self.runtime_account,
+                '--role=roles/secretmanager.secretAccessor', '--format=none')
+        self.secret_updates[key] = name + ':' + version
+
+    @staticmethod
+    def telegram_metadata(token, method, data=None):
+        # These read-only methods cannot change the shared bot's webhook,
+        # consume AutoHelp updates, or send a message to the shared chat.
+        if method not in ('getMe', 'getChat'):
+            raise UpdateError('Разрешена только проверка данных Telegram.')
+        request = urllib.request.Request('https://api.telegram.org/bot' + token + '/' + method,
+                                         data=json.dumps(data or {}).encode(),
+                                         headers={'Content-Type': 'application/json'}, method='POST')
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                result = json.loads(response.read(128 * 1024))
+        except urllib.error.HTTPError as exc:
+            exc.close()
+            raise UpdateError('Telegram отклонил проверку. Проверьте токен бота, Chat ID и доступ бота к чату.') from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError):
+            raise UpdateError('Не удалось проверить Telegram. Проверьте соединение и повторите настройку.') from None
+        if not isinstance(result, dict) or result.get('ok') is not True or not isinstance(result.get('result'), dict):
+            raise UpdateError('Telegram не подтвердил бота или чат. Настройки не сохранены.')
+        return result['result']
+
+    def configure_telegram(self):
+        print('Для общего с AutoHelp бота укажите существующий токен и тот же Chat ID.', flush=True)
+        token = getpass.getpass('Telegram bot token (ввод скрыт): ').strip()
+        chat = input('Telegram Chat ID: ').strip()
+        if not re.fullmatch(r'\d{5,}:[A-Za-z0-9_-]{20,}', token) or not re.fullmatch(r'-?\d+|@[A-Za-z0-9_]{5,}', chat):
+            raise UpdateError('Проверьте формат Telegram token и Chat ID.')
+        bot = self.telegram_metadata(token, 'getMe')
+        if bot.get('is_bot') is not True:
+            raise UpdateError('Telegram не подтвердил учётную запись бота.')
+        destination = self.telegram_metadata(token, 'getChat', {'chat_id': chat})
+        if not destination.get('id'):
+            raise UpdateError('Telegram не подтвердил целевой чат.')
+        print('Проверен бот @' + str(bot.get('username', 'без username')) + '; чат доступен. '
+              'Доставка сообщения проверяется отдельной тестовой заявкой.', flush=True)
+        self.gc('services', 'enable', 'secretmanager.googleapis.com')
+        self.save_secret('TELEGRAM_BOT_TOKEN', token)
+        self.save_secret('TELEGRAM_CHAT_ID', str(destination['id']))
+
+    def configured(self, key, runtime_only=False):
+        if not runtime_only and key in self.secret_updates:
+            return bool(self.secret_updates[key])
+        if not runtime_only and key in self.updates:
+            return bool(self.updates[key])
+        entry = self.entries.get(key, {})
+        return bool(entry.get('value') or entry.get('valueFrom', {}).get('secretKeyRef'))
+
+    def integration_report(self):
+        groups = [
+            ('Отправка почты', ('SMTP_HOST', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'MAIL_FROM')),
+            ('Telegram', ('TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID')),
+            ('Google Таблица', ('GOOGLE_APPS_SCRIPT_URL', 'GOOGLE_APPS_SCRIPT_TOKEN')),
+            ('Обработка заявок', ('FIRESTORE_PROJECT_ID', 'INTERNAL_TASK_TOKEN', 'REVIEW_TOKEN_SECRET',
+                                  'CLOUD_TASKS_PROJECT_ID', 'CLOUD_TASKS_LOCATION', 'CLOUD_TASKS_QUEUE',
+                                  'GCS_BUCKET_NAME', 'INTERNAL_PROCESS_LEAD_URL')),
+        ]
+        print('Наличие настроек (без проверки доставки и без вывода секретов):', flush=True)
+        for title, keys in groups:
+            missing = [key for key in keys if not self.configured(key, runtime_only=True)]
+            print(title + ': ' + ('задано' if not missing else 'не заданы ' + ', '.join(missing)), flush=True)
+        paused = self.entries.get('LIIKKUVA_BOOTSTRAP', {}).get('value') == '1'
+        print('Приём заявок: ' + ('режим настройки, отправка приостановлена' if paused else 'режим настройки не включён'), flush=True)
+        print('Проверка входящей пересылки выполняется в Cloudflare Email Routing. '
+              'Проверка доставки — своей заявкой после подключения очереди, хранилища и таблицы.', flush=True)
+
     def check_intake(self):
         required = ['INTERNAL_TASK_TOKEN', 'REVIEW_TOKEN_SECRET', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'GOOGLE_APPS_SCRIPT_URL', 'GOOGLE_APPS_SCRIPT_TOKEN', 'CLOUD_TASKS_PROJECT_ID', 'CLOUD_TASKS_LOCATION', 'CLOUD_TASKS_QUEUE', 'GCS_BUCKET_NAME', 'INTERNAL_PROCESS_LEAD_URL']
-        missing = [k for k in required if k not in self.entries]
+        missing = [k for k in required if not self.configured(k)]
         if missing:
             raise UpdateError('Приём заявок пока нельзя включить: отсутствуют ' + ', '.join(missing))
         self.updates['LIIKKUVA_BOOTSTRAP'] = '0'
@@ -569,6 +640,8 @@ def parse_args(argv=None):
     p.add_argument('--set-password', action='store_true', help='Set an owner password after deployment')
     p.add_argument('--password-only', action='store_true', help='Set a password without deploying')
     p.add_argument('--configure-email', action='store_true', help='Configure SMTP using hidden credential prompts')
+    p.add_argument('--configure-telegram', action='store_true', help='Configure an existing Telegram bot using hidden credential prompts')
+    p.add_argument('--check-integrations', action='store_true', help='Read configuration status without changing cloud resources')
     p.add_argument('--enable-leads', action='store_true', help='Leave setup mode after integrations are configured')
     return p.parse_args(argv)
 
@@ -577,9 +650,11 @@ def main(argv=None):
     args = parse_args(argv)
     if not 30 <= args.check_timeout <= 600:
         raise UpdateError('--check-timeout должен быть от 30 до 600 секунд.')
-    if args.resume and (args.password_only or args.configure_email or args.enable_leads):
+    if args.check_integrations and (args.resume or args.password_only or args.set_password or args.configure_email or args.configure_telegram or args.enable_leads):
+        raise UpdateError('--check-integrations используется отдельно от обновления и изменения конфигурации.')
+    if args.resume and (args.password_only or args.configure_email or args.configure_telegram or args.enable_leads):
         raise UpdateError('--resume используется отдельно от смены конфигурации и --password-only.')
-    if args.password_only and (args.configure_email or args.enable_leads):
+    if args.password_only and (args.configure_email or args.configure_telegram or args.enable_leads):
         raise UpdateError('--password-only используется отдельно от настройки почты и приёма заявок.')
     if not shutil.which('gcloud'):
         raise UpdateError('Откройте Google Cloud Shell: https://shell.cloud.google.com/')
@@ -588,9 +663,14 @@ def main(argv=None):
     needs_password = args.set_password or args.password_only
     updater = Updater(args)
     updater.discover()
+    if args.check_integrations:
+        updater.integration_report()
+        return
     updater.prepare_storage()
     if args.configure_email:
         updater.configure_email()
+    if args.configure_telegram:
+        updater.configure_telegram()
     if args.enable_leads:
         updater.check_intake()
     with tempfile.TemporaryDirectory(prefix='liikkuva-build-') as temp:

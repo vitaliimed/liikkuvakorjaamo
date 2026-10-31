@@ -445,6 +445,9 @@ type SiteSettings struct {
 	ProDiagnosticEUR             int
 	ProFontSize                  int
 	ProAccent                    string
+	ProTheme                     string
+	ProNightStart                string
+	ProNightEnd                  string
 	ProPricingText               string
 	ProAreasText                 string
 	ProDiagnosticsText           string
@@ -851,16 +854,17 @@ type AdminReviewListItem struct {
 }
 
 type AdminPageData struct {
-	CSRF           string
-	ReleaseVersion string
-	IntakePaused   bool
-	PageTitle      string
-	LoginRequired  bool
-	Error          string
-	Saved          bool
-	MailEnabled    bool
-	Settings       SiteSettings
-	ActiveTab      string
+	TelegramConfigured bool
+	CSRF               string
+	ReleaseVersion     string
+	IntakePaused       bool
+	PageTitle          string
+	LoginRequired      bool
+	Error              string
+	Saved              bool
+	MailEnabled        bool
+	Settings           SiteSettings
+	ActiveTab          string
 
 	OverviewTotalLeads     int
 	OverviewFailedLeads    int

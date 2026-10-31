@@ -53,9 +53,52 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
 
       await page.goto(base + '/admin?tab=general');
       await page.locator('[name="ProVisitEUR"]').fill(width === 390 ? '91' : '92');
+      await page.locator('[name="ProTheme"]').selectOption('night');
+      await page.locator('[name="ProNightStart"]').fill('21:00');
+      await page.locator('[name="ProNightEnd"]').fill('07:00');
       await submit(page.locator('.pro-save'), '/admin/save');
       await page.waitForURL(/saved=1/);
       assert.equal(await page.locator('[name="ProVisitEUR"]').inputValue(), width === 390 ? '91' : '92');
+
+      const publicPage = await context.newPage();
+      await publicPage.goto(base + '/');
+      assert.equal(await publicPage.locator('html').getAttribute('data-theme-policy'), 'night');
+      if (width < 600) await publicPage.locator('#menuToggle').click();
+      await publicPage.locator('[data-theme-picker]').selectOption('dark');
+      assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark');
+      const colors = await publicPage.evaluate(() => ({body: getComputedStyle(document.body).backgroundColor,
+        hero: getComputedStyle(document.querySelector('.hero-copy')).backgroundColor,
+        overflow: document.documentElement.scrollWidth > innerWidth + 1}));
+      assert.equal(colors.body, 'rgb(16, 24, 39)');
+      assert.equal(colors.hero, 'rgb(22, 34, 56)');
+      assert.equal(colors.overflow, false);
+      const inputColors = await publicPage.locator('#lead-form input[name="name"]').evaluate(input => ({background: getComputedStyle(input).backgroundColor, color: getComputedStyle(input).color}));
+      assert.equal(inputColors.background, 'rgb(17, 28, 46)');
+      assert.equal(inputColors.color, 'rgb(237, 244, 255)');
+      await publicPage.waitForFunction(() => getComputedStyle(document.querySelector('#lead-form .inline-actions .btn')).backgroundColor === 'rgb(28, 42, 64)');
+      const actionColors = await publicPage.locator('#lead-form .inline-actions .btn').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
+      assert.equal(actionColors.background, 'rgb(28, 42, 64)');
+      assert.equal(actionColors.color, 'rgb(237, 244, 255)');
+      if (process.env.LIIKKUVA_THEME_SCREENSHOTS) {
+        const fs = require('node:fs'), path = require('node:path');
+        fs.mkdirSync(process.env.LIIKKUVA_THEME_SCREENSHOTS, {recursive: true});
+        if (width < 600) await publicPage.locator('#menuToggle').click();
+        await publicPage.screenshot({path: path.join(process.env.LIIKKUVA_THEME_SCREENSHOTS, `night-${width}.png`)});
+        const necessary = publicPage.getByRole('button', {name: 'Vain välttämättömät'});
+        if (await necessary.isVisible()) await necessary.click();
+        await publicPage.locator('#lead-form').scrollIntoViewIfNeeded();
+        await publicPage.screenshot({path: path.join(process.env.LIIKKUVA_THEME_SCREENSHOTS, `night-form-${width}.png`)});
+      }
+      await publicPage.reload();
+      assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark', 'Visitor theme must persist');
+      await publicPage.goto(base + '/en');
+      assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark', 'Language switch must preserve theme');
+      if (width < 600) await publicPage.locator('#menuToggle').click();
+      await publicPage.locator('[data-theme-picker]').selectOption('light');
+      assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'light');
+      await publicPage.locator('[data-theme-picker]').selectOption('auto');
+      assert.equal(await publicPage.locator('[data-theme-picker]').inputValue(), 'auto');
+      await publicPage.close();
 
       await page.goto(base + '/admin/access');
       await page.locator('#password-current').fill(password);
@@ -88,7 +131,7 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
         await page.waitForURL(base + '/admin');
       }
       assert.deepEqual(errors, [], 'Admin JavaScript must not fail');
-      console.log(`PASS ${width}px: native login, Hosting proxy, secure session, reload, save, password change, logout, wrong-password retry` + (width === 390 ? ', recovery and reset' : ''));
+      console.log(`PASS ${width}px: native login, Hosting proxy, secure session, reload, save, night theme and visitor override, password change, logout, wrong-password retry` + (width === 390 ? ', recovery and reset' : ''));
       await context.close();
     }
   } finally {

@@ -4,6 +4,30 @@
 Google Cloud project: `liikkuva-korjaamo`. Регион Cloud Run: `europe-north1`.
 Firebase Hosting site: `liikkuva-liikkuva-korjaamo`.
 
+## Почта, Telegram, логотип и ночная тема
+
+Пошаговая инструкция: [CONNECT-RU.md](CONNECT-RU.md).
+SMTP и существующий бот подключаются скрытыми запросами Cloud Shell:
+
+```bash
+(
+set -e
+git -C "$HOME/liikkuva-release" pull --ff-only origin main
+python3 "$HOME/liikkuva-release/update.py" --configure-email --configure-telegram
+python3 "$HOME/liikkuva-release/update.py" --check-integrations
+)
+```
+
+Для общего с AutoHelp бота укажите тот же token и Chat ID. Настройка проверяет
+бота и доступ к чату, сохраняет отдельные ссылки на секреты Liikkuva и не
+меняет webhook общего бота. Уведомления и фотографии помечаются `#Liikkuva`.
+Статус наличия остальных настроек можно прочитать отдельно через
+`--check-integrations`; эта команда не меняет облачные ресурсы и не проверяет доставку.
+
+В «Основных настройках» появилась тема: светлая, тёмная, по устройству
+или по времени Хельсинки (по умолчанию 21:00–07:00). Начальный режим — светлый.
+Посетитель может изменить тему в меню главной; Auto возвращает настройку владельца.
+
 ## Обновить существующий сайт и задать пароль
 
 В Google Cloud Shell из папки этого репозитория:

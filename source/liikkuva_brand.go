@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.10.30-admin-login"
+const releaseVersion = "2026.10.31-integrations-theme"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte

@@ -11,7 +11,7 @@ const artifactDir = process.env.ARTIFACT_DIR || path.join(root, '.qa-artifacts')
 const fixtureDir = process.env.LIIKKUVA_QA_DIR;
 const localBinary = process.env.LIIKKUVA_TEST_BINARY;
 let base = process.env.BASE_URL || 'http://127.0.0.1:8080';
-const sizes = [[320,568],[360,800],[375,667],[390,844],[430,932],[768,1024],[1024,768],[1366,768],[1440,900],[1920,1080],[2560,1440],[3840,2160]];
+const sizes = [[320,568],[360,800],[375,667],[390,844],[430,932],[768,1024],[1024,768],[1101,800],[1200,800],[1366,768],[1440,900],[1920,1080],[2560,1440],[3840,2160]];
 const children = [];
 let proxy, browser;
 const pause = ms => new Promise(resolve => setTimeout(resolve,ms));

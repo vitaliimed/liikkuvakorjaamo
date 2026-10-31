@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html"
 	"io"
@@ -22,13 +23,13 @@ func sendLeadToTelegram(cfg Config, lead Lead) error {
 		return fmt.Errorf("telegram config is empty")
 	}
 
-	if err := sendTelegramText(cfg, ("🔧 <b>liikkuvakorjaamo.fi</b>\n" + buildTelegramMessage(lead))); err != nil {
+	if err := sendTelegramText(cfg, liikkuvaTelegramHeader()+buildTelegramMessage(lead)); err != nil {
 		return err
 	}
 
 	if len(lead.PhotoPaths) > 0 {
 		for i, photoPath := range lead.PhotoPaths {
-			caption := fmt.Sprintf("Photo %d", i+1)
+			caption := liikkuvaTelegramPhotoCaption(lead, i+1)
 			if err := sendTelegramDocumentFromFile(cfg, photoPath, caption); err != nil {
 				return err
 			}
@@ -37,13 +38,25 @@ func sendLeadToTelegram(cfg Config, lead Lead) error {
 	}
 
 	for i, photoRef := range lead.PhotoURLs {
-		caption := fmt.Sprintf("Photo %d", i+1)
+		caption := liikkuvaTelegramPhotoCaption(lead, i+1)
 		if err := sendTelegramDocumentFromRef(cfg, photoRef, caption); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func liikkuvaTelegramHeader() string {
+	return "🟦 <b>LIIKKUVA · liikkuvakorjaamo.fi</b>\n#Liikkuva\n\n"
+}
+
+func liikkuvaTelegramPhotoCaption(lead Lead, number int) string {
+	car := []rune(strings.TrimSpace(lead.Car))
+	if len(car) > 80 {
+		car = car[:80]
+	}
+	return fmt.Sprintf("LIIKKUVA · liikkuvakorjaamo.fi\n#Liikkuva · Photo %d · %s", number, string(car))
 }
 
 func sendTelegramText(cfg Config, message string) error {
@@ -53,10 +66,11 @@ func sendTelegramText(cfg Config, message string) error {
 	form.Set("chat_id", cfg.TelegramChatID)
 	form.Set("text", message)
 	form.Set("parse_mode", "HTML")
+	form.Set("link_preview_options", `{"is_disabled":true}`)
 
 	req, err := http.NewRequest(http.MethodPost, apiURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return fmt.Errorf("create telegram text request: %w", err)
+		return fmt.Errorf("Telegram: проверьте формат токена бота")
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -64,16 +78,11 @@ func sendTelegramText(cfg Config, message string) error {
 	client := &http.Client{Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("send telegram text request: %w", err)
+		return fmt.Errorf("Telegram: не удалось соединиться с сервером отправки")
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("telegram returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
+	return checkTelegramResponse(resp)
 }
 
 func sendTelegramDocumentFromFile(cfg Config, filePath, caption string) error {
@@ -157,23 +166,47 @@ func sendTelegramDocument(cfg Config, source io.Reader, filename, caption string
 
 	req, err := http.NewRequest(http.MethodPost, apiURL, &body)
 	if err != nil {
-		return fmt.Errorf("create telegram document request: %w", err)
+		return fmt.Errorf("Telegram: проверьте формат токена бота")
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("send telegram document request: %w", err)
+		return fmt.Errorf("Telegram: не удалось соединиться с сервером вложений")
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("telegram returned status %d: %s", resp.StatusCode, string(respBody))
-	}
+	return checkTelegramResponse(resp)
+}
 
-	return nil
+func checkTelegramResponse(response *http.Response) error {
+	var result struct {
+		OK   bool `json:"ok"`
+		Code int  `json:"error_code"`
+	}
+	err := json.NewDecoder(io.LimitReader(response.Body, 128*1024)).Decode(&result)
+	code := response.StatusCode
+	if code >= 200 && code < 300 && err == nil && result.OK {
+		return nil
+	}
+	if result.Code >= 400 && result.Code <= 599 {
+		code = result.Code
+	}
+	reason := "неожиданный ответ сервера, проверьте доступность Telegram"
+	switch code {
+	case 400:
+		reason = "проверьте Chat ID и формат сообщения"
+	case 401:
+		reason = "проверьте токен бота"
+	case 403:
+		reason = "боту запрещена отправка в этот чат"
+	case 429:
+		reason = "лимит отправки, повторите позже"
+	}
+	// Transport errors and response bodies can contain the token-bearing URL.
+	// Keep shared AutoHelp/Liikkuva credentials out of logs and stored errors.
+	return fmt.Errorf("Telegram: HTTP %d, %s", code, reason)
 }
 
 func buildTelegramMessage(lead Lead) string {

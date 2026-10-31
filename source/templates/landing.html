@@ -214,7 +214,7 @@
  <a href="/en" class="brand" aria-label="Liikkuva Auto Korjaamo">
   <img src="{{.Content.Header.LogoURL}}" alt="" width="46" height="46"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span>
  </a>
- <nav id="mainNav" class="nav" aria-label="Main menu">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}</nav>
+ <nav id="mainNav" class="nav" aria-label="Main menu">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}<label class="theme-picker"><span class="theme-picker-label">Appearance</span><select data-theme-picker aria-label="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>
  <div class="header-actions"><div class="languages"><a href="/">FI</a><span>/</span><a href="/en" aria-current="page">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
 </div></header>
 
@@ -398,7 +398,7 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
  <a href="/" class="brand" aria-label="Liikkuva Auto Korjaamo">
   <img src="{{.Content.Header.LogoURL}}" alt="" width="46" height="46"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span>
  </a>
- <nav id="mainNav" class="nav" aria-label="Päävalikko">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}</nav>
+ <nav id="mainNav" class="nav" aria-label="Päävalikko">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}<label class="theme-picker"><span class="theme-picker-label">Ulkoasu</span><select data-theme-picker aria-label="Ulkoasu"><option value="auto">Auto</option><option value="light">Vaalea</option><option value="dark">Tumma</option></select></label></nav>
  <div class="header-actions"><div class="languages"><a href="/" aria-current="page">FI</a><span>/</span><a href="/en">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
 </div></header>
 

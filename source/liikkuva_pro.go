@@ -60,6 +60,18 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	if !regexp.MustCompile(`^#[a-fA-F0-9]{6}$`).MatchString(s.ProAccent) {
 		s.ProAccent = "#2458d6"
 	}
+	switch s.ProTheme {
+	case "light", "dark", "system", "night":
+	default:
+		s.ProTheme = "light"
+	}
+	clock := regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
+	if !clock.MatchString(s.ProNightStart) {
+		s.ProNightStart = "21:00"
+	}
+	if !clock.MatchString(s.ProNightEnd) {
+		s.ProNightEnd = "07:00"
+	}
 	return s
 }
 func liikkuvaPriceText(s string, c SiteSettings) string {
@@ -106,6 +118,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 			return
 		}
 		body := liikkuvaPriceText(rec.Body.String(), settings)
+		body = liikkuvaThemeHTML(body, settings)
 		css := fmt.Sprintf(`<style>:root{--brand:%s;--blue:%s}html{font-size:%dpx}.btn-orange,.btn-primary{background:%s}</style>`, settings.ProAccent, settings.ProAccent, settings.ProFontSize, settings.ProAccent)
 		body = strings.Replace(body, "</head>", css+"</head>", 1)
 		extra := ""

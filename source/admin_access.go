@@ -375,6 +375,7 @@ func renderAccess(w http.ResponseWriter, code int, data accessPageData) {
 func (h *AdminHandler) renderAdmin(w http.ResponseWriter, r *http.Request, data AdminPageData) error {
 	data.CSRF = accessCSRF(r)
 	data.MailEnabled = mailNotificationsEnabled(h.cfg)
+	data.TelegramConfigured = strings.TrimSpace(h.cfg.TelegramBotToken) != "" && strings.TrimSpace(h.cfg.TelegramChatID) != ""
 	data.ReleaseVersion = releaseVersion
 	data.IntakePaused = getEnv("LIIKKUVA_BOOTSTRAP", "") == "1"
 	return h.renderer.renderAdmin(w, data)
