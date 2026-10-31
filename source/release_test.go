@@ -12,6 +12,8 @@ import (
 func TestLeadDoesNotRequireVisitPriceConsent(t *testing.T) {
 	valid := Lead{
 		Name:     "Test Client",
+		Car:      "ABC-123",
+		Address:  "Helsinki",
 		Phone:    "+358401234567",
 		Email:    "client@example.com",
 		Language: "en",
@@ -83,7 +85,7 @@ func TestReviewAliasAndClientStageHelpers(t *testing.T) {
 
 func TestConfirmationEmailContainsRequiredMessage(t *testing.T) {
 	body := buildLeadConfirmationText(Config{SiteURL: "https://liikkuvakorjaamo.fi"}, Lead{Name: "Matti", Language: "fi"})
-	for _, required := range []string{"Kiitos pyynnöstäsi", strconv.Itoa(visitPriceEUR) + " €", "Odota viestiämme"} {
+	for _, required := range []string{"Kiitos pyynnöstäsi", strconv.Itoa(visitPriceEUR) + " €", "Asiakaspalvelumme soittaa"} {
 		if !strings.Contains(body, required) {
 			t.Fatalf("confirmation email is missing %q", required)
 		}

@@ -223,12 +223,6 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 		}
 	}
 
-	if len(processingErrs) > 0 {
-		joined := strings.Join(processingErrs, " | ")
-		_ = markLeadFailed(ctx, cfg, leadID, joined)
-		return errors.New(joined)
-	}
-
 	if strings.TrimSpace(record.Lead.Email) != "" && record.ConfirmationEmailStatus != "sent" {
 		if err := sendLeadConfirmationEmail(cfg, record.Lead); err != nil {
 			log.Printf("Confirmation email failed for %s: %v", leadID, err)
@@ -236,6 +230,12 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 		} else if err := markConfirmationEmailSent(ctx, cfg, leadID); err != nil {
 			log.Printf("Confirmation email sent, but status update failed for %s: %v", leadID, err)
 		}
+	}
+
+	if len(processingErrs) > 0 {
+		joined := strings.Join(processingErrs, " | ")
+		_ = markLeadFailed(ctx, cfg, leadID, joined)
+		return errors.New(joined)
 	}
 
 	if !coreAlreadyDone {
@@ -282,7 +282,7 @@ func validateLead(lead Lead) map[string]string {
 		}
 	}
 
-	if lead.Car != "" && !isValidRegistrationNumber(lead.Car) {
+	if lead.Car == "" || !isValidRegistrationNumber(lead.Car) {
 		if lead.Language == "fi" {
 			errors["car"] = "anna kelvollinen rekisterinumero muodossa ABC-123"
 		} else {
@@ -290,6 +290,13 @@ func validateLead(lead Lead) map[string]string {
 		}
 	}
 
+	if strings.TrimSpace(lead.Address) == "" {
+		if lead.Language == "fi" {
+			errors["address"] = "anna auton osoite tai valitse sijainti kartalta"
+		} else {
+			errors["address"] = "enter the car address or choose its location on the map"
+		}
+	}
 	return errors
 }
 
@@ -395,7 +402,7 @@ func isValidRegistrationNumber(value string) bool {
 	if value == "" {
 		return true
 	}
-	return regexp.MustCompile(`^[A-Z]{3}-[0-9]{1,3}$`).MatchString(value)
+	return regexp.MustCompile(`^[A-Z]{3}-[0-9]{3}$`).MatchString(value)
 }
 
 func minInt(a, b int) int {

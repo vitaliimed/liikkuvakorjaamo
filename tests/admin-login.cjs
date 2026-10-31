@@ -52,6 +52,7 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       assert(await page.getByRole('heading', {name: 'Кабинет Liikkuva', exact: true}).isVisible(), 'Session must survive reload');
 
       await page.goto(base + '/admin?tab=general');
+      assert.equal(await page.locator('[name="phone"]').inputValue(), '');
       await page.locator('[name="ProVisitEUR"]').fill(width === 390 ? '91' : '92');
       await page.locator('[name="ProTheme"]').selectOption('night');
       await page.locator('[name="ProNightStart"]').fill('21:00');
@@ -63,8 +64,7 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       const publicPage = await context.newPage();
       await publicPage.goto(base + '/');
       assert.equal(await publicPage.locator('html').getAttribute('data-theme-policy'), 'night');
-      if (width < 600) await publicPage.locator('#menuToggle').click();
-      await publicPage.locator('[data-theme-picker]').selectOption('dark');
+      if(await publicPage.locator('html').getAttribute('data-theme') !== 'dark') await publicPage.locator('[data-theme-toggle]').click();
       assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark');
       const colors = await publicPage.evaluate(() => ({body: getComputedStyle(document.body).backgroundColor,
         hero: getComputedStyle(document.querySelector('.hero-copy')).backgroundColor,
@@ -75,15 +75,13 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       const inputColors = await publicPage.locator('#lead-form input[name="name"]').evaluate(input => ({background: getComputedStyle(input).backgroundColor, color: getComputedStyle(input).color}));
       assert.equal(inputColors.background, 'rgb(17, 28, 46)');
       assert.equal(inputColors.color, 'rgb(237, 244, 255)');
-      await publicPage.waitForFunction(() => getComputedStyle(document.querySelector('#lead-form .inline-actions .btn')).backgroundColor === 'rgb(28, 42, 64)');
-      const actionColors = await publicPage.locator('#lead-form .inline-actions .btn').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
-      assert.equal(actionColors.background, 'rgb(28, 42, 64)');
-      assert.equal(actionColors.color, 'rgb(237, 244, 255)');
+      const actionColors = await publicPage.locator('#lead-form .location-action').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
+      assert.equal(actionColors.background, 'rgba(0, 0, 0, 0)');
+      assert.equal(actionColors.color, 'rgb(178, 202, 255)');
       if (process.env.LIIKKUVA_THEME_SCREENSHOTS) {
         const fs = require('node:fs'), path = require('node:path');
         fs.mkdirSync(process.env.LIIKKUVA_THEME_SCREENSHOTS, {recursive: true});
-        if (width < 600) await publicPage.locator('#menuToggle').click();
-        await publicPage.screenshot({path: path.join(process.env.LIIKKUVA_THEME_SCREENSHOTS, `night-${width}.png`)});
+          await publicPage.screenshot({path: path.join(process.env.LIIKKUVA_THEME_SCREENSHOTS, `night-${width}.png`)});
         const necessary = publicPage.getByRole('button', {name: 'Vain välttämättömät'});
         if (await necessary.isVisible()) await necessary.click();
         await publicPage.locator('#lead-form').scrollIntoViewIfNeeded();
@@ -93,13 +91,52 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark', 'Visitor theme must persist');
       await publicPage.goto(base + '/en');
       assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'dark', 'Language switch must preserve theme');
-      if (width < 600) await publicPage.locator('#menuToggle').click();
-      await publicPage.locator('[data-theme-picker]').selectOption('light');
+      await publicPage.locator('[data-theme-toggle]').click();
       assert.equal(await publicPage.locator('html').getAttribute('data-theme'), 'light');
-      await publicPage.locator('[data-theme-picker]').selectOption('auto');
-      assert.equal(await publicPage.locator('[data-theme-picker]').inputValue(), 'auto');
+      assert.equal(await publicPage.locator('[data-theme-toggle]').getAttribute('aria-pressed'), 'false');
+      // Exercise the actual form UI with a synthetic local acknowledgement only.
+      const receipt = 'q'.repeat(43);
+      await publicPage.route('**/lead', route => route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({ok:true,submission_id:receipt,message:'Test request received'})}));
+      const necessaryForForm=publicPage.getByRole('button',{name:'Only necessary'});
+      if(await necessaryForForm.isVisible())await necessaryForForm.click();
+      await publicPage.evaluate(() => {
+        window.__measured=[];
+        window.liikkuvaConsentState=()=>({analytics:true,marketing:false});
+        window.gtag=(...args)=>window.__measured.push(args);
+      });
+      await publicPage.locator('#name').fill('Synthetic Private Name');
+      await publicPage.locator('#phone').fill('+358401234567');
+      await publicPage.locator('#email').fill('private-client@example.test');
+      await publicPage.locator('#car').fill('ABC123');
+      await publicPage.locator('#address').fill('Synthetic Address 1, Helsinki');
+      await publicPage.locator('#message').fill('Private request contents');
+      await publicPage.locator('#leadForm button[type=submit]').click();
+      await publicPage.waitForFunction(() => window.__measured.some(x=>x[1]==='generate_lead'));
+      await publicPage.evaluate(id=>window.liikkuvaSavedLead(id),receipt);
+      const measured=await publicPage.evaluate(()=>window.__measured);
+      assert.equal(measured.filter(x=>x[1]==='generate_lead').length,1,'Duplicate accepted-lead conversion');
+      assert(!/Synthetic Private|private-client|Private request|358401234567/.test(JSON.stringify(measured)),'Form contents leaked to analytics');
+      assert(await publicPage.locator('#formMessage').isVisible());
       await publicPage.close();
 
+      await page.goto(base + '/admin?tab=analytics');
+      assert.equal(await page.locator('[name=ga4_measurement_id]').inputValue(),'G-MXX9XCNCRB');
+      assert(await page.locator('[name=analytics_event][value=generate_lead]').isChecked());
+      await page.goto(base + '/admin/email-preview?kind=confirmation&lang=fi');
+      assert(await page.getByRole('heading',{name:'Kiitos yhteydenotostasi'}).isVisible());
+      assert((await page.locator('body').textContent()).includes('Asiakaspalvelumme soittaa'));
+      if(width===1366){
+        await page.goto(base + '/admin?tab=assets');
+        const field=page.locator('[name=hero_background_url]').locator('..');
+        const uploading=page.waitForResponse(r=>r.url().endsWith('/admin/assets/upload')&&r.request().method()==='POST');
+        await field.locator('input[type=file]').setInputFiles({name:'example.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2ioAAAAASUVORK5CYII=','base64')});
+        const uploaded=await uploading;assert.equal(uploaded.status(),200);
+        const asset=await uploaded.json();assert(asset.ok&&/^\/media\/site\/[a-f0-9]{64}\.png$/.test(asset.url));
+        await page.waitForFunction(url=>document.querySelector('[name=hero_background_url]').value===url,asset.url);
+        await submit(page.locator('.pro-save'),'/admin/save');
+        assert.equal(await page.locator('[name=hero_background_url]').inputValue(),asset.url);
+        assert.equal((await context.request.get(base+asset.url)).status(),200,'Saved image is unavailable after reload');
+      }
       await page.goto(base + '/admin/access');
       await page.locator('#password-current').fill(password);
       password = 'changed-browser-password-' + width;

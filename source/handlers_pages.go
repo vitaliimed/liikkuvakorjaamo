@@ -98,7 +98,7 @@ func faviconURLs(settings SiteSettings) (string, string, string, string, string)
 }
 
 func consentModeEnabled(settings SiteSettings) bool {
-	return strings.TrimSpace(settings.GA4MeasurementID) != "" ||
+	return ga4ID(settings) != "" ||
 		strings.TrimSpace(settings.GoogleAdsTagID) != "" ||
 		strings.TrimSpace(settings.MetaPixelID) != "" ||
 		strings.TrimSpace(settings.LinkedInPartnerID) != "" ||
@@ -106,7 +106,7 @@ func consentModeEnabled(settings SiteSettings) bool {
 }
 
 func primaryGoogleTagID(settings SiteSettings) string {
-	if value := strings.TrimSpace(settings.GA4MeasurementID); value != "" {
+	if value := ga4ID(settings); value != "" {
 		return value
 	}
 	return strings.TrimSpace(settings.GoogleAdsTagID)
@@ -175,6 +175,7 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		}
 	}
 
+	content = withoutLanguageClaims(content)
 	pageURL := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang(lang)
 	alternateFI := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang("fi")
 	alternateEN := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang("en")
@@ -198,7 +199,7 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		AppleTouchIconURL:            appleTouchIconURL,
 		EnableConsentMode:            consentModeEnabled(settings),
 		PrimaryGoogleTagID:           primaryGoogleTagID(settings),
-		GA4MeasurementID:             strings.TrimSpace(settings.GA4MeasurementID),
+		GA4MeasurementID:             ga4ID(settings),
 		GoogleAdsTagID:               strings.TrimSpace(settings.GoogleAdsTagID),
 		GoogleAdsLeadConversionLabel: strings.TrimSpace(settings.GoogleAdsLeadConversionLabel),
 		MetaPixelID:                  strings.TrimSpace(settings.MetaPixelID),
@@ -290,7 +291,7 @@ func (h *PageHandler) serveThankYou(w http.ResponseWriter, r *http.Request, lang
 		AppleTouchIconURL:            appleTouchIconURL,
 		EnableConsentMode:            consentModeEnabled(settings),
 		PrimaryGoogleTagID:           primaryGoogleTagID(settings),
-		GA4MeasurementID:             strings.TrimSpace(settings.GA4MeasurementID),
+		GA4MeasurementID:             ga4ID(settings),
 		GoogleAdsTagID:               strings.TrimSpace(settings.GoogleAdsTagID),
 		GoogleAdsLeadConversionLabel: strings.TrimSpace(settings.GoogleAdsLeadConversionLabel),
 		MetaPixelID:                  strings.TrimSpace(settings.MetaPixelID),
@@ -345,7 +346,7 @@ func (h *PageHandler) servePrivacy(w http.ResponseWriter, r *http.Request, lang 
 		AppleTouchIconURL:            appleTouchIconURL,
 		EnableConsentMode:            consentModeEnabled(settings),
 		PrimaryGoogleTagID:           primaryGoogleTagID(settings),
-		GA4MeasurementID:             strings.TrimSpace(settings.GA4MeasurementID),
+		GA4MeasurementID:             ga4ID(settings),
 		GoogleAdsTagID:               strings.TrimSpace(settings.GoogleAdsTagID),
 		GoogleAdsLeadConversionLabel: strings.TrimSpace(settings.GoogleAdsLeadConversionLabel),
 		MetaPixelID:                  strings.TrimSpace(settings.MetaPixelID),
