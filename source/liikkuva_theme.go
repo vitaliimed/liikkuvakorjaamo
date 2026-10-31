@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html"
+	"regexp"
 	"strings"
 )
 
@@ -17,6 +18,22 @@ func liikkuvaThemeHTML(body string, settings SiteSettings) string {
 	attributes := fmt.Sprintf(` data-theme="%s" data-theme-policy="%s" data-night-start="%s" data-night-end="%s"`,
 		initial, html.EscapeString(settings.ProTheme), html.EscapeString(settings.ProNightStart), html.EscapeString(settings.ProNightEnd))
 	body = strings.Replace(body, "<html", "<html"+attributes, 1)
-	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261031"><script src="/static/js/theme.js?v=20261031"></script>`
+	light := settings.LogoURL
+	dark := settings.LogoDarkURL
+	logoClass := ""
+	if strings.TrimSpace(light) == "" || strings.HasPrefix(light, "/static/img/logo_liikkuva.svg") {
+		light = "/static/img/logo-light.svg"
+		if dark == "" {
+			dark = "/static/img/logo-dark.svg"
+		}
+		logoClass = ` class="brand-logo-wide"`
+	}
+	// Brand marks occur in the public header and footer. Text remains CSS-colored.
+	logoPattern := regexp.MustCompile(`(<a\b[^>]*class="brand"[^>]*>\s*)<img\b[^>]*>`)
+	body = logoPattern.ReplaceAllStringFunc(body, func(block string) string {
+		start := strings.Index(block, "<img")
+		return block[:start] + `<img` + logoClass + ` src="` + html.EscapeString(light) + `" data-logo-light="` + html.EscapeString(light) + `" data-logo-dark="` + html.EscapeString(dark) + `" alt="Liikkuva auto korjaamo" width="46" height="46">`
+	})
+	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261031-verified"><script src="/static/js/theme.js?v=20261031-client"></script>`
 	return strings.Replace(body, "</head>", assets+"</head>", 1)
 }
