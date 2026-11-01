@@ -23,7 +23,7 @@ func TestProPriceSettings(t *testing.T) {
 	if got != "90 €; €90; 60 €; €60; 90; 60; 150" {
 		t.Fatal(got)
 	}
-	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#2458d6" {
+	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#223631" {
 		t.Fatal("Unsafe CSS accepted")
 	}
 }

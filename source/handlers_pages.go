@@ -44,6 +44,12 @@ func (h *PageHandler) Privacy(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) Robots(w http.ResponseWriter, r *http.Request) {
 	settings, err := loadSiteSettings(r.Context(), h.cfg)
 	settings = liikkuvaSettings(settings)
+	if err == nil && !settings.SearchIndexingEnabled {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /internal/\nDisallow: /lead\n"))
+		return
+	}
 	if err == nil && strings.TrimSpace(settings.RobotsTXT) != "" {
 		content := strings.ReplaceAll(strings.TrimSpace(settings.RobotsTXT), "{{SITE_URL}}", strings.TrimRight(h.cfg.SiteURL, "/"))
 		if !strings.HasSuffix(content, "\n") {
@@ -68,6 +74,13 @@ func (h *PageHandler) Robots(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
+	settings, settingsErr := loadSiteSettings(r.Context(), h.cfg)
+	if settingsErr == nil && !settings.SearchIndexingEnabled {
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`))
+		return
+	}
 	fileBytes, err := os.ReadFile("static/sitemap.xml")
 	if err != nil {
 		content := fallbackSitemapXML(h.cfg.SiteURL)

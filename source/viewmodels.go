@@ -441,6 +441,7 @@ type PrivacyPageData struct {
 }
 
 type SiteSettings struct {
+	SearchIndexingEnabled        bool
 	Revision                     int64 `firestore:"revision"`
 	ProVisitEUR                  int
 	ProDiagnosticEUR             int

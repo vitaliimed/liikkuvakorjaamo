@@ -63,3 +63,11 @@ SMTP, Telegram и GA4 проверялись с локальными двойн�
 - Новые логотипы скопированы в source/static/img, используемую Cloud Run; светлая и тёмная версии сохраняют пропорции.
 
 Проверки проводились локально с тестовыми ответами поставщиков. Реальные заявки, письма и Telegram не отправлялись. Cloud Run из этой среды не обновлялся.
+
+## 2026-11-01: pine-settings
+
+- Go suite and real Chromium admin/login tests pass; regression coverage for global noindex and re-enabling indexing, settings injection and uploaded-logo markup.
+- 24 browser appearance combinations: 390/1280/1920 widths, fonts 16/18/20/22, light/dark. Saved #203832 reaches rendered buttons; 20px visibly increases text; no horizontal overflow; capability-card text contrast >=4.5:1. Desktop form fits 1280x720 at sizes through 20.
+- 35 responsive scenarios and independent forms/maps/photos/analytics flows pass; 34 Python tests and JavaScript suites pass.
+- CRM-WHATSAPP-RU.md is an implementation plan, not an active WhatsApp integration. No outbound messages or live cloud mutations performed.
+- Public indexing is disabled by default after deployment (SearchIndexingEnabled=false). Enable explicitly in SEO settings when ready. Actual search removal depends on recrawling; noindex does not make content private.

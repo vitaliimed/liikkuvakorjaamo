@@ -61,6 +61,13 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       await page.waitForURL(/saved=1/);
       assert.equal(await page.locator('[name="ProVisitEUR"]').inputValue(), width === 390 ? '91' : '92');
 
+      await page.goto(base + '/admin?tab=seo');
+      const indexing=page.locator('[name=search_indexing_enabled]');
+      await indexing.check();await submit(page.locator('.pro-save'), '/admin/save');await page.waitForURL(/saved=1/);
+      assert(await page.locator('[name=search_indexing_enabled]').isChecked(),'Indexing switch did not persist');
+      await page.locator('[name=search_indexing_enabled]').uncheck();await submit(page.locator('.pro-save'), '/admin/save');await page.waitForURL(/saved=1/);
+      assert.equal(await page.locator('[name=search_indexing_enabled]').isChecked(),false);
+
       const publicPage = await context.newPage();
       await publicPage.goto(base + '/');
       assert.equal(await publicPage.locator('html').getAttribute('data-theme-policy'), 'night');
@@ -69,15 +76,15 @@ assert(/^https:\/\/127\.0\.0\.1:\d+$/.test(base), 'Browser test requires the loc
       const colors = await publicPage.evaluate(() => ({body: getComputedStyle(document.body).backgroundColor,
         hero: getComputedStyle(document.querySelector('.hero-copy')).backgroundColor,
         overflow: document.documentElement.scrollWidth > innerWidth + 1}));
-      assert.equal(colors.body, 'rgb(16, 24, 39)');
-      assert.equal(colors.hero, 'rgb(22, 34, 56)');
+      assert.equal(colors.body, 'rgb(16, 30, 25)');
+      assert.equal(colors.hero, 'rgb(27, 48, 38)');
       assert.equal(colors.overflow, false);
       const inputColors = await publicPage.locator('#lead-form input[name="name"]').evaluate(input => ({background: getComputedStyle(input).backgroundColor, color: getComputedStyle(input).color}));
-      assert.equal(inputColors.background, 'rgb(17, 28, 46)');
-      assert.equal(inputColors.color, 'rgb(237, 244, 255)');
+      assert.equal(inputColors.background, 'rgb(20, 37, 28)');
+      assert.equal(inputColors.color, 'rgb(237, 245, 239)');
       const actionColors = await publicPage.locator('#lead-form .location-action').first().evaluate(button => ({background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color}));
       assert.equal(actionColors.background, 'rgba(0, 0, 0, 0)');
-      assert.equal(actionColors.color, 'rgb(178, 202, 255)');
+      assert.equal(actionColors.color, 'rgb(184, 213, 196)');
       if (process.env.LIIKKUVA_THEME_SCREENSHOTS) {
         const fs = require('node:fs'), path = require('node:path');
         fs.mkdirSync(process.env.LIIKKUVA_THEME_SCREENSHOTS, {recursive: true});
