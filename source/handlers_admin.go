@@ -426,6 +426,7 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 		ProDiagnosticEUR:          liikkuvaInt(r.FormValue("ProDiagnosticEUR"), 50, 1, 2000),
 		ProFontSize:               liikkuvaInt(r.FormValue("ProFontSize"), 18, 16, 22),
 		ProAccent:                 strings.TrimSpace(r.FormValue("ProAccent")),
+		SearchIndexingEnabled:     r.FormValue("search_indexing_enabled") == "1",
 		ProTheme:                  strings.TrimSpace(r.FormValue("ProTheme")),
 		ProNightStart:             strings.TrimSpace(r.FormValue("ProNightStart")),
 		ProNightEnd:               strings.TrimSpace(r.FormValue("ProNightEnd")),

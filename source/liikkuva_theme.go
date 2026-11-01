@@ -20,7 +20,7 @@ func liikkuvaThemeHTML(body string, settings SiteSettings) string {
 	body = strings.Replace(body, "<html", "<html"+attributes, 1)
 	light := settings.LogoURL
 	dark := settings.LogoDarkURL
-	logoClass := ""
+	logoClass := ` class="brand-logo-wide"`
 	if strings.TrimSpace(light) == "" || strings.HasPrefix(light, "/static/img/logo_liikkuva.svg") {
 		light = "/static/img/logo-light.svg"
 		if dark == "" {
@@ -28,12 +28,14 @@ func liikkuvaThemeHTML(body string, settings SiteSettings) string {
 		}
 		logoClass = ` class="brand-logo-wide"`
 	}
-	// Brand marks occur in the public header and footer. Text remains CSS-colored.
+	// Every uploaded logo uses the same proportional slot; remove duplicate adjacent brand text.
 	logoPattern := regexp.MustCompile(`(<a\b[^>]*class="brand"[^>]*>\s*)<img\b[^>]*>`)
 	body = logoPattern.ReplaceAllStringFunc(body, func(block string) string {
 		start := strings.Index(block, "<img")
 		return block[:start] + `<img` + logoClass + ` src="` + html.EscapeString(light) + `" data-logo-light="` + html.EscapeString(light) + `" data-logo-dark="` + html.EscapeString(dark) + `" alt="Liikkuva auto korjaamo" width="46" height="46">`
 	})
-	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261031-verified"><script src="/static/js/theme.js?v=20261031-client"></script>`
+	brandText := regexp.MustCompile(`(<img[^>]*class="brand-logo-wide"[^>]*>)\s*<span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span>`)
+	body = brandText.ReplaceAllString(body, "$1")
+	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261101-pine"><script src="/static/js/theme.js?v=20261031-client"></script>`
 	return strings.Replace(body, "</head>", assets+"</head>", 1)
 }

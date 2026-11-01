@@ -22,7 +22,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.31-compact-verified'
+VERSION = '2026.11.01-pine-settings'
 HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'

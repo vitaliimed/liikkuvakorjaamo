@@ -58,7 +58,7 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 		s.ProFontSize = 18
 	}
 	if !regexp.MustCompile(`^#[a-fA-F0-9]{6}$`).MatchString(s.ProAccent) {
-		s.ProAccent = "#2458d6"
+		s.ProAccent = "#223631"
 	}
 	switch s.ProTheme {
 	case "light", "dark", "system", "night":
@@ -93,7 +93,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 			fmt.Fprintf(w, "window.LIIKKUVA_TRACKING=%s;", b)
 			return
 		}
-		public := r.URL.Path == "/" || r.URL.Path == "/en" || r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi"
+		public := r.URL.Path == "/" || r.URL.Path == "/en" || r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review" || strings.HasPrefix(r.URL.Path, "/static/seo/")
 		if (r.Method != http.MethodGet && r.Method != http.MethodHead) || !public {
 			next.ServeHTTP(w, r)
 			return
@@ -119,8 +119,13 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 		}
 		body := liikkuvaPriceText(rec.Body.String(), settings)
 		body = liikkuvaThemeHTML(body, settings)
+		body = regexp.MustCompile(`href="(/static/css/[^"?]+\.css)(?:\?[^" ]*)?"`).ReplaceAllString(body, `href="$1?v=20261101-pine"`)
 		body = liikkuvaTrackingHTML(body, settings)
-		css := fmt.Sprintf(`<style>:root{--brand:%s;--blue:%s}html{font-size:%dpx}.btn-orange,.btn-primary{background:%s}</style>`, settings.ProAccent, settings.ProAccent, settings.ProFontSize, settings.ProAccent)
+		if !settings.SearchIndexingEnabled {
+			body = regexp.MustCompile(`<meta\s+name="robots"[^>]*>`).ReplaceAllString(body, "")
+			body = strings.Replace(body, "</head>", `<meta name="robots" content="noindex, follow"></head>`, 1)
+		}
+		css := fmt.Sprintf(`<style id="site-appearance">:root{--site-accent:%s;--brand:var(--site-accent);--blue:var(--site-accent);--font-scale:%.4f}html{font-size:%dpx}</style>`, settings.ProAccent, float64(settings.ProFontSize)/18, settings.ProFontSize)
 		body = strings.Replace(body, "</head>", css+"</head>", 1)
 		extra := ""
 		switch r.URL.Path {
@@ -189,6 +194,9 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 
 		for k, v := range rec.Header() {
 			w.Header()[k] = v
+		}
+		if !settings.SearchIndexingEnabled {
+			w.Header().Set("X-Robots-Tag", "noindex, follow")
 		}
 		w.Header().Del("Content-Length")
 		w.Header().Del("Last-Modified")
