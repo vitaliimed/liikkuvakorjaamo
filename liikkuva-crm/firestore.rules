@@ -1,0 +1,7 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  // For a dedicated CRM database only. Do not overwrite existing shared rules.
+  match /{document=**} { allow read, write: if false; }
+ }
+}
