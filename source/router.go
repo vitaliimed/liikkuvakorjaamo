@@ -70,5 +70,6 @@ func newRouter(cfg Config, renderer *TemplateRenderer) *http.ServeMux {
 	staticHandler := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", withCache(staticHandler)))
 
+	registerCRM(mux, cfg)
 	return mux
 }
