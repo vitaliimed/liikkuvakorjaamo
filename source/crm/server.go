@@ -571,6 +571,10 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		s.changePlate(w, r, u, j)
 		return
 	}
+	if len(parts) == 2 && parts[1] == "messages" {
+		s.messages(w, r, u, j)
+		return
+	}
 	if len(parts) == 2 && parts[1] == "emails" {
 		s.emails(w, r, u, j)
 		return
@@ -736,6 +740,13 @@ func (s *Server) mutate(ctx context.Context, id string, a Action, u User) (Job, 
 		}
 		if sr != nil {
 			if e := tx.Set(sr, sched); e != nil {
+				return e
+			}
+		}
+		if a.Kind == "message" {
+			mr := ref.Collection("messages").NewDoc()
+			m := Message{ID: mr.ID, JobID: id, VehicleID: vehicleID(n), Source: a.Channel, Author: u.ID, At: now, Original: a.Text, Direction: a.Direction, Status: "recorded"}
+			if e := tx.Create(mr, m); e != nil {
 				return e
 			}
 		}

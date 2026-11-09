@@ -30,13 +30,14 @@ type User struct {
 	TelegramID string          `json:"telegram_id"`
 }
 type Photo struct {
-	ID      string    `json:"id"`
-	Object  string    `json:"-"`
-	Caption string    `json:"caption"`
-	Stage   string    `json:"stage"`
-	Author  string    `json:"author"`
-	SHA256  string    `json:"sha256"`
-	Created time.Time `json:"created"`
+	PreviewObject string    `json:"-"`
+	ID            string    `json:"id"`
+	Object        string    `json:"-"`
+	Caption       string    `json:"caption"`
+	Stage         string    `json:"stage"`
+	Author        string    `json:"author"`
+	SHA256        string    `json:"sha256"`
+	Created       time.Time `json:"created"`
 }
 type Proposal struct {
 	WorkPriceSet *bool     `json:"work_price_set,omitempty"`

@@ -267,6 +267,9 @@ func (s *Server) emails(w http.ResponseWriter, r *http.Request, u User, j Job) {
 		if e = tx.Create(s.Collection("mail_index").Doc(digest(m.MessageID)), mailIndex{Job: j.ID, Email: id}); e != nil {
 			return e
 		}
+		if e = tx.Create(ref.Collection("messages").Doc("email-"+id), emailMessage(live, m)); e != nil {
+			return e
+		}
 		created = true
 		return nil
 	})
@@ -284,7 +287,10 @@ func (s *Server) emails(w http.ResponseWriter, r *http.Request, u User, j Job) {
 		m.Error = sendErr.Error()
 	}
 	// Complete only these fields; no automatic retry after an ambiguous network result.
-	_, err = mr.Update(r.Context(), []firestore.Update{{Path: "Status", Value: m.Status}, {Path: "Error", Value: m.Error}})
+	batch := s.DB.Batch()
+	batch.Update(mr, []firestore.Update{{Path: "Status", Value: m.Status}, {Path: "Error", Value: m.Error}})
+	batch.Update(ref.Collection("messages").Doc("email-"+id), []firestore.Update{{Path: "Status", Value: m.Status}})
+	_, err = batch.Commit(r.Context())
 	if err != nil {
 		fail(w, 503, "Результат отправки не удалось записать. Не отправляйте повторно до проверки цепочки и SMTP-журнала")
 		return
@@ -356,6 +362,9 @@ func (s *Server) inboundMail(w http.ResponseWriter, r *http.Request) {
 			return errors.New("Отправитель отличается от email клиента; требуется ручной разбор")
 		}
 		if err = tx.Create(ref.Collection("emails").Doc(id), m); err != nil {
+			return err
+		}
+		if err = tx.Create(ref.Collection("messages").Doc("email-"+id), emailMessage(j, m)); err != nil {
 			return err
 		}
 		return tx.Create(s.Collection("mail_index").Doc(id), mailIndex{Job: link.Job, Email: id})

@@ -32,7 +32,11 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 			if p.ID != parts[0] {
 				continue
 			}
-			rd, e := client.Bucket(s.Bucket).Object(p.Object).NewReader(r.Context())
+			object := p.Object
+			if p.PreviewObject != "" && r.URL.Query().Get("original") != "1" {
+				object = p.PreviewObject
+			}
+			rd, e := client.Bucket(s.Bucket).Object(object).NewReader(r.Context())
 			if e != nil {
 				fail(w, 404, "Фото не найдено")
 				return
@@ -50,9 +54,16 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 		fail(w, 405, "Method not allowed")
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, 6<<20)
-	if e = r.ParseMultipartForm(6 << 20); e != nil {
-		fail(w, 400, "Фото до 5 МБ")
+	select {
+	case photoProcessing <- struct{}{}:
+		defer func() { <-photoProcessing }()
+	default:
+		fail(w, 429, "Обрабатывается другое фото; повторите позже")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 21<<20)
+	if e = r.ParseMultipartForm(21 << 20); e != nil {
+		fail(w, 400, "Фото до 20 МБ")
 		return
 	}
 	defer r.MultipartForm.RemoveAll()
@@ -77,9 +88,9 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 		return
 	}
 	defer f.Close()
-	b, e := io.ReadAll(io.LimitReader(f, (5<<20)+1))
-	if e != nil || len(b) > 5<<20 {
-		fail(w, 400, "Фото до 5 МБ")
+	b, e := io.ReadAll(io.LimitReader(f, (20<<20)+1))
+	if e != nil || len(b) > 20<<20 {
+		fail(w, 400, "Фото до 20 МБ")
 		return
 	}
 	cfg, format, e := image.DecodeConfig(bytes.NewReader(b))
@@ -93,6 +104,12 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 	}
 	p := Photo{ID: randomID(), Caption: caption, Stage: stage, Author: u.ID, SHA256: digest(string(b)), Created: time.Now().UTC()}
 	p.Object = "crm/" + j.ID + "/" + p.ID
+	preview, e := thumbnail(b)
+	if e != nil {
+		fail(w, 400, "Повреждённое изображение")
+		return
+	}
+	p.PreviewObject = p.Object + "-preview.jpg"
 	obj := client.Bucket(s.Bucket).Object(p.Object).If(storage.Conditions{DoesNotExist: true})
 	wr := obj.NewWriter(r.Context())
 	wr.ContentType = "image/" + format
@@ -104,6 +121,25 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 	}
 	if e = wr.Close(); e != nil {
 		fail(w, 503, "Фото не сохранено")
+		return
+	}
+	cleanup := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = client.Bucket(s.Bucket).Object(p.Object).Delete(ctx)
+		_ = client.Bucket(s.Bucket).Object(p.PreviewObject).Delete(ctx)
+	}
+	pw := client.Bucket(s.Bucket).Object(p.PreviewObject).If(storage.Conditions{DoesNotExist: true}).NewWriter(r.Context())
+	pw.ContentType = "image/jpeg"
+	if _, e = pw.Write(preview); e != nil {
+		_ = pw.Close()
+		cleanup()
+		fail(w, 503, "Ошибка копии фото")
+		return
+	}
+	if e = pw.Close(); e != nil {
+		cleanup()
+		fail(w, 503, "Ошибка копии фото")
 		return
 	}
 	ref := s.Collection("jobs").Doc(j.ID)
@@ -134,9 +170,7 @@ func (s *Server) photos(w http.ResponseWriter, r *http.Request, u User, j Job, p
 		return tx.Create(ref.Collection("events").NewDoc(), Event{Actor: u.ID, Type: "photo", Text: stage + ": " + caption, At: p.Created, Revision: live.Revision, Snapshot: &live})
 	})
 	if e != nil {
-		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		_ = client.Bucket(s.Bucket).Object(p.Object).Delete(cleanup)
+		cleanup()
 		fail(w, 409, e.Error())
 		return
 	}

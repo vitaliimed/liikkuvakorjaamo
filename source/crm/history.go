@@ -3,31 +3,24 @@ package crm
 import (
 	"cloud.google.com/go/firestore"
 	"net/http"
-	"time"
 )
-
-type VehicleVisit struct {
-	ID          string    `json:"id"`
-	Created     time.Time `json:"created"`
-	Status      string    `json:"status"`
-	Description string    `json:"description"`
-	Model       string    `json:"model"`
-	Mileage     int64     `json:"mileage"`
-	Proposal    Proposal  `json:"proposal"`
-	Report      Report    `json:"report"`
-	Photos      []Photo   `json:"photos"`
-}
 
 // Assigned mechanics can inspect the technical history for that vehicle,
 // without prior customers' names, addresses, phone numbers or conversations.
 func (s *Server) vehicleHistory(w http.ResponseWriter, r *http.Request, current Job, u User) {
-	q := s.Collection("jobs").Where("Vehicle", "==", current.Vehicle).OrderBy(firestore.DocumentID, firestore.Asc)
+	q := s.Collection("jobs").Where("Vehicle", "==", current.Vehicle).OrderBy("Created", firestore.Desc).OrderBy(firestore.DocumentID, firestore.Desc)
 	if c := r.URL.Query().Get("cursor"); c != "" {
 		if len(c) != 64 {
 			fail(w, 400, "Некорректный курсор")
 			return
 		}
-		q = q.StartAfter(c)
+		d, err := s.Collection("jobs").Doc(c).Get(r.Context())
+		var prior Job
+		if err != nil || d.DataTo(&prior) != nil || vehicleID(prior) != vehicleID(current) {
+			fail(w, 400, "Некорректный курсор")
+			return
+		}
+		q = q.StartAfter(d)
 	}
 	docs, e := q.Limit(101).Documents(r.Context()).GetAll()
 	if e != nil {
