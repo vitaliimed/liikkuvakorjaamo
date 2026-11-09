@@ -10,7 +10,7 @@ import (
 
 var testNow = time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC)
 var testOwner = User{ID: "o", Role: "owner", Active: true}
-var testMechanic = User{ID: "m", Role: "mechanic", Active: true}
+var testMechanic = User{ID: "m", Role: "mechanic", Active: true, MainCity: "Helsinki", Shifts: []Shift{{0, "00:00", "23:59"}, {1, "00:00", "23:59"}, {2, "00:00", "23:59"}, {3, "00:00", "23:59"}, {4, "00:00", "23:59"}, {5, "00:00", "23:59"}, {6, "00:00", "23:59"}}}
 
 func fixture(t *testing.T) Job {
 	t.Helper()
@@ -39,7 +39,7 @@ func TestFullWorkflow(t *testing.T) {
 	j = step(t, j, Action{Kind: "client_confirm", Text: "Agreed by phone"}, testOwner)
 	j = step(t, j, Action{Kind: "confirm"}, testOwner)
 	j = step(t, j, Action{Kind: "start"}, testMechanic)
-	j = step(t, j, Action{Kind: "report", Report: Report{ReceivedCents: 12000, Work: "Battery replaced", Result: "repaired", Payment: "cash"}}, testMechanic)
+	j = step(t, j, Action{Kind: "report", Report: Report{Diagnosis: "Battery tested", Parts: "Battery", ReceivedCents: 12000, Work: "Battery replaced", Result: "repaired", Payment: "cash"}}, testMechanic)
 	j = step(t, j, Action{Kind: "close"}, testOwner)
 	if j.Status != "closed" || j.Revision != 8 || j.Report.ReceivedCents != 12000 {
 		t.Fatal(j)
@@ -97,7 +97,7 @@ func TestIncompleteReport(t *testing.T) {
 	j := fixture(t)
 	j.Mechanic = "m"
 	j.Status = "in_progress"
-	r := Report{Result: "partial", Work: "Diagnosed", Payment: "cash"}
+	r := Report{Diagnosis: "Inspected", Parts: "None", Result: "partial", Work: "Diagnosed", Payment: "cash"}
 	if _, e := Apply(j, Action{Kind: "report", Revision: 1, Report: r}, testMechanic, testNow); e == nil {
 		t.Fatal("missing next step accepted")
 	}

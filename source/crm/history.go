@@ -46,7 +46,11 @@ func (s *Server) vehicleHistory(w http.ResponseWriter, r *http.Request, current 
 			fail(w, 503, "Ошибка истории авто")
 			return
 		}
-		if u.Manager(){visits=append(visits,j)}else{visits=append(visits,technicalVisit(j))}
+		if u.Manager() {
+			visits = append(visits, j)
+		} else {
+			visits = append(visits, technicalVisit(j))
+		}
 	}
 	write(w, 200, map[string]any{"visits": visits, "cursor": next})
 }

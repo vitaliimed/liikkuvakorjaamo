@@ -17,6 +17,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/mail"
 	"os"
 	"sort"
 	"strings"
@@ -121,7 +122,7 @@ func (s *Server) auth(r *http.Request) (User, error) {
 		return User{}, ErrForbidden
 	}
 	var u User
-	if d.DataTo(&u) != nil || !u.Active || x.Auth != digest(u.Hash) {
+	if d.DataTo(&u) != nil || !u.Active || (u.Role != "owner" && u.Role != "mechanic") || x.Auth != digest(u.Hash) {
 		return User{}, ErrForbidden
 	}
 	return u, nil
@@ -140,7 +141,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, "Нет доступа")
 			return
 		}
-		s.jobs(w, r, User{ID: "intake-api", Role: "manager", Active: true})
+		s.jobs(w, r, User{ID: "intake-api", Role: "owner", Active: true})
+		return
+	}
+	if path == "/mail/inbound" {
+		s.inboundMail(w, r)
 		return
 	}
 	if path == "/bot/telegram" {
@@ -209,6 +214,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.jobs(w, r, u)
 	case strings.HasPrefix(path, "/api/jobs/"):
 		s.job(w, r, u, strings.TrimPrefix(path, "/api/jobs/"))
+	case path == "/api/tariffs":
+		s.tariffs(w, r, u)
 	case path == "/api/notifications" && r.Method == "GET" && u.Manager():
 		s.notifications(w, r)
 	case path == "/api/retry-notifications" && r.Method == "POST" && u.Manager():
@@ -303,25 +310,39 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	var x struct {
-		Email      string `json:"email"`
-		Name       string `json:"name"`
-		Password   string `json:"password"`
-		Role       string `json:"role"`
-		Active     bool   `json:"active"`
-		TelegramID string `json:"telegram_id"`
+		MainCity   string          `json:"main_city"`
+		Phone      string          `json:"phone"`
+		Exceptions []WorkException `json:"exceptions"`
+		Email      string          `json:"email"`
+		Name       string          `json:"name"`
+		Password   string          `json:"password"`
+		Role       string          `json:"role"`
+		Active     bool            `json:"active"`
+		TelegramID string          `json:"telegram_id"`
+		Areas      []string        `json:"areas"`
+		Shifts     []Shift         `json:"shifts"`
+		DaysOff    []string        `json:"days_off"`
 	}
 	if e := decode(w, r, &x); e != nil {
 		fail(w, 400, e.Error())
 		return
 	}
 	x.Email = strings.ToLower(strings.TrimSpace(x.Email))
-	if !strings.Contains(x.Email, "@") || x.Name == "" || (x.Role != "manager" && x.Role != "mechanic") {
+	if !strings.Contains(x.Email, "@") || x.Name == "" || x.Role != "mechanic" {
 		fail(w, 400, "Укажите имя, email и роль")
 		return
 	}
 	if len(x.Password) > 72 || (x.Password != "" && len(x.Password) < 12) {
 		fail(w, 400, "Пароль: 12–72 байта")
 		return
+	}
+	candidate := User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff}
+	if e := ValidateAvailability(candidate); e != nil {
+		fail(w, 400, e.Error())
+		return
+	}
+	for i := range x.Areas {
+		x.Areas[i] = Area(x.Areas[i])
 	}
 	ref := s.Collection("users").Doc(digest(x.Email))
 	e := s.DB.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
@@ -349,7 +370,22 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		if hash == "" {
 			return errors.New("Для нового пользователя нужен пароль")
 		}
-		return tx.Set(ref, User{ID: ref.ID, Name: x.Name, Email: x.Email, Role: x.Role, Active: x.Active, Hash: hash, TelegramID: x.TelegramID})
+		sd, err := tx.Get(s.Collection("schedules").Doc(ref.ID))
+		if err != nil && status.Code(err) != codes.NotFound {
+			return err
+		}
+		if err == nil {
+			var sc schedule
+			if err = sd.DataTo(&sc); err != nil {
+				return err
+			}
+			for _, b := range sc.Bookings {
+				if b.Proposal.End.After(time.Now()) && !WithinHours(candidate, b.Proposal) {
+					return errors.New("Новый график конфликтует с подтверждённым выездом. Сначала перенесите выезд")
+				}
+			}
+		}
+		return tx.Set(ref, User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff, ID: ref.ID, Name: x.Name, Email: x.Email, Role: x.Role, Active: x.Active, Hash: hash, TelegramID: x.TelegramID})
 	})
 	if e != nil {
 		fail(w, 400, e.Error())
@@ -364,6 +400,7 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request, u User) {
 			return
 		}
 		var x struct {
+			Area        string `json:"area"`
 			Plate       string `json:"plate"`
 			Name        string `json:"name"`
 			Phone       string `json:"phone"`
@@ -388,7 +425,30 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request, u User) {
 			fail(w, 400, e.Error())
 			return
 		}
+		if x.Email != "" {
+			a, e := mail.ParseAddress(x.Email)
+			if e != nil || a.Address != x.Email {
+				fail(w, 400, "Некорректный email")
+				return
+			}
+		}
+		book, err := loadPriceBook(r.Context(), s.DB)
+		if err != nil {
+			fail(w, 503, "Ошибка тарифов")
+			return
+		}
+		applyPrices(&j, book)
+		stable, err := resolveVehicle(r.Context(), s.DB, j.Plate)
+		if err != nil {
+			fail(w, 503, "Ошибка автомобиля")
+			return
+		}
+		j.Vehicle = stable
+		j.VehicleID = stable
 		j.Email = x.Email
+		if x.Area != "" {
+			j.Area = Area(x.Area)
+		}
 		ref := s.Collection("jobs").Doc(id)
 		b := s.DB.Batch()
 		b.Create(ref, j)
@@ -422,7 +482,20 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request, u User) {
 			fail(w, 400, e.Error())
 			return
 		}
-		q = q.Where("Plate", "==", p)
+		alias, err := s.Collection("vehicle_aliases").Doc(p).Get(r.Context())
+		if err == nil {
+			var a VehicleAlias
+			if alias.DataTo(&a) != nil {
+				fail(w, 503, "Ошибка номера")
+				return
+			}
+			q = q.Where("Vehicle", "==", a.VehicleID)
+		} else if status.Code(err) == codes.NotFound {
+			q = q.Where("Plate", "==", p)
+		} else {
+			fail(w, 503, "Ошибка поиска")
+			return
+		}
 	}
 	q = q.OrderBy("Created", firestore.Desc).OrderBy(firestore.DocumentID, firestore.Desc)
 	if c := r.URL.Query().Get("cursor"); c != "" {
@@ -463,7 +536,11 @@ func (s *Server) jobs(w http.ResponseWriter, r *http.Request, u User) {
 		jobs = append(jobs, j)
 	}
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].Created.After(jobs[j].Created) })
-	write(w, 200, map[string]any{"jobs": jobs, "cursor": next})
+	safe := []any{}
+	for _, j := range jobs {
+		safe = append(safe, jobView(j, u))
+	}
+	write(w, 200, map[string]any{"jobs": safe, "cursor": next})
 }
 func (s *Server) readJob(ctx context.Context, id string, u User) (Job, error) {
 	if len(id) != 64 {
@@ -490,6 +567,14 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		fail(w, 404, "Заявка не найдена или недоступна")
 		return
 	}
+	if len(parts) == 2 && parts[1] == "registration" {
+		s.changePlate(w, r, u, j)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "emails" {
+		s.emails(w, r, u, j)
+		return
+	}
 	if len(parts) == 2 && parts[1] == "vehicle-history" && r.Method == "GET" {
 		s.vehicleHistory(w, r, j, u)
 		return
@@ -497,7 +582,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 	if len(parts) == 4 && parts[1] == "vehicle-photos" && r.Method == "GET" {
 		previous, e := s.Collection("jobs").Doc(parts[2]).Get(r.Context())
 		var old Job
-		if e != nil || previous.DataTo(&old) != nil || old.Vehicle != j.Vehicle {
+		if e != nil || previous.DataTo(&old) != nil || vehicleID(old) == "" || vehicleID(old) != vehicleID(j) {
 			fail(w, 404, "Фото недоступно")
 			return
 		}
@@ -513,7 +598,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		return
 	}
 	if len(parts) == 1 && r.Method == "GET" {
-		write(w, 200, jobResponse(j,u))
+		write(w, 200, jobResponse(j, u))
 		return
 	}
 	if len(parts) == 2 && parts[1] == "events" && r.Method == "GET" {
@@ -544,7 +629,9 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 				return
 			}
 			x.ID = d.Ref.ID
-			if v,ok:=eventView(x,u);ok {out=append(out,v)}
+			if v, ok := eventView(x, u); ok {
+				out = append(out, v)
+			}
 		}
 		write(w, 200, map[string]any{"events": out, "cursor": next})
 		return
@@ -567,7 +654,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 			fail(w, code, e.Error())
 			return
 		}
-		write(w, 200, jobResponse(next,u))
+		write(w, 200, jobResponse(next, u))
 		return
 	}
 	http.NotFound(w, r)
@@ -592,12 +679,18 @@ func (s *Server) mutate(ctx context.Context, id string, a Action, u User) (Job, 
 		if e = d.DataTo(&j); e != nil {
 			return e
 		}
+		if a.Kind == "contact" && a.Email != "" {
+			address, e := mail.ParseAddress(a.Email)
+			if e != nil || address.Address != a.Email {
+				return errors.New("Некорректный email")
+			}
+		}
 		n, e := Apply(j, a, u, now)
 		if e != nil {
 			return e
 		}
-		if a.Kind == "assign" {
-			d, e := tx.Get(s.Collection("users").Doc(a.Mechanic))
+		if a.Kind == "assign" || a.Kind == "reassign" || a.Kind == "propose" || a.Kind == "confirm" {
+			d, e := tx.Get(s.Collection("users").Doc(n.Mechanic))
 			if e != nil {
 				return errors.New("Механик не найден")
 			}
@@ -605,10 +698,13 @@ func (s *Server) mutate(ctx context.Context, id string, a Action, u User) (Job, 
 			if d.DataTo(&m) != nil || !m.Active || m.Role != "mechanic" {
 				return errors.New("Выберите активного механика")
 			}
+			if e := CheckAvailability(m, n, a.Kind != "assign" && a.Kind != "reassign"); e != nil {
+				return e
+			}
 		}
 		var sched schedule
 		var sr *firestore.DocumentRef
-		touch := a.Kind == "confirm" || a.Kind == "reschedule" || a.Kind == "cancel"
+		touch := a.Kind == "reassign" || a.Kind == "confirm" || a.Kind == "reschedule" || a.Kind == "cancel"
 		if touch && j.Mechanic != "" {
 			sr = s.Collection("schedules").Doc(j.Mechanic)
 			d, e := tx.Get(sr)

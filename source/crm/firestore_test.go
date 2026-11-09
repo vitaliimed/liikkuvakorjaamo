@@ -44,7 +44,7 @@ func TestEmulatorConcurrentBookingAndAudit(t *testing.T) {
 		j.Status = "client_confirmed"
 		j.Mechanic = "m"
 		j.Proposal = testProposal()
-		j.Proposal.Start = time.Now().Add(time.Hour)
+		j.Proposal.Start = time.Now().UTC().AddDate(0, 0, 1).Truncate(24 * time.Hour).Add(10 * time.Hour)
 		j.Proposal.End = j.Proposal.Start.Add(time.Hour)
 		if _, e := s.Collection("jobs").Doc(id).Set(ctx, j); e != nil {
 			t.Fatal(e)

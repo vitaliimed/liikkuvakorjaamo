@@ -15,13 +15,19 @@ var ErrConflict = errors.New("Запись изменена. Обновите с
 var ErrForbidden = errors.New("Нет доступа")
 
 type User struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	Role       string `json:"role"`
-	Hash       string `json:"-"`
-	Active     bool   `json:"active"`
-	TelegramID string `json:"telegram_id"`
+	MainCity   string          `json:"main_city"`
+	Phone      string          `json:"phone"`
+	Exceptions []WorkException `json:"exceptions"`
+	Areas      []string        `json:"areas"`
+	Shifts     []Shift         `json:"shifts"`
+	DaysOff    []string        `json:"days_off"`
+	ID         string          `json:"id"`
+	Name       string          `json:"name"`
+	Email      string          `json:"email"`
+	Role       string          `json:"role"`
+	Hash       string          `json:"-"`
+	Active     bool            `json:"active"`
+	TelegramID string          `json:"telegram_id"`
 }
 type Photo struct {
 	ID      string    `json:"id"`
@@ -33,16 +39,19 @@ type Photo struct {
 	Created time.Time `json:"created"`
 }
 type Proposal struct {
-	Start      time.Time `json:"start"`
-	End        time.Time `json:"end"`
-	VisitCents int64     `json:"visit_cents"`
-	WorkCents  int64     `json:"work_cents"`
-	PartsCents int64     `json:"parts_cents"`
-	Cause      string    `json:"cause"`
-	Plan       string    `json:"plan"`
-	Payment    string    `json:"payment"`
+	WorkPriceSet *bool     `json:"work_price_set,omitempty"`
+	Start        time.Time `json:"start"`
+	End          time.Time `json:"end"`
+	VisitCents   int64     `json:"visit_cents"`
+	WorkCents    int64     `json:"work_cents"`
+	PartsCents   int64     `json:"parts_cents"`
+	Cause        string    `json:"cause"`
+	Plan         string    `json:"plan"`
+	Payment      string    `json:"payment"`
 }
 type Report struct {
+	Diagnosis     string `json:"diagnosis"`
+	Parts         string `json:"parts"`
 	ReceivedCents int64  `json:"received_cents"`
 	Work          string `json:"work"`
 	Result        string `json:"result"`
@@ -50,28 +59,31 @@ type Report struct {
 	Payment       string `json:"payment"`
 }
 type Job struct {
-	ID           string    `json:"id"`
-	Vehicle      string    `json:"vehicle"`
-	Plate        string    `json:"plate"`
-	Brand        string    `json:"brand"`
-	Name         string    `json:"name"`
-	Phone        string    `json:"phone"`
-	Email        string    `json:"email"`
-	Address      string    `json:"address"`
-	Language     string    `json:"language"`
-	Description  string    `json:"description"`
-	Model        string    `json:"model"`
-	VIN          string    `json:"vin"`
-	Mileage      int64     `json:"mileage"`
-	Mechanic     string    `json:"mechanic"`
-	Status       string    `json:"status"`
-	Proposal     Proposal  `json:"proposal"`
-	Report       Report    `json:"report"`
-	Photos       []Photo   `json:"photos"`
-	IntakePhotos []string  `json:"intake_photos"`
-	Revision     int64     `json:"revision"`
-	Created      time.Time `json:"created"`
-	Updated      time.Time `json:"updated"`
+	VehicleID       string    `json:"vehicle_id"`
+	PricingSnapshot []Tariff  `json:"pricing_snapshot"`
+	Area            string    `json:"area"`
+	ID              string    `json:"id"`
+	Vehicle         string    `json:"vehicle"`
+	Plate           string    `json:"plate"`
+	Brand           string    `json:"brand"`
+	Name            string    `json:"name"`
+	Phone           string    `json:"phone"`
+	Email           string    `json:"email"`
+	Address         string    `json:"address"`
+	Language        string    `json:"language"`
+	Description     string    `json:"description"`
+	Model           string    `json:"model"`
+	VIN             string    `json:"vin"`
+	Mileage         int64     `json:"mileage"`
+	Mechanic        string    `json:"mechanic"`
+	Status          string    `json:"status"`
+	Proposal        Proposal  `json:"proposal"`
+	Report          Report    `json:"report"`
+	Photos          []Photo   `json:"photos"`
+	IntakePhotos    []string  `json:"intake_photos"`
+	Revision        int64     `json:"revision"`
+	Created         time.Time `json:"created"`
+	Updated         time.Time `json:"updated"`
 }
 type Event struct {
 	ID        string    `json:"id"`
@@ -85,6 +97,8 @@ type Event struct {
 	Snapshot  *Job      `json:"snapshot,omitempty"`
 }
 type Action struct {
+	Area      string   `json:"area"`
+	Email     string   `json:"email"`
 	Kind      string   `json:"kind"`
 	Revision  int64    `json:"revision"`
 	Mechanic  string   `json:"mechanic"`
@@ -121,7 +135,9 @@ func NewJob(id, plate, name, phone, address, description, brand, language string
 		language = "fi"
 	}
 	now := time.Now().UTC()
-	return Job{ID: id, Vehicle: "FI-" + p, Plate: p, Name: name, Phone: phone, Address: address, Description: description, Brand: brand, Language: language, Status: "new", Revision: 1, Created: now, Updated: now, Photos: []Photo{}, Proposal: Proposal{VisitCents: 5000, WorkCents: 7000, Payment: "cash"}}, nil
+	j := Job{Area: InferArea(address), ID: id, Vehicle: "FI-" + p, Plate: p, Name: name, Phone: phone, Address: address, Description: description, Brand: brand, Language: language, Status: "new", Revision: 1, Created: now, Updated: now, Photos: []Photo{}, Proposal: Proposal{VisitCents: 5000, WorkCents: 7000, Payment: "cash"}}
+	applyPrices(&j, DefaultPriceBook())
+	return j, nil
 }
 func (u User) Manager() bool { return u.Active && u.Role == "owner" }
 func (u User) CanRead(j Job) bool {
@@ -136,6 +152,27 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 	}
 	bad := func(s string) (Job, error) { return j, errors.New(s) }
 	switch a.Kind {
+	case "contact":
+		if !u.Manager() {
+			return j, ErrForbidden
+		}
+		if Area(a.Area) != j.Area && (j.Status == "scheduled" || j.Status == "in_progress") {
+			return bad("Для изменения зоны сначала перенесите выезд")
+		}
+		j.Area = Area(a.Area)
+		j.Email = strings.TrimSpace(a.Email)
+	case "reassign":
+		if !u.Manager() {
+			return j, ErrForbidden
+		}
+		if j.Status != "assigned" && j.Status != "proposed" && j.Status != "client_confirmed" && j.Status != "scheduled" {
+			return bad("Переназначение недоступно")
+		}
+		if a.Mechanic == "" || strings.TrimSpace(a.Text) == "" {
+			return bad("Укажите механика и причину")
+		}
+		j.Mechanic = a.Mechanic
+		j.Status = "assigned"
 	case "assign":
 		if !u.Manager() {
 			return j, ErrForbidden
@@ -153,6 +190,9 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 			return bad("Сначала назначьте механика; подтверждённый выезд нужно перенести")
 		}
 		p := a.Proposal
+		if p.WorkPriceSet != nil && !*p.WorkPriceSet {
+			return bad("Укажите стоимость работ")
+		}
 		if !p.Start.After(now) || !p.End.After(p.Start) || p.End.Sub(p.Start) > 12*time.Hour {
 			return bad("Укажите будущее время и длительность до 12 часов")
 		}
@@ -204,6 +244,9 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 			return bad("Сначала отметьте начало работ")
 		}
 		x := a.Report
+		if strings.TrimSpace(x.Diagnosis) == "" || strings.TrimSpace(x.Parts) == "" {
+			return bad("Укажите диагностику и детали (или «не меняли»)")
+		}
 		if strings.TrimSpace(x.Work) == "" || x.ReceivedCents < 0 || x.ReceivedCents > 10000000 {
 			return bad("Укажите выполненные работы и полученную сумму")
 		}
@@ -249,9 +292,13 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		j.Status = "cancelled"
 	case "technical_note", "internal_note":
- if strings.TrimSpace(a.Text)=="" || a.Channel!="" || a.Direction!="" {return bad("Укажите техническую заметку без канала и направления")}
- case "message":
- if !u.Manager(){return j,ErrForbidden}
+		if strings.TrimSpace(a.Text) == "" || a.Channel != "" || a.Direction != "" {
+			return bad("Укажите техническую заметку без канала и направления")
+		}
+	case "message":
+		if !u.Manager() {
+			return j, ErrForbidden
+		}
 		if strings.TrimSpace(a.Text) == "" {
 			return bad("Введите текст")
 		}
