@@ -20,7 +20,7 @@ type VehicleVisit struct {
 
 // Assigned mechanics can inspect the technical history for that vehicle,
 // without prior customers' names, addresses, phone numbers or conversations.
-func (s *Server) vehicleHistory(w http.ResponseWriter, r *http.Request, current Job) {
+func (s *Server) vehicleHistory(w http.ResponseWriter, r *http.Request, current Job, u User) {
 	q := s.Collection("jobs").Where("Vehicle", "==", current.Vehicle).OrderBy(firestore.DocumentID, firestore.Asc)
 	if c := r.URL.Query().Get("cursor"); c != "" {
 		if len(c) != 64 {
@@ -39,14 +39,14 @@ func (s *Server) vehicleHistory(w http.ResponseWriter, r *http.Request, current 
 		docs = docs[:100]
 		next = docs[99].Ref.ID
 	}
-	visits := []VehicleVisit{}
+	visits := []any{}
 	for _, d := range docs {
 		var j Job
 		if d.DataTo(&j) != nil {
 			fail(w, 503, "Ошибка истории авто")
 			return
 		}
-		visits = append(visits, VehicleVisit{ID: j.ID, Created: j.Created, Status: j.Status, Description: j.Description, Model: j.Model, Mileage: j.Mileage, Proposal: j.Proposal, Report: j.Report, Photos: j.Photos})
+		if u.Manager(){visits=append(visits,j)}else{visits=append(visits,technicalVisit(j))}
 	}
 	write(w, 200, map[string]any{"visits": visits, "cursor": next})
 }

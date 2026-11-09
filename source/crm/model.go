@@ -123,7 +123,7 @@ func NewJob(id, plate, name, phone, address, description, brand, language string
 	now := time.Now().UTC()
 	return Job{ID: id, Vehicle: "FI-" + p, Plate: p, Name: name, Phone: phone, Address: address, Description: description, Brand: brand, Language: language, Status: "new", Revision: 1, Created: now, Updated: now, Photos: []Photo{}, Proposal: Proposal{VisitCents: 5000, WorkCents: 7000, Payment: "cash"}}, nil
 }
-func (u User) Manager() bool { return u.Role == "owner" || u.Role == "manager" }
+func (u User) Manager() bool { return u.Active && u.Role == "owner" }
 func (u User) CanRead(j Job) bool {
 	return u.Active && (u.Manager() || (u.Role == "mechanic" && j.Mechanic == u.ID))
 }
@@ -248,7 +248,10 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 			return bad("Укажите причину отмены")
 		}
 		j.Status = "cancelled"
-	case "message":
+	case "technical_note", "internal_note":
+ if strings.TrimSpace(a.Text)=="" || a.Channel!="" || a.Direction!="" {return bad("Укажите техническую заметку без канала и направления")}
+ case "message":
+ if !u.Manager(){return j,ErrForbidden}
 		if strings.TrimSpace(a.Text) == "" {
 			return bad("Введите текст")
 		}

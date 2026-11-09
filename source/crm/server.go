@@ -491,7 +491,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		return
 	}
 	if len(parts) == 2 && parts[1] == "vehicle-history" && r.Method == "GET" {
-		s.vehicleHistory(w, r, j)
+		s.vehicleHistory(w, r, j, u)
 		return
 	}
 	if len(parts) == 4 && parts[1] == "vehicle-photos" && r.Method == "GET" {
@@ -513,7 +513,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		return
 	}
 	if len(parts) == 1 && r.Method == "GET" {
-		write(w, 200, map[string]any{"job": j, "draft": Draft(j)})
+		write(w, 200, jobResponse(j,u))
 		return
 	}
 	if len(parts) == 2 && parts[1] == "events" && r.Method == "GET" {
@@ -536,7 +536,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 			ds = ds[:100]
 			next = ds[99].Ref.ID
 		}
-		out := []Event{}
+		out := []any{}
 		for _, d := range ds {
 			var x Event
 			if d.DataTo(&x) != nil {
@@ -544,7 +544,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 				return
 			}
 			x.ID = d.Ref.ID
-			out = append(out, x)
+			if v,ok:=eventView(x,u);ok {out=append(out,v)}
 		}
 		write(w, 200, map[string]any{"events": out, "cursor": next})
 		return
@@ -567,7 +567,7 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 			fail(w, code, e.Error())
 			return
 		}
-		write(w, 200, map[string]any{"job": next, "draft": Draft(next)})
+		write(w, 200, jobResponse(next,u))
 		return
 	}
 	http.NotFound(w, r)
