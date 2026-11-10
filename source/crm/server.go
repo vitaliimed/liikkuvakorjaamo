@@ -216,6 +216,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.job(w, r, u, strings.TrimPrefix(path, "/api/jobs/"))
 	case path == "/api/calendar":
 		s.calendarList(w, r, u)
+	case path == "/api/ledger-report":
+		s.ledgerReport(w, r, u)
+	case path == "/api/whatsapp":
+		s.whatsAppInbox(w, r, u)
 	case path == "/api/finance":
 		s.finance(w, r, u)
 	case path == "/api/tariffs":
@@ -581,6 +585,10 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 	}
 	if len(parts) == 2 && parts[1] == "messages" {
 		s.messages(w, r, u, j)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "ledger" {
+		s.ledger(w, r, u, j)
 		return
 	}
 	if len(parts) == 2 && parts[1] == "emails" {

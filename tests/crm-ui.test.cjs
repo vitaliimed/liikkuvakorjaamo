@@ -31,3 +31,10 @@ test('calendar displays records absent from the loaded job page',()=>{
  assert.match(a.html(),/CALENDAR-ONLY/);
  assert.doesNotMatch(a.html(),/Подтверждённых выездов пока нет/);
 });
+test('financial controls and WhatsApp handoff remain owner-only',()=>{
+ const a=app();a.run('selected={job:jobs[0],events:[],draft:"TEST"};detail()');assert.match(a.html(),/id="openLedger"/);assert.match(a.html(),/id="openWhatsAppDraft"/);
+ a.run('me={id:"m1",name:"Mechanic",role:"mechanic"};detail()');assert.doesNotMatch(a.html(),/id="openLedger"|id="openWhatsAppDraft"/);
+});
+test('money entry converts decimal text without floating point rounding',()=>{
+ const a=app();assert.equal(a.run('centsInput("12,34")'),1234);assert.equal(a.run('centsInput("0.01")'),1);assert.throws(()=>a.run('centsInput("1.005")'));assert.throws(()=>a.run('centsInput("-1")'));
+});
