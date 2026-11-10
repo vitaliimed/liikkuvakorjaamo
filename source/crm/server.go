@@ -214,6 +214,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.jobs(w, r, u)
 	case strings.HasPrefix(path, "/api/jobs/"):
 		s.job(w, r, u, strings.TrimPrefix(path, "/api/jobs/"))
+	case path == "/api/finance":
+		s.finance(w, r, u)
 	case path == "/api/tariffs":
 		s.tariffs(w, r, u)
 	case path == "/api/notifications" && r.Method == "GET" && u.Manager():
@@ -565,6 +567,10 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 	j, e := s.readJob(r.Context(), id, u)
 	if e != nil {
 		fail(w, 404, "Заявка не найдена или недоступна")
+		return
+	}
+	if len(parts) == 3 && parts[1] == "intake-photos" {
+		s.intakePhoto(w, r, j, parts[2])
 		return
 	}
 	if len(parts) == 2 && parts[1] == "registration" {

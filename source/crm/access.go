@@ -42,5 +42,5 @@ func jobView(j Job, u User) any {
 	if u.Manager() {
 		return j
 	}
-	return map[string]any{"id": j.ID, "vehicle_id": j.VehicleID, "plate": j.Plate, "brand": j.Brand, "area": j.Area, "name": j.Name, "phone": j.Phone, "address": j.Address, "description": j.Description, "model": j.Model, "vin": j.VIN, "mileage": j.Mileage, "mechanic": j.Mechanic, "status": j.Status, "proposal": j.Proposal, "report": j.Report, "photos": j.Photos, "revision": j.Revision, "created": j.Created, "updated": j.Updated}
+	return map[string]any{"id": j.ID, "vehicle_id": vehicleID(j), "plate": j.Plate, "brand": j.Brand, "area": j.Area, "name": j.Name, "phone": j.Phone, "address": j.Address, "description": j.Description, "model": j.Model, "vin": j.VIN, "mileage": j.Mileage, "mechanic": j.Mechanic, "status": j.Status, "proposal": j.Proposal, "report": j.Report, "photos": j.Photos, "intake_photo_count": len(j.IntakePhotos), "revision": j.Revision, "created": j.Created, "updated": j.Updated}
 }

@@ -21,6 +21,7 @@ def main():
  if run(['git','status','--porcelain'],True).strip():raise SystemExit('Save local changes before deployment; working tree must be clean')
  before=service();baseline=traffic(before);print('Preserving traffic:',baseline,flush=True)
  run(['go','test','./...'],cwd=ROOT/'source')
+ run(['node','--test','tests/crm-ui.test.cjs'])
  with tempfile.TemporaryDirectory() as tmp:run(['go','build','-o',str(pathlib.Path(tmp)/'server'),'.'],cwd=ROOT/'source')
  wanted=json.loads((ROOT/'source/crm/firestore.indexes.json').read_text())['indexes'];existing=indexes()
  for item in wanted:
