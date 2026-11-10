@@ -144,6 +144,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.jobs(w, r, User{ID: "intake-api", Role: "owner", Active: true})
 		return
 	}
+	if path == "/webhooks/whatsapp" {
+		s.whatsappWebhook(w, r)
+		return
+	}
 	if path == "/mail/inbound" {
 		s.inboundMail(w, r)
 		return
