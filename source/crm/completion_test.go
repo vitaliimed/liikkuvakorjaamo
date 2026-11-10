@@ -99,3 +99,75 @@ func TestEmulatorCompleteRepairReview(t *testing.T) {
 		t.Fatal("Incomplete audit", len(ds), e)
 	}
 }
+
+func TestAgreementSnapshotAndReschedule(t *testing.T) {
+	j := fixture(t)
+	j.Mechanic = "m"
+	j.Status = "proposed"
+	j.Proposal = testProposal()
+	j = step(t, j, Action{Kind: "client_confirm", Text: "Agreed"}, testOwner)
+	if j.Agreed == nil || j.Agreed.Proposal.WorkCents != 7000 {
+		t.Fatal("agreement missing")
+	}
+	j.Proposal.WorkCents = 9000
+	if j.Agreed.Proposal.WorkCents != 7000 {
+		t.Fatal("snapshot changed")
+	}
+	j = step(t, j, Action{Kind: "reschedule", Text: "New time requested"}, testOwner)
+	if j.Agreed != nil {
+		t.Fatal("old consent reused")
+	}
+}
+
+type fakeTranslator struct{}
+
+func (fakeTranslator) Translate(_ context.Context, text, from, to string) (string, error) {
+	return "Перевод: " + text, nil
+}
+func TestEmulatorTranslationAndCompleteCalendar(t *testing.T) {
+	s := emulator(t)
+	ctx := context.Background()
+	for i := 0; i < 102; i++ {
+		j := fixture(t)
+		j.ID = randomID()
+		j.Mechanic = "m"
+		if i == 101 {
+			j.Mechanic = "other"
+		}
+		j.Status = "scheduled"
+		j.Proposal = testProposal()
+		if _, e := s.Collection("jobs").Doc(j.ID).Set(ctx, j); e != nil {
+			t.Fatal(e)
+		}
+	}
+	for _, tc := range []struct {
+		u     User
+		count int
+	}{{testOwner, 102}, {testMechanic, 101}} {
+		w := httptest.NewRecorder()
+		s.calendarList(w, httptest.NewRequest("GET", "/", nil), tc.u)
+		var response struct {
+			Jobs []Job `json:"jobs"`
+		}
+		if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &response) != nil || len(response.Jobs) != tc.count {
+			t.Fatal(w.Code, len(response.Jobs), w.Body.String())
+		}
+	}
+	j := fixture(t)
+	j.ID = randomID()
+	_, e := s.Collection("jobs").Doc(j.ID).Set(ctx, j)
+	if e != nil {
+		t.Fatal(e)
+	}
+	m, e := s.RecordInboundMessage(ctx, j.ID, "whatsapp", "translation-test", "client", "Hei", "fi", nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = s.TranslateMessage(ctx, testMechanic, j.ID, m.ID, fakeTranslator{}); e != ErrForbidden {
+		t.Fatal("mechanic translated", e)
+	}
+	translated, e := s.TranslateMessage(ctx, testOwner, j.ID, m.ID, fakeTranslator{})
+	if e != nil || translated.Original != "Hei" || translated.Translation != "Перевод: Hei" {
+		t.Fatal(translated, e)
+	}
+}

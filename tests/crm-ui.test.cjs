@@ -3,10 +3,10 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const crypto=require('node:crypto').webcrypto;
-function app(){
+function app(demo=true){
  const elements=new Map();
  const element=()=>({style:{},dataset:{},addEventListener(){},querySelector(){return element()},showModal(){},close(){}});
- const context=vm.createContext({crypto,Intl,Date,URLSearchParams,console,setTimeout(){},location:{search:'?demo'},document:{querySelector(s){if(!elements.has(s))elements.set(s,element());return elements.get(s)},querySelectorAll(){return []}}});
+ const context=vm.createContext({crypto,Intl,Date,URLSearchParams,console,setTimeout(){},location:{search:demo?'?demo':''},document:{querySelector(s){if(!elements.has(s))elements.set(s,element());return elements.get(s)},querySelectorAll(){return []}}});
  let source=fs.readFileSync('source/crm/web/app.js','utf8');
  source=source.split('\n').filter(line=>!line.startsWith('(async()=>')).join('\n');
  vm.runInContext(source,context);
@@ -25,4 +25,9 @@ test('owner sees drafts and mail composer',()=>{
 test('finance renders totals independent of loaded job list',()=>{
  const a=app();a.run('view="finance";jobs=[];financeData={total:{jobs:105,closed:104,reported_cents:11000,accepted_cents:10500},brands:{},mechanics:{},payments:{cash:10500}};render()');
  assert.match(a.html(),/105/);assert.match(a.html(),/Вся база/);
+});
+test('calendar displays records absent from the loaded job page',()=>{
+ const a=app(false);a.run('calendarJobs=[{...jobs[0],plate:"CALENDAR-ONLY"}];jobs=[];view="calendar";render()');
+ assert.match(a.html(),/CALENDAR-ONLY/);
+ assert.doesNotMatch(a.html(),/Подтверждённых выездов пока нет/);
 });

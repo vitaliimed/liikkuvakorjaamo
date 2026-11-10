@@ -59,32 +59,40 @@ type Report struct {
 	Remaining     string `json:"remaining"`
 	Payment       string `json:"payment"`
 }
+type Agreement struct {
+	Proposal Proposal  `json:"proposal"`
+	At       time.Time `json:"at"`
+	Actor    string    `json:"actor"`
+	Revision int64     `json:"revision"`
+}
+
 type Job struct {
-	VehicleID       string    `json:"vehicle_id"`
-	PricingSnapshot []Tariff  `json:"pricing_snapshot"`
-	Area            string    `json:"area"`
-	ID              string    `json:"id"`
-	Vehicle         string    `json:"vehicle"`
-	Plate           string    `json:"plate"`
-	Brand           string    `json:"brand"`
-	Name            string    `json:"name"`
-	Phone           string    `json:"phone"`
-	Email           string    `json:"email"`
-	Address         string    `json:"address"`
-	Language        string    `json:"language"`
-	Description     string    `json:"description"`
-	Model           string    `json:"model"`
-	VIN             string    `json:"vin"`
-	Mileage         int64     `json:"mileage"`
-	Mechanic        string    `json:"mechanic"`
-	Status          string    `json:"status"`
-	Proposal        Proposal  `json:"proposal"`
-	Report          Report    `json:"report"`
-	Photos          []Photo   `json:"photos"`
-	IntakePhotos    []string  `json:"intake_photos"`
-	Revision        int64     `json:"revision"`
-	Created         time.Time `json:"created"`
-	Updated         time.Time `json:"updated"`
+	Agreed          *Agreement `json:"agreed,omitempty"`
+	VehicleID       string     `json:"vehicle_id"`
+	PricingSnapshot []Tariff   `json:"pricing_snapshot"`
+	Area            string     `json:"area"`
+	ID              string     `json:"id"`
+	Vehicle         string     `json:"vehicle"`
+	Plate           string     `json:"plate"`
+	Brand           string     `json:"brand"`
+	Name            string     `json:"name"`
+	Phone           string     `json:"phone"`
+	Email           string     `json:"email"`
+	Address         string     `json:"address"`
+	Language        string     `json:"language"`
+	Description     string     `json:"description"`
+	Model           string     `json:"model"`
+	VIN             string     `json:"vin"`
+	Mileage         int64      `json:"mileage"`
+	Mechanic        string     `json:"mechanic"`
+	Status          string     `json:"status"`
+	Proposal        Proposal   `json:"proposal"`
+	Report          Report     `json:"report"`
+	Photos          []Photo    `json:"photos"`
+	IntakePhotos    []string   `json:"intake_photos"`
+	Revision        int64      `json:"revision"`
+	Created         time.Time  `json:"created"`
+	Updated         time.Time  `json:"updated"`
 }
 type Event struct {
 	ID        string    `json:"id"`
@@ -174,6 +182,7 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		j.Mechanic = a.Mechanic
 		j.Status = "assigned"
+		j.Agreed = nil
 	case "assign":
 		if !u.Manager() {
 			return j, ErrForbidden
@@ -186,6 +195,7 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		j.Mechanic = a.Mechanic
 		j.Status = "assigned"
+		j.Agreed = nil
 	case "propose":
 		if j.Mechanic == "" || (j.Status != "assigned" && j.Status != "proposed") {
 			return bad("Сначала назначьте механика; подтверждённый выезд нужно перенести")
@@ -208,6 +218,7 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		j.Proposal = p
 		j.Status = "proposed"
+		j.Agreed = nil
 	case "client_confirm":
 		if !u.Manager() {
 			return j, ErrForbidden
@@ -216,6 +227,7 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 			return bad("Добавьте сообщение или запись звонка с согласием клиента")
 		}
 		j.Status = "client_confirmed"
+		j.Agreed = &Agreement{Proposal: j.Proposal, At: now, Actor: u.ID, Revision: j.Revision + 1}
 	case "confirm":
 		if !u.Manager() {
 			return j, ErrForbidden
@@ -235,6 +247,7 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 			return bad("Укажите причину переноса")
 		}
 		j.Status = "assigned"
+		j.Agreed = nil
 	case "start":
 		if j.Status != "scheduled" {
 			return bad("Выезд ещё не подтверждён")

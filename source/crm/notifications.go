@@ -232,6 +232,18 @@ func (s *Server) bot(w http.ResponseWriter, r *http.Request) {
 	p, err := Plate(update.Message.Text)
 	if err == nil {
 		q := s.Collection("jobs").Where("Plate", "==", p)
+		alias, lookupErr := s.Collection("vehicle_aliases").Doc(p).Get(r.Context())
+		if lookupErr == nil {
+			var a VehicleAlias
+			if alias.DataTo(&a) != nil {
+				fail(w, 503, "Ошибка номера автомобиля")
+				return
+			}
+			q = s.Collection("jobs").Where("Vehicle", "==", a.VehicleID)
+		} else if status.Code(lookupErr) != codes.NotFound {
+			fail(w, 503, "Ошибка поиска автомобиля")
+			return
+		}
 		if !u.Manager() {
 			q = q.Where("Mechanic", "==", u.ID)
 		}

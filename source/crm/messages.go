@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -122,4 +123,49 @@ func (s *Server) messages(w http.ResponseWriter, r *http.Request, u User, j Job)
 
 func emailMessage(j Job, m Email) Message {
 	return Message{ID: "email-" + m.ID, JobID: j.ID, VehicleID: vehicleID(j), Source: "email", Author: m.Actor, At: m.Created, Original: m.Body, Direction: m.Direction, Status: m.Status}
+}
+
+// TranslateMessage centralizes translation and stores the result without changing
+// the original. Provider/network calls happen outside Firestore transactions.
+func (s *Server) TranslateMessage(ctx context.Context, u User, jobID, messageID string, t Translator) (Message, error) {
+	if !u.Manager() {
+		return Message{}, ErrForbidden
+	}
+	j, e := s.readJob(ctx, jobID, u)
+	if e != nil {
+		return Message{}, e
+	}
+	_ = j
+	if messageID == "" || strings.Contains(messageID, "/") {
+		return Message{}, errors.New("Некорректный ID сообщения")
+	}
+	ref := s.Collection("jobs").Doc(jobID).Collection("messages").Doc(messageID)
+	d, e := ref.Get(ctx)
+	if e != nil {
+		return Message{}, e
+	}
+	var original Message
+	if e = d.DataTo(&original); e != nil {
+		return Message{}, e
+	}
+	translated, e := TranslateToRussian(ctx, t, original.Original, original.Language)
+	if e != nil {
+		return original, e
+	}
+	var result Message
+	e = s.DB.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+		d, e := tx.Get(ref)
+		if e != nil {
+			return e
+		}
+		if e = d.DataTo(&result); e != nil {
+			return e
+		}
+		if result.Original != original.Original || result.Language != original.Language {
+			return ErrConflict
+		}
+		result.Translation = translated
+		return tx.Update(ref, []firestore.Update{{Path: "Translation", Value: translated}})
+	})
+	return result, e
 }

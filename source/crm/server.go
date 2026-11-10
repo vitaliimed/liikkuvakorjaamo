@@ -214,6 +214,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.jobs(w, r, u)
 	case strings.HasPrefix(path, "/api/jobs/"):
 		s.job(w, r, u, strings.TrimPrefix(path, "/api/jobs/"))
+	case path == "/api/calendar":
+		s.calendarList(w, r, u)
 	case path == "/api/finance":
 		s.finance(w, r, u)
 	case path == "/api/tariffs":
