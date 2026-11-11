@@ -1,12 +1,12 @@
-/* Liikkuva identity: forest green site, orange arrow and former blue accents. */
-:root{--brand:#ff7410;--blue:#ff7410;--orange:#ff7410;--green:#223631;--pine:#133e32;--forest:#223631;--forest-soft:#edf2ee;--ink:#17221f;--accent-text:#a94000}
+/* Liikkuva: exactly two primary brand colours: green #23372b, orange #f97315. */
+:root{--brand:#f97315;--blue:#f97315;--orange:#f97315;--green:#23372b;--pine:#23372b;--forest:#23372b;--forest-soft:#f4f5f2;--ink:#23372b;--accent-text:#f97315}
 .brand{display:inline-flex;align-items:center;flex-shrink:0;max-width:100%}
 .brand img.brand-logo,.access-brand img.brand-logo{width:clamp(160px,19vw,240px);height:auto;max-width:100%;object-fit:contain;border-radius:0}
 .brand-logo-dark{display:none!important}
 .brand-logo-light{display:block}
 html[data-theme="dark"] .brand-logo-light{display:none!important}
 html[data-theme="dark"] .brand-logo-dark{display:block!important}
-.footer,.subpage-footer,html[data-theme="dark"] .footer,html[data-theme="dark"] .subpage-footer{background:#133e32;color:#f5f8f5;border-top:4px solid #ff7410}
+.footer,.subpage-footer,html[data-theme="dark"] .footer,html[data-theme="dark"] .subpage-footer{background:#23372b;color:#f5f8f5;border-top:4px solid #f97315}
 .footer{padding-top:48px}.subpage-footer{padding:28px 20px;text-align:center}
 .footer a,.subpage-footer a,html[data-theme="dark"] .footer a{color:#fff}
 .footer p,.footer-contacts,.footer-bottom{color:#d4e4d9}
@@ -14,35 +14,35 @@ html[data-theme="dark"] .brand-logo-dark{display:block!important}
 .footer .brand-logo-light{display:none!important}.footer .brand-logo-dark{display:block!important}
 .footer .resource-links,html[data-theme="dark"] .footer .resource-links{background:transparent;color:inherit;border-color:#ffffff30}
 .footer .social-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;flex:none;border:1px solid #ffffff55;border-radius:50%;padding:0;transition:background .2s,color .2s}
-.footer .social-icon:hover{background:#ff7410;color:#17221f;border-color:#ff7410}
-.btn-orange,.btn-primary{color:#17221f!important;font-weight:750;border-color:transparent}
-.btn-orange:hover,.btn-primary:hover{background:#ff9140!important;color:#17221f!important}
-.text-link,.service-link,.eyebrow,.big-price{color:#a94000}
-html[data-theme="dark"] .text-link,html[data-theme="dark"] .service-link,html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .big-price{color:#ffac70}
-:focus-visible{outline:3px solid #a94000;outline-offset:4px}
-html[data-theme="dark"] :focus-visible{outline-color:#ffac70}
+.footer .social-icon:hover{background:#f97315;color:#23372b;border-color:#f97315}
+.btn-orange,.btn-primary{color:#23372b!important;font-weight:750;border-color:transparent}
+.btn-orange:hover,.btn-primary:hover{background:var(--orange)!important;filter:brightness(.95);color:var(--green)!important}
+.text-link,.service-link,.eyebrow,.big-price{color:var(--green)}
+html[data-theme="dark"] .text-link,html[data-theme="dark"] .service-link,html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .big-price{color:#f97315}
+:focus-visible{outline:3px solid var(--green);outline-offset:4px}
+html[data-theme="dark"] :focus-visible{outline-color:var(--orange)}
 html[data-theme="dark"] .capability-card p,html[data-theme="dark"] .area-card p{color:#bacbc1}
 @media(max-width:760px){.brand img.brand-logo,.access-brand img.brand-logo{width:170px}.footer-top{gap:26px}.footer .brand img{width:220px}.subpage-header .container{gap:16px;flex-wrap:wrap}}
 
 /* Restore the LIVE site's pine-green hierarchy. Orange is an accent, not a surface color. */
 .topbar,.areas-section,.final-cta{background:var(--forest)!important;color:#fff!important}
 .topbar .status-dot{background:var(--orange)}
-.pricing-section,.request-section{background:var(--forest-soft)!important;color:#17221f!important}
+.pricing-section,.request-section{background:var(--forest-soft)!important;color:#23372b!important}
 .price-panel{background:var(--forest)!important;color:#fff!important}
 .price-panel>.eyebrow,.price-panel>p,.price-panel .big-price{color:#fff!important}
-.areas-section .area-map{color:#17221f}
+.areas-section .area-map{color:#23372b}
 .final-cta h2,.final-cta p{color:#fff}
 .final-cta .btn-dark{background:#fff!important;color:var(--forest)!important}
-.final-cta .btn-dark:hover{background:#e2f0e7!important;color:var(--forest)!important}
+.final-cta .btn-dark:hover{background:#f4f5f2!important;color:var(--forest)!important}
 .resource-links{background:#fff!important;color:var(--forest)!important}
 .resource-links a:hover,.service-entry:hover{background:var(--forest-soft)!important}
-.request-card{background:#fff;color:#17221f}
+.request-card{background:#fff;color:#23372b}
 .service-icon,.hero-points .icon,.request-points .icon,.capability-card .icon,.nav a:hover,.languages a[aria-current]{color:var(--orange)}
-.btn-orange,.btn-submit,.btn-primary{background:var(--orange)!important;color:#17221f!important;border-color:transparent}
-.btn-orange:hover,.btn-submit:hover,.btn-primary:hover{background:#ff9140!important;color:#17221f!important}
+.btn-orange,.btn-submit,.btn-primary{background:var(--orange)!important;color:#23372b!important;border-color:transparent}
+.btn-orange:hover,.btn-submit:hover,.btn-primary:hover{background:var(--orange)!important;filter:brightness(.95);color:var(--green)!important}
 .footer,.subpage-footer{background:var(--pine)!important}
 html[data-theme="dark"] .pricing-section,html[data-theme="dark"] .request-section{background:#1c2522!important;color:#f2f6f3!important}
 html[data-theme="dark"] .request-section h2,html[data-theme="dark"] .request-copy,html[data-theme="dark"] .request-copy>p{color:#f2f6f3!important}
 html[data-theme="dark"] .request-card{background:#1c2522;color:#f2f6f3;border:1px solid #40544b}
-html[data-theme="dark"] .request-card input,html[data-theme="dark"] .request-card textarea{background:#26352d;color:#fff;border-color:#60756a}
-html[data-theme="dark"] .service-entry:hover{background:#25392e!important}
+html[data-theme="dark"] .request-card input,html[data-theme="dark"] .request-card textarea{background:#222927;color:#fff;border-color:#60756a}
+html[data-theme="dark"] .service-entry:hover{background:#222927!important}

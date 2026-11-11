@@ -14,7 +14,7 @@ func TestOrangeBrandEmailLanguageAndEscaping(t *testing.T) {
 		if lang == "fi" {
 			greeting = "Hei"
 		}
-		for _, wanted := range []string{`<html lang="` + lang + `">`, greeting + " &lt;Client&gt;", "logo-green.png", "#133e32", "#ff7410", "&lt;script&gt;", "<br>Second line"} {
+		for _, wanted := range []string{`<html lang="` + lang + `">`, greeting + " &lt;Client&gt;", "logo-green.png", "#23372b", "#f97315", "&lt;script&gt;", "<br>Second line"} {
 			if !strings.Contains(body, wanted) {
 				t.Errorf("%s email missing %q", lang, wanted)
 			}
@@ -39,10 +39,10 @@ func TestStandaloneBrandPreservesOperatorText(t *testing.T) {
 	}
 }
 func TestLegacyBlueMigratesToOrange(t *testing.T) {
-	if got := liikkuvaProDefaults(SiteSettings{ProAccent: "#2458d6"}).ProAccent; got != "#ff7410" {
+	if got := liikkuvaProDefaults(SiteSettings{ProAccent: "#f97315"}).ProAccent; got != "#f97315" {
 		t.Fatalf("legacy accent: %s", got)
 	}
-	if got := liikkuvaProDefaults(SiteSettings{ProAccent: "#123456"}).ProAccent; got != "#123456" {
-		t.Fatalf("custom accent overwritten: %s", got)
+	if got := liikkuvaProDefaults(SiteSettings{ProAccent: "#123456"}).ProAccent; got != "#f97315" {
+		t.Fatalf("non-brand accent retained: %s", got)
 	}
 }

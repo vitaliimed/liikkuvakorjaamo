@@ -57,9 +57,8 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	if s.ProFontSize < 16 || s.ProFontSize > 22 {
 		s.ProFontSize = 18
 	}
-	if !regexp.MustCompile(`^#[a-fA-F0-9]{6}$`).MatchString(s.ProAccent) || strings.EqualFold(s.ProAccent, "#2458d6") {
-		s.ProAccent = "#ff7410"
-	}
+	// One approved brand accent. Legacy/custom database values cannot leak into public CSS.
+	s.ProAccent = "#f97315"
 	switch s.ProTheme {
 	case "light", "dark", "system", "night":
 	default:
