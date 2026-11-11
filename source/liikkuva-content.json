@@ -4,7 +4,7 @@
     "ShowStats": false,
     "Header": {
       "LogoText": "Liikkuva Auto Korjaamo",
-      "LogoURL": "/static/img/logo-white.png",
+      "LogoURL": "/static/img/logo-white.svg",
       "Nav": [
         {
           "Label": "Palvelut",
@@ -350,7 +350,7 @@
     "ShowStats": false,
     "Header": {
       "LogoText": "Liikkuva Auto Korjaamo",
-      "LogoURL": "/static/img/logo-white.png",
+      "LogoURL": "/static/img/logo-white.svg",
       "Nav": [
         {
           "Label": "Services",
