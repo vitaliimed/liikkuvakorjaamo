@@ -31,7 +31,7 @@ func TestCanonicalTwoColourBrand(t *testing.T) {
    if strings.Contains(svg,v) {t.Errorf("old logo colour %s in %s",v,path)}
   }
  }
- for _,path:=range []string{"landing.html","templates/landing.html"} {
+ for _,path:=range []string{"landing.html","templates/landing.html","privacy.html","review.html","thankyou.html","templates/privacy.html","templates/review.html","templates/thankyou.html","admin-access.html"} {
   b,err:=os.ReadFile(path)
   if err!=nil {t.Fatal(err)}
   if !strings.Contains(string(b),"logo-white.svg") || !strings.Contains(string(b),"logo-transparent-dark.svg") {
