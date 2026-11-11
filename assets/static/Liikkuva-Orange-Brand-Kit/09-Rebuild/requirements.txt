@@ -1,0 +1,4 @@
+Pillow>=11.3
+cairosvg
+reportlab
+pypdf
