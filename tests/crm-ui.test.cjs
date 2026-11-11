@@ -38,3 +38,21 @@ test('financial controls and WhatsApp handoff remain owner-only',()=>{
 test('money entry converts decimal text without floating point rounding',()=>{
  const a=app();assert.equal(a.run('centsInput("12,34")'),1234);assert.equal(a.run('centsInput("0.01")'),1);assert.throws(()=>a.run('centsInput("1.005")'));assert.throws(()=>a.run('centsInput("-1")'));
 });
+
+test('approved orange brand logo is used on sidebar and login',()=>{
+ const a=app();
+ a.run('shell("<p>demo</p>")');
+ // Main CRM app loads the original brand asset in both light and dark contexts.
+ const source=fs.readFileSync('source/crm/web/app.js','utf8');
+ assert.match(source,/\/crm\/logo-dark\.svg/);
+ assert.match(source,/\/crm\/logo-light\.svg/);
+});
+test('whatsapp inbox shows real messages separately from status-only records',async()=>{
+ const a=app(false);
+ a.run('api=async()=>({messages:[{id:"valid",peer:"358401234567",direction:"incoming",status:"received",at:"2026-11-11T15:00:00Z",message:{id:"wamid.real",type:"text",text:{body:"Hei testi"}}},{id:"pending",peer:"",status:"read",message:{}}],cursor:""})');
+ await a.run('showWAInbox()');
+ assert.match(a.html(),/Hei testi/);
+ assert.match(a.html(),/служебных статусов без текста/);
+ assert.match(a.html(),/id="waRefresh"/);
+ assert.doesNotMatch(a.html(),/Ожидание сообщения/);
+});

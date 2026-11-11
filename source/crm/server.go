@@ -180,18 +180,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		file := "index.html"
-		if path == "/app.js" {
-			file = "app.js"
-		}
-		if path == "/style.css" {
-			file = "style.css"
-		}
-		if path != "" && path != "/" && path != "/app.js" && path != "/style.css" {
+		mime := "text/html; charset=utf-8"
+		switch path {
+		case "", "/":
+		case "/app.js":
+			file, mime = "app.js", "text/javascript; charset=utf-8"
+		case "/style.css":
+			file, mime = "style.css", "text/css; charset=utf-8"
+		case "/favicon.svg", "/logo-dark.svg", "/logo-light.svg":
+			file, mime = strings.TrimPrefix(path, "/"), "image/svg+xml"
+		default:
 			http.NotFound(w, r)
 			return
 		}
-		b, _ := web.ReadFile("web/" + file)
-		w.Header().Set("Content-Type", map[string]string{"index.html": "text/html; charset=utf-8", "app.js": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}[file])
+		b, err := web.ReadFile("web/" + file)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", mime)
 		_, _ = w.Write(b)
 		return
 	}
