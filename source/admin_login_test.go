@@ -53,8 +53,9 @@ func TestAdminBrowserLoginFlow(t *testing.T) {
 		t.Skip("set LIIKKUVA_BROWSER_TEST=1; requires Node, Playwright and Chromium")
 	}
 	f := newAccessFixture(t, fixtureAdminPassword)
-	settings := &memorySettingsStore{state: SiteSettings{BusinessName: "Liikkuva", Phone: "+358401234567", ServiceEmail: "service@example.test"}}
+	settings := &memorySettingsStore{state: SiteSettings{BusinessName: "Liikkuva", ServiceEmail: "service@example.test"}}
 	f.cfg.SettingsStore = settings
+	f.cfg.AssetStore = &memorySiteAssets{}
 	var mu sync.Mutex
 	var origins, referers []string
 	ready := make(chan struct{})

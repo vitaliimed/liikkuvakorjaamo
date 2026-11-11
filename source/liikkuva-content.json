@@ -32,7 +32,7 @@
       "BackgroundURL": "/static/img/mobile-mechanic-v2.png",
       "PersonDesktopURL": "",
       "Title": "Liikkuva autokorjaamo\nUudellamaalla.",
-      "Subtitle": "Kotipiha, työpaikka tai sovittu pysäköintipaikka. Selvitämme vian ja sovimme korjauksesta ennen työn aloittamista — ilman turhaa matkaa korjaamolle.",
+      "Subtitle": "Auton korjaus kotipihalla tai työpaikalla. Helsinki, Espoo, Vantaa ja Uusimaa.",
       "Badge": "DIAGNOSTIIKKA JA KORJAUS · UUSIMAA",
       "Points": [
         "Käynti 70 €",
@@ -51,8 +51,8 @@
           "Text": "Selkeä arvio etukäteen"
         },
         {
-          "Title": "FI · EN · RU · UA",
-          "Text": "Palvelu neljällä kielellä"
+          "Title": "Soitamme sinulle",
+          "Text": "Sovitaan sopiva aika"
         }
       ]
     },
@@ -224,10 +224,6 @@
           "Answer": "Ei. Monet yleiset viat voidaan diagnosoida tai korjata paikan päällä, mutta osa töistä vaatii korjaamon."
         },
         {
-          "Question": "Palveletteko vain suomeksi?",
-          "Answer": "Palvelemme suomeksi, englanniksi, venäjäksi ja ukrainaksi."
-        },
-        {
           "Question": "Millainen paikka sopii liikkuvalle autokorjaamolle?",
           "Answer": "Tarvitsemme luvallisen ja turvallisen työskentelypaikan, jossa auton ympärillä on tilaa. Kerro, onko auto kotipihalla, työpaikalla vai pysäköintihallissa. Kohteen olosuhteet ja työn soveltuvuus arvioidaan ennen käyntiä."
         },
@@ -243,8 +239,7 @@
       "Items": [
         "Asentajan käynti 70 €",
         "Diagnostiikka tarvittaessa alk. 50 €",
-        "Varaosat ja lisätyöt sovitaan erikseen",
-        "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"
+        "Varaosat ja lisätyöt sovitaan erikseen"
       ]
     },
     "Capability": {
@@ -314,7 +309,7 @@
       "NetworkErrorMessage": "Verkko- tai selainvirhe. Yritä uudelleen.",
       "SubmitButton": "Lähetä avunpyyntö",
       "Title": "Miten voimme auttaa?",
-      "Intro": "Kerro lyhyesti, mitä autolle tapahtui ja missä se on. Otamme yhteyttä ja sovimme käynnistä.",
+      "Intro": "Jätä yhteystietosi ja kerro lyhyesti ongelmasta. Soitamme sinulle.",
       "VisitPriceText": "Asentajan saapuminen 70 €. Diagnostiikka tarvittaessa alk. 50 €. Muut työt ja varaosat sovitaan erikseen.",
       "VisitPriceFootnote": "Lomakkeen lähettäminen on maksutonta. Vahvistamme ajan ja sovitun työn ennen käyntiä.",
       "UseLocationButton": "Käytä sijaintiani",
@@ -378,7 +373,7 @@
       "BackgroundURL": "/static/img/mobile-mechanic-v2.png",
       "PersonDesktopURL": "",
       "Title": "Mobile mechanic.\nAt your doorstep.",
-      "Subtitle": "Your driveway, workplace or an agreed parking spot. We investigate the fault and agree the repair before work starts — saving a trip to the workshop.",
+      "Subtitle": "Car repairs at home or work. Helsinki, Espoo, Vantaa and Uusimaa.",
       "Badge": "MOBILE DIAGNOSTICS & REPAIR · UUSIMAA",
       "Points": [
         "Visit €70",
@@ -397,8 +392,8 @@
           "Text": "A clear assessment in advance"
         },
         {
-          "Title": "FI · EN · RU · UA",
-          "Text": "Service in four languages"
+          "Title": "We will call you",
+          "Text": "Arrange a suitable time"
         }
       ]
     },
@@ -570,10 +565,6 @@
           "Answer": "No. Many common issues can be diagnosed or fixed on-site, but some jobs still require a workshop."
         },
         {
-          "Question": "Do you work only in Finnish?",
-          "Answer": "Not only in Finnish, the service can be handled in Finnish and English, Russian and Ukrainian"
-        },
-        {
           "Question": "What location is suitable for a mobile mechanic?",
           "Answer": "We need permission to work and a safe space around the vehicle. Tell us if it is in a driveway, at work or in a parking garage. We assess the conditions and suitability of the job before the visit."
         },
@@ -589,8 +580,7 @@
       "Items": [
         "Mechanic visit €70",
         "Diagnostics, if needed, from €50",
-        "Parts and additional work agreed separately",
-        "Finnish, English, Russian and Ukrainian service"
+        "Parts and additional work agreed separately"
       ]
     },
     "Capability": {
@@ -660,7 +650,7 @@
       "NetworkErrorMessage": "Network or browser error. Please try again.",
       "SubmitButton": "Send help request",
       "Title": "How can we help?",
-      "Intro": "Tell us briefly what happened and where your car is. We will contact you to arrange a visit.",
+      "Intro": "Leave your details and briefly describe the problem. We will call you.",
       "VisitPriceText": "Mechanic visit €70. Diagnostics, if needed, from €50. Other work and spare parts are agreed separately.",
       "VisitPriceFootnote": "Sending a request is free. We confirm the time and agreed work before the visit.",
       "UseLocationButton": "Use my location",

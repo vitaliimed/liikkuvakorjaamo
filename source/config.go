@@ -33,6 +33,8 @@ type Config struct {
 	AdminRecoveryEmail         string
 	AdminStore                 adminAuthStore
 	SettingsStore              siteSettingsStore
+	AssetStore                 siteAssetStore
+	EmailSettings              *SiteSettings
 	AdminSend                  func(Config, string, string, string, string) error
 	ReviewTokenSecret          string
 	SiteSettingsCollection     string

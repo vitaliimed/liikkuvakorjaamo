@@ -475,12 +475,12 @@ func TestWriteAdminPreview(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings := normalizeAdminSettingsForTemplate(SiteSettings{BusinessName: "Liikkuva", Phone: "+358 40 123 4567", ServiceEmail: "service@example.test"})
-	for _, tab := range []string{"overview", "general", "assets", "leads", "help", "seo"} {
+	for _, tab := range []string{"overview", "general", "assets", "analytics", "emails", "leads", "help", "seo"} {
 		file, err := os.Create(filepath.Join(dir, "admin-"+tab+".html"))
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = renderer.admin.Execute(file, AdminPageData{PageTitle: "Кабинет Liikkuva", Settings: settings, ActiveTab: tab, CSRF: "synthetic-preview-token", ReleaseVersion: releaseVersion, MailEnabled: true, OverviewTotalLeads: 12, OverviewFailedLeads: 1, OverviewPendingReviews: 2})
+		err = renderer.admin.Execute(file, AdminPageData{PageTitle: "Кабинет Liikkuva", Settings: settings, AnalyticsEvents: analyticsEventCatalog(settings), AssetsConfigured: true, ActiveTab: tab, CSRF: "synthetic-preview-token", ReleaseVersion: releaseVersion, MailEnabled: true, OverviewTotalLeads: 12, OverviewFailedLeads: 1, OverviewPendingReviews: 2})
 		file.Close()
 		if err != nil {
 			t.Fatal(err)

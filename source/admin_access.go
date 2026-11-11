@@ -373,6 +373,8 @@ func renderAccess(w http.ResponseWriter, code int, data accessPageData) {
 	}
 }
 func (h *AdminHandler) renderAdmin(w http.ResponseWriter, r *http.Request, data AdminPageData) error {
+	data.AnalyticsEvents = analyticsEventCatalog(data.Settings)
+	data.AssetsConfigured = h.cfg.AssetStore != nil || strings.TrimSpace(h.cfg.GCSBucketName) != ""
 	data.CSRF = accessCSRF(r)
 	data.MailEnabled = mailNotificationsEnabled(h.cfg)
 	data.TelegramConfigured = strings.TrimSpace(h.cfg.TelegramBotToken) != "" && strings.TrimSpace(h.cfg.TelegramChatID) != ""
@@ -461,9 +463,9 @@ func sendAccessMail(cfg Config, to, subject, message string) error {
 	// Recovery links must never be copied to the client-mail BCC recipient.
 	cfg.MailCopyTo = ""
 	if cfg.AdminSend != nil {
-		return cfg.AdminSend(cfg, to, subject, message, standaloneEmailHTML(message))
+		return cfg.AdminSend(cfg, to, subject, message, brandedPlainEmailHTML(withEmailSettings(cfg), "ru", subject, message))
 	}
-	return sendSMTPMail(cfg, to, subject, message, standaloneEmailHTML(message))
+	return sendSMTPMail(cfg, to, subject, message, brandedPlainEmailHTML(withEmailSettings(cfg), "ru", subject, message))
 }
 func accessURL(cfg Config, path, token string) (string, error) {
 	u, err := url.Parse(cfg.SiteURL)

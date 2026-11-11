@@ -339,17 +339,18 @@ type LandingPageData struct {
 }
 
 type ThankYouPageData struct {
-	Lang                         string
-	PageTitle                    string
-	MetaDescription              string
-	RobotsMeta                   string
-	CanonicalURL                 string
-	HrefLangFI                   string
-	HrefLangEN                   string
-	OGTitle                      string
-	OGDescription                string
-	OGURL                        string
-	LogoURL                      string
+	Lang            string
+	PageTitle       string
+	MetaDescription string
+	RobotsMeta      string
+	CanonicalURL    string
+	HrefLangFI      string
+	HrefLangEN      string
+	OGTitle         string
+	OGDescription   string
+	OGURL           string
+	LogoURL         string
+
 	SiteName                     string
 	Footer                       FooterContent
 	FaviconSVGURL                string
@@ -469,6 +470,21 @@ type SiteSettings struct {
 	WorkingHoursFI               string
 	WorkingHoursEN               string
 	LogoURL                      string
+	LogoDarkURL                  string
+	EmailLogoURL                 string
+	EmailConfirmationSubjectFI   string
+	EmailConfirmationSubjectEN   string
+	EmailConfirmationTextFI      string
+	EmailConfirmationTextEN      string
+	EmailReadySubjectFI          string
+	EmailReadySubjectEN          string
+	EmailReadyTextFI             string
+	EmailReadyTextEN             string
+	EmailSignatureFI             string
+	EmailSignatureEN             string
+	AnalyticsDisabled            bool
+	AnalyticsEventsConfigured    bool
+	AnalyticsDisabledEvents      []string
 	InstagramURL                 string
 	TikTokURL                    string
 	FacebookGroupURL             string
@@ -854,6 +870,9 @@ type AdminReviewListItem struct {
 }
 
 type AdminPageData struct {
+	AnalyticsEvents    []analyticsEventSetting
+	AssetsConfigured   bool
+	AssetUploadMessage string
 	TelegramConfigured bool
 	CSRF               string
 	ReleaseVersion     string

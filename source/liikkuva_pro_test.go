@@ -32,7 +32,7 @@ func TestPhoneRequiredForEmailLead(t *testing.T) {
 	if len(issues) == 0 {
 		t.Fatal("email-only request accepted")
 	}
-	if issues := validateLead(Lead{Name: "Test", Phone: "+358401234567", Language: "fi"}); len(issues) != 0 {
+	if issues := validateLead(Lead{Name: "Test", Phone: "+358401234567", Car: "ABC-123", Address: "Helsinki", Language: "fi"}); len(issues) != 0 {
 		t.Fatal(issues)
 	}
 }

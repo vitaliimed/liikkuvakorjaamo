@@ -21,7 +21,11 @@ func newTemplateRenderer() (*TemplateRenderer, error) {
 	if err != nil {
 		return nil, err
 	}
-	landing, err := template.ParseFiles(landingPath)
+	formPath, err := resolveTemplatePath("lead-form.html")
+	if err != nil {
+		return nil, err
+	}
+	landing, err := template.New("landing.html").Funcs(template.FuncMap{"requestForm": requestFormData}).ParseFiles(landingPath, formPath)
 	if err != nil {
 		return nil, err
 	}
