@@ -20,7 +20,7 @@
       // generate_lead is emitted once at the successful server acknowledgement.
 
     }
-    if (typeof window.liikkuvaTrackCustomEvent === 'function') window.liikkuvaTrackCustomEvent('lead_thankyou_view', event);
+    if (typeof window.liikkuvaTrackEvent === 'function') window.liikkuvaTrackEvent('lead_thankyou_view', event);
     try { sessionStorage.removeItem(key); } catch (_) {}
   });
 })();

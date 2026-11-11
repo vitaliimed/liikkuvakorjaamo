@@ -248,7 +248,12 @@ func padAdminCases(items []AdminCaseItem, size int) []AdminCaseItem {
 }
 
 func normalizeAdminSettingsForTemplate(settings SiteSettings) SiteSettings {
-	settings = liikkuvaProDefaults(settings)
+	settings = adminContentDefaults(liikkuvaEmailDefaults(liikkuvaSettings(liikkuvaProDefaults(settings))))
+	content := getLandingContent("fi")
+	settings.LogoURL = assetOrFallback(settings.LogoURL, content.Header.LogoURL)
+	settings.HeroBackgroundURL = assetOrFallback(settings.HeroBackgroundURL, content.Hero.BackgroundURL)
+	settings.AreasMapImageURL = assetOrFallback(settings.AreasMapImageURL, content.Areas.MapImageURL)
+	settings.FaviconSVGURL, settings.Favicon32URL, settings.Favicon16URL, settings.FaviconICOURL, settings.AppleTouchIconURL = faviconURLs(settings)
 	if len(settings.ServiceItems) == 0 {
 		settings.ServiceItems = []AdminServiceItem{{}}
 	}
@@ -446,6 +451,21 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 		WorkingHoursFI:               strings.TrimSpace(r.FormValue("working_hours_fi")),
 		WorkingHoursEN:               strings.TrimSpace(r.FormValue("working_hours_en")),
 		LogoURL:                      strings.TrimSpace(r.FormValue("logo_url")),
+		LogoDarkURL:                  strings.TrimSpace(r.FormValue("logo_dark_url")),
+		EmailLogoURL:                 strings.TrimSpace(r.FormValue("email_logo_url")),
+		EmailConfirmationSubjectFI:   strings.TrimSpace(r.FormValue("email_confirmation_subject_fi")),
+		EmailConfirmationSubjectEN:   strings.TrimSpace(r.FormValue("email_confirmation_subject_en")),
+		EmailConfirmationTextFI:      strings.TrimSpace(r.FormValue("email_confirmation_text_fi")),
+		EmailConfirmationTextEN:      strings.TrimSpace(r.FormValue("email_confirmation_text_en")),
+		EmailReadySubjectFI:          strings.TrimSpace(r.FormValue("email_ready_subject_fi")),
+		EmailReadySubjectEN:          strings.TrimSpace(r.FormValue("email_ready_subject_en")),
+		EmailReadyTextFI:             strings.TrimSpace(r.FormValue("email_ready_text_fi")),
+		EmailReadyTextEN:             strings.TrimSpace(r.FormValue("email_ready_text_en")),
+		EmailSignatureFI:             strings.TrimSpace(r.FormValue("email_signature_fi")),
+		EmailSignatureEN:             strings.TrimSpace(r.FormValue("email_signature_en")),
+		AnalyticsDisabled:            r.FormValue("analytics_disabled") == "1",
+		AnalyticsEventsConfigured:    true,
+		AnalyticsDisabledEvents:      disabledAnalyticsEvents(r.Form["analytics_event"]),
 		InstagramURL:                 strings.TrimSpace(r.FormValue("instagram_url")),
 		TikTokURL:                    strings.TrimSpace(r.FormValue("tiktok_url")),
 		FacebookGroupURL:             strings.TrimSpace(r.FormValue("facebook_group_url")),
@@ -753,6 +773,17 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 		PrivacyRobotsMeta:  strings.TrimSpace(r.FormValue("privacy_robots_meta")),
 		RobotsTXT:          strings.TrimSpace(r.FormValue("robots_txt")),
 	}
+	// An already-open form from an older release has no event controls.
+	if r.FormValue("analytics_events_present") != "1" {
+		current, err := loadSiteSettings(r.Context(), h.cfg)
+		if err != nil {
+			http.Error(w, "Не удалось проверить настройки аналитики. Обновите страницу.", http.StatusServiceUnavailable)
+			return
+		}
+		settings.AnalyticsEventsConfigured = current.AnalyticsEventsConfigured
+		settings.AnalyticsDisabledEvents = current.AnalyticsDisabledEvents
+		settings.AnalyticsDisabled = current.AnalyticsDisabled
+	}
 
 	if err := saveSiteSettings(r.Context(), h.cfg, settings); err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -960,7 +991,7 @@ func normalizeAdminTab(value string, hasSelectedLead bool) string {
 	value = strings.ToLower(strings.TrimSpace(value))
 
 	switch value {
-	case "overview", "help", "general", "assets", "visual", "landing-fi", "landing-en", "form-fi", "form-en", "promo", "testimonials", "services", "cases", "thankyou", "privacy", "seo", "leads", "reviews":
+	case "overview", "help", "general", "assets", "analytics", "emails", "visual", "landing-fi", "landing-en", "form-fi", "form-en", "promo", "testimonials", "services", "cases", "thankyou", "privacy", "seo", "leads", "reviews":
 		return value
 	}
 

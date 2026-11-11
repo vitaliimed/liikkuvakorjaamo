@@ -141,9 +141,20 @@ def prepare(source,destination):
             file.write_text(re.sub(r'<header\b.*?</header>',lambda _:header,html,count=1,flags=re.S))
         for name in ['Dockerfile','.dockerignore','.gcloudignore']:shutil.copy2(ROOT/name,destination/name)
         apply_pro(destination)
+        # Both public forms use the same named template, with independent IDs.
+        for name in ['lead_form.go', 'lead-form.html']:
+            shutil.copy2(ROOT/'source'/name, destination/name)
+        renderer_file = destination/'templates.go'
+        renderer_text = renderer_file.read_text()
+        if '"requestForm": requestFormData' not in renderer_text:
+            old = 'landing, err := template.ParseFiles(landingPath)'
+            if old not in renderer_text:
+                raise RuntimeError('Не найдено подключение шаблона формы. Исходники AutoHelp не изменены.')
+            renderer_text = renderer_text.replace(old, 'formPath, err := resolveTemplatePath("lead-form.html")\n if err != nil { return nil, err }\n landing, err := template.New("landing.html").Funcs(template.FuncMap{"requestForm": requestFormData}).ParseFiles(landingPath, formPath)', 1)
+            renderer_file.write_text(renderer_text)
         # The runtime ships both lookup locations; never depend on an empty directory
         # surviving Cloud Build's source archive.
-        for name in ['landing.html','privacy.html','thankyou.html','admin.html','review.html']:
+        for name in ['landing.html','lead-form.html','privacy.html','thankyou.html','admin.html','review.html']:
             if (destination/name).is_file():shutil.copy2(destination/name,destination/'templates'/name)
         if fingerprint(source)!=before:raise RuntimeError('Исходники AutoHelp изменились параллельно. Этот скрипт их не редактирует.')
         print('Копия подготовлена: '+str(destination));print('Исходный AutoHelp не изменён.')

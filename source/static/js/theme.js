@@ -14,16 +14,31 @@
       start: html.dataset.nightStart, end: html.dataset.nightEnd,
       systemDark: !!(media && media.matches), now: new Date()});
     html.dataset.theme = theme;
-    document.querySelectorAll('[data-theme-picker]').forEach(select => { select.value = preference; });
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+      button.setAttribute('aria-pressed', String(theme === 'dark'));
+      button.dataset.themeState = theme;
+    });
+    document.querySelectorAll('.brand img[data-logo-light]').forEach(img => {
+      const src = theme === 'dark' && img.dataset.logoDark ? img.dataset.logoDark : img.dataset.logoLight;
+      if (img.getAttribute('src') !== src) img.src = src;
+      img.classList.toggle('logo-light-fallback', theme === 'dark' && !img.dataset.logoDark);
+    });
   }
   apply();
   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-theme-picker]').forEach(select => {
-      select.value = preference;
-      select.addEventListener('change', () => {
-        preference = api.preference(select.value);
+    apply();
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+      button.addEventListener('click', () => {
+        preference = html.dataset.theme === 'dark' ? 'light' : 'dark';
         try { root.localStorage.setItem(key, preference); } catch (_) {}
         apply();
+        if (root.liikkuvaTrackEvent) root.liikkuvaTrackEvent('theme_change', {theme: preference});
+      });
+    });
+    document.querySelectorAll('.brand img[data-logo-light]').forEach(img => {
+      img.addEventListener('error', () => {
+        const fallback = img.dataset.logoLight || '/static/img/logo_liikkuva.svg';
+        if (img.getAttribute('src') !== fallback) {img.src = fallback;img.classList.add('logo-light-fallback');}
       });
     });
   });

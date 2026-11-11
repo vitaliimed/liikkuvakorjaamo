@@ -1,44 +1,47 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("leadForm");
-  if (!form) return;
+ document.querySelectorAll('[data-lead-form]').forEach(initLeadForm);
+});
+function initLeadForm(form) {
+  const prefix = form.dataset.idPrefix || '';
+  const byId = id => document.getElementById(prefix + id);
 
-  const messageBox = document.getElementById("formMessage");
+  const messageBox = byId("formMessage");
   const submitButton = form.querySelector("button[type='submit']");
-  const pageUrlInput = document.getElementById("pageUrl");
-  const refererField = document.getElementById("refererField");
-  const utmSource = document.getElementById("utmSource");
-  const utmMedium = document.getElementById("utmMedium");
-  const utmCampaign = document.getElementById("utmCampaign");
-  const utmTerm = document.getElementById("utmTerm");
-  const utmContent = document.getElementById("utmContent");
+  const pageUrlInput = byId("pageUrl");
+  const refererField = byId("refererField");
+  const utmSource = byId("utmSource");
+  const utmMedium = byId("utmMedium");
+  const utmCampaign = byId("utmCampaign");
+  const utmTerm = byId("utmTerm");
+  const utmContent = byId("utmContent");
 
-  const nameInput = document.getElementById("name");
-  const phoneInput = document.getElementById("phone");
-  const emailInput = document.getElementById("email");
-  const addressInput = document.getElementById("address");
-  const addressHintInput = document.getElementById("addressHint");
-  const carInput = document.getElementById("car");
-  const messageInput = document.getElementById("message");
-  const photosInput = document.getElementById("photos");
-  const photosTrigger = document.getElementById("photosTrigger");
-  const photoPreviewList = document.getElementById("photoPreviewList");
-  const mobileStickyFormLink = document.getElementById("mobileStickyFormLink");
+  const nameInput = byId("name");
+  const phoneInput = byId("phone");
+  const emailInput = byId("email");
+  const addressInput = byId("address");
+  const addressHintInput = byId("addressHint");
+  const carInput = byId("car");
+  const messageInput = byId("message");
+  const photosInput = byId("photos");
+  const photosTrigger = byId("photosTrigger");
+  const photoPreviewList = byId("photoPreviewList");
+  const mobileStickyFormLink = prefix ? null : document.getElementById("mobileStickyFormLink");
 
-  const useLocationBtn = document.getElementById("useLocationBtn");
-  const pickMapBtn = document.getElementById("pickMapBtn");
-  const locationSourceInput = document.getElementById("locationSource");
-  const latitudeInput = document.getElementById("latitude");
-  const longitudeInput = document.getElementById("longitude");
-  const mapsUrlInput = document.getElementById("mapsUrl");
+  const useLocationBtn = byId("useLocationBtn");
+  const pickMapBtn = byId("pickMapBtn");
+  const locationSourceInput = byId("locationSource");
+  const latitudeInput = byId("latitude");
+  const longitudeInput = byId("longitude");
+  const mapsUrlInput = byId("mapsUrl");
 
-  const mapModal = document.getElementById("mapPickerModal");
-  const closeMapModalBtn = document.getElementById("closeMapModal");
-  const confirmMapPointBtn = document.getElementById("confirmMapPoint");
-  const mapCanvas = document.getElementById("mapPickerCanvas");
+  const mapModal = byId("mapPickerModal");
+  const closeMapModalBtn = byId("closeMapModal");
+  const confirmMapPointBtn = byId("confirmMapPoint");
+  const mapCanvas = byId("mapPickerCanvas");
 
-  const areasSection = document.getElementById("areas");
+  const areasSection = prefix ? null : document.getElementById("areas");
   const areasShell = areasSection ? areasSection.querySelector(".areas-shell") : null;
-  const areasLiveMapEl = document.getElementById("areasLiveMap");
+  const areasLiveMapEl = prefix ? null : document.getElementById("areasLiveMap");
 
   const i18n = {
     successMessage: form.dataset.successMessage || "",
@@ -72,10 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
     js: mapModal ? mapModal.dataset.leafletJs : ""
   };
 
-  const areasBounds = [
-    [59.75, 22.9],
-    [61.55, 26.9]
-  ];
+
 
   let hasTrackedFormStart = false;
   let originalSubmitText = submitButton ? submitButton.textContent.trim() : "";
@@ -86,27 +86,20 @@ document.addEventListener("DOMContentLoaded", function () {
   let leafletReadyPromise = null;
   let areasLiveMap = null;
   let areasResizeTimer = null;
+  let fittingAreasMap = false;
   let selectedFiles = [];
+  let locationLookupSerial = 0;
 
   function trackEvent(name, params) {
-    const payload = Object.assign({site_brand:"liikkuva",site_domain:"liikkuvakorjaamo.fi"}, params || {});
-    const consent = typeof window.liikkuvaConsentState === "function" ? window.liikkuvaConsentState() : {};
-
-    if (consent.analytics && typeof window.gtag === "function") {
-      window.gtag("event", name, payload);
-    }
-
-    if (typeof window.liikkuvaTrackCustomEvent === "function") {
-      window.liikkuvaTrackCustomEvent(name, payload);
-    }
+    if (typeof window.liikkuvaTrackEvent === 'function') return window.liikkuvaTrackEvent(name, Object.assign({form_position: form.dataset.formPosition}, params || {}));
+    return false;
   }
 
   function trackFormStart() {
     const c=typeof window.liikkuvaConsentState === "function" ? window.liikkuvaConsentState() : {};
-    if(!c.analytics && !c.marketing) return;
+    if(!c.analytics) return;
     if (hasTrackedFormStart) return;
-    hasTrackedFormStart = true;
-    trackEvent("lead_form_start", {
+    hasTrackedFormStart = trackEvent("lead_form_start", {
       page_language: i18n.lang
     });
   }
@@ -208,7 +201,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (digits.startsWith("358")) {
       digits = digits.slice(3);
-    } else if (digits.startsWith("0")) {
+    }
+    if (digits.startsWith("0")) {
       digits = digits.slice(1);
     }
 
@@ -273,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function isValidRegistrationNumber(value) {
     if (!value) return true;
-    return /^[A-Z]{3}-[0-9]{1,3}$/.test(value);
+    return /^[A-Z]{3}-[0-9]{3}$/.test(value);
   }
 
   function isValidEmail(value) {
@@ -331,6 +325,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderPhotoPreviews() {
+    const count = form.querySelector("[data-photo-count]");
+    if(count)count.textContent = selectedFiles.length + " / 3";
     if (!photoPreviewList) return;
     photoPreviewList.innerHTML = "";
 
@@ -394,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function autoResizeTextarea(textarea) {
     if (!textarea) return;
     textarea.style.height = "auto";
-    textarea.style.height = Math.min(textarea.scrollHeight, 240) + "px";
+    textarea.style.height = Math.min(textarea.scrollHeight, window.matchMedia("(min-width:981px)").matches ? 80 : 180) + "px";
   }
 
   function ensureLeafletAssets() {
@@ -437,9 +433,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function fitAreasMap() {
     if (!areasLiveMap || !window.L) return;
-    const bounds = window.L.latLngBounds(areasBounds);
-    areasLiveMap.invalidateSize();
-    areasLiveMap.fitBounds(bounds, { padding: [24, 24] });
+    fittingAreasMap = true;
+    try {
+      areasLiveMap.invalidateSize();
+
+    } finally { fittingAreasMap = false; }
   }
 
   async function initAreasLiveMap() {
@@ -470,7 +468,10 @@ document.addEventListener("DOMContentLoaded", function () {
       attribution: "© OpenStreetMap contributors"
     }).addTo(areasLiveMap);
 
+    areasLiveMap.setView([60.1699, 24.9384], 12, {animate: false});
     fitAreasMap();
+    areasLiveMap.on('zoomstart', () => { if (!fittingAreasMap) trackEvent('service_area_map_interaction', {action: 'zoom'}); });
+    areasLiveMap.on('dragstart', () => trackEvent('service_area_map_interaction', {action: 'move'}));
     areasShell.classList.add("is-live-map");
 
     window.addEventListener("resize", function () {
@@ -519,9 +520,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function resolveAddressFromCoordinates(lat, lng) {
     if (!addressInput) return;
-
+    const serial = ++locationLookupSerial;
+    const previousAddress = addressInput.value;
     try {
       const address = await reverseGeocode(lat, lng);
+      // A slower response must not overwrite a newer location or a manual correction.
+      if (serial !== locationLookupSerial || addressInput.value !== previousAddress) return;
       if (address) {
         addressInput.value = address;
         setCookie("address", address, 30);
@@ -537,7 +541,6 @@ document.addEventListener("DOMContentLoaded", function () {
   async function openMapModal() {
     if (!mapModal || !mapCanvas) return;
     clearMessage();
-    document.body.classList.add("modal-open");
 
     try {
       await ensureLeafletAssets();
@@ -547,13 +550,15 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    document.body.classList.add("modal-open");
     mapModal.classList.add("open");
+    closeMapModalBtn?.focus({preventScroll: true});
 
     setTimeout(function () {
       if (!pickerMap) {
         pickerMap = window.L.map(mapCanvas, {
           center: [60.1699, 24.9384],
-          zoom: 10,
+          zoom: 12,
           zoomControl: true
         });
 
@@ -598,8 +603,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function closeMapModal() {
     if (!mapModal) return;
+    const wasOpen = mapModal.classList.contains("open");
     mapModal.classList.remove("open");
     document.body.classList.remove("modal-open");
+    if(wasOpen)pickMapBtn?.focus({preventScroll: true});
   }
 
   function handleUseLocation() {
@@ -678,6 +685,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const carValue = carInput ? carInput.value.trim() : "";
 
     if (!nameValue) {
+      trackEvent("lead_validation_error", {field_name: "name"});
       showMessage(i18n.nameRequired, "error");
       setSubmitState(false);
       if (nameInput) nameInput.focus();
@@ -685,6 +693,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (!phoneValue) {
+      trackEvent("lead_validation_error", {field_name: "phone"});
       showMessage(i18n.contactRequired, "error");
       setSubmitState(false);
       if (phoneInput) phoneInput.focus();
@@ -692,6 +701,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (phoneValue && !isValidPhone(phoneValue)) {
+      trackEvent("lead_validation_error", {field_name: "phone"});
       showMessage(i18n.phoneInvalid, "error");
       setSubmitState(false);
       if (phoneInput) phoneInput.focus();
@@ -699,6 +709,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (emailValue && !isValidEmail(emailValue)) {
+      trackEvent("lead_validation_error", {field_name: "email"});
       showMessage(i18n.emailInvalid, "error");
       setSubmitState(false);
       if (emailInput) emailInput.focus();
@@ -706,6 +717,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (carValue && !isValidRegistrationNumber(carValue)) {
+      trackEvent("lead_validation_error", {field_name: "car"});
       showMessage(i18n.registrationInvalid, "error");
       setSubmitState(false);
       if (carInput) carInput.focus();
@@ -738,7 +750,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (response.ok && result && result.ok) {
         rememberSuccessfulLead();
-        if(window.liikkuvaSavedLead) window.liikkuvaSavedLead(result.submission_id);
+        if(window.liikkuvaSavedLead) window.liikkuvaSavedLead(result.submission_id, form.dataset.formPosition);
         
 
         trackEvent("lead_submit_success", {
@@ -809,8 +821,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   [nameInput, phoneInput, emailInput, addressInput, addressHintInput, carInput, messageInput].forEach(function (input) {
     if (!input) return;
-    input.addEventListener("focus", trackFormStart, { once: true });
-    input.addEventListener("input", trackFormStart, { once: true });
+    input.addEventListener("focus", trackFormStart);
+    input.addEventListener("input", trackFormStart);
   });
 
   if (useLocationBtn) {
@@ -854,6 +866,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  document.addEventListener("keydown", event => {if(event.key === "Escape" && mapModal?.classList.contains("open"))closeMapModal();});
+
   if (mapModal) {
     mapModal.addEventListener("click", function (event) {
       if (event.target === mapModal) closeMapModal();
@@ -870,11 +884,13 @@ document.addEventListener("DOMContentLoaded", function () {
       setCookie("phone", phoneInput.value, 30);
     });
 
-    phoneInput.addEventListener("paste", function () {
-      setTimeout(function () {
-        phoneInput.value = formatFinnishPhone(phoneInput.value);
-        setCookie("phone", phoneInput.value, 30);
-      }, 0);
+    phoneInput.addEventListener("paste", function (event) {
+      const pasted = event.clipboardData?.getData('text');
+      if(!pasted)return;
+      event.preventDefault();
+      const value = onlyDigits(pasted).length >= 7 ? pasted : phoneInput.value.slice(0,phoneInput.selectionStart||0)+pasted+phoneInput.value.slice(phoneInput.selectionEnd||0);
+      phoneInput.value = formatFinnishPhone(value);
+      phoneInput.dispatchEvent(new Event('input',{bubbles:true}));
     });
 
     phoneInput.addEventListener("blur", function () {
@@ -895,11 +911,11 @@ document.addEventListener("DOMContentLoaded", function () {
         newCursor += 1;
       }
 
-      requestAnimationFrame(function () {
-        try {
-          carInput.setSelectionRange(newCursor, newCursor);
-        } catch (e) {}
-      });
+      // Restore the caret in this input event. A queued frame can collapse the
+      // next selection and truncate a quick replacement at maxlength.
+      try {
+        carInput.setSelectionRange(newCursor, newCursor);
+      } catch (e) {}
     });
   }
 
@@ -929,25 +945,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  document.querySelectorAll('a[href^="tel:"]').forEach(function (link) {
-    link.addEventListener("click", function () {
-      trackEvent("phone_click", {
-        page_language: i18n.lang
-      });
-    });
-  });
-
-  document.querySelectorAll(".lang-link, .languages a").forEach(function (link) {
-    link.addEventListener("click", function () {
-      trackEvent("language_switch", {
-        page_language: i18n.lang,
-        target_url: link.getAttribute("href") || ""
-      });
-    });
-  });
-
   form.addEventListener("submit", handleSubmit);
-});
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   const sliderWrap = document.querySelector("[data-testimonial-slider]");
@@ -1007,7 +1006,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  const stickyHeader = document.querySelector(".site-header");
+  const stickyHeader = document.querySelector(".header, .site-header");
   const anchors = document.querySelectorAll('a[href^="#"]');
 
   anchors.forEach(function (anchor) {

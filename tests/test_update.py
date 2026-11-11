@@ -60,7 +60,7 @@ class UpdateTests(unittest.TestCase):
             events.append(('check', url, identity_token))
             if '/api/health' in url:
                 return json.dumps({'ok': True, 'site': 'liikkuvakorjaamo.fi', 'version': update.VERSION if health_ok else 'old-version', 'revision': revision})
-            return 'Войти в кабинет' if '/admin' in url else '.hero .hero-layout'
+            return 'Войти в кабинет' if '/admin' in url else '.hero .hero-layout .hero-form-panel'
         updater.endpoint = endpoint
         return updater, events
 
@@ -298,7 +298,7 @@ class UpdateTests(unittest.TestCase):
                 elif self.path == '/admin':
                     code, body = 200, 'Войти в кабинет'
                 else:
-                    code, body = 200, '.hero .hero-layout'
+                    code, body = 200, '.hero .hero-layout .hero-form-panel'
                 self.send_response(code)
                 self.end_headers()
                 self.wfile.write(body.encode())
@@ -394,7 +394,7 @@ class UpdateTests(unittest.TestCase):
                 elif self.path == '/admin':
                     code, body = 200, 'Войти в кабинет'
                 else:
-                    code, body = 200, '.hero .hero-layout'
+                    code, body = 200, '.hero .hero-layout .hero-form-panel'
                 self.send_response(code)
                 self.end_headers()
                 self.wfile.write(body.encode())
@@ -417,7 +417,7 @@ class UpdateTests(unittest.TestCase):
             with self.assertRaises(update.EndpointError):
                 transport(base + '/healthz')
             updater.deploy()
-            self.assertEqual(hits, ['/healthz', '/api/health', '/admin', '/static/css/responsive.css?v=20261029'])
+            self.assertEqual(hits, ['/healthz', '/api/health', '/admin', '/static/css/responsive.css?v=20261031-compact2'])
             self.assertTrue(public_checks and all('/api/health?' in u for u in public_checks))
             self.assertTrue(any(e[0] == 'gcloud' and any(a.startswith('--to-revisions=') for a in e[1]) for e in events))
         finally:

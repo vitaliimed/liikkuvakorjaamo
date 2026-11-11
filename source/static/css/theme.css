@@ -1,7 +1,9 @@
 /* Theme preference changes colors, while the responsive layout stays shared. */
-.theme-picker{display:inline-flex;align-items:center;flex:none;margin:0}
-.theme-picker select{width:88px;min-height:44px;padding:6px 8px;border:1px solid #c9d5e5;border-radius:8px;background:#fff;color:#10213a;font-size:13px;line-height:1.3;cursor:pointer}
-.theme-picker-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:10px;border:1px solid #dbe3f1;border-radius:50%;background:transparent;color:#10213a;cursor:pointer;flex-shrink:0}
+.theme-toggle svg{width:22px;height:22px}.theme-sun{display:none}html[data-theme="dark"] .theme-moon{display:none}html[data-theme="dark"] .theme-sun{display:block}html[data-theme="dark"] .theme-toggle{color:#edf4ff;border-color:#52647f;background:#1c2a40}
+html[data-theme="dark"] .logo-light-fallback{background:#fff;padding:4px;border-radius:10px}
+html[data-theme="dark"] .request-details{border-color:#52647f}html[data-theme="dark"] .request-details summary{color:#edf4ff}
+@media(max-width:600px){.header .header-actions{gap:7px}.theme-toggle{width:36px;min-width:36px;height:44px;min-height:44px;padding:7px;border:0}.theme-toggle svg{width:21px;height:21px}}
 html[data-theme="dark"]{color-scheme:dark;--paper:#101827;--ink:#edf4ff;--body:#edf4ff;--muted:#b6c6dc;--line:#35455e;--soft:#1c2a40}
 html[data-theme="dark"] body{background:#101827;color:#edf4ff}
 html[data-theme="dark"] main>section{background:#101827;color:#edf4ff}
@@ -36,4 +38,8 @@ html[data-theme="dark"] .liikkuva-consent-banner,html[data-theme="dark"] .liikku
 html[data-theme="dark"] .liikkuva-consent-title,html[data-theme="dark"] .liikkuva-consent-modal-title{color:#edf4ff}
 html[data-theme="dark"] .liikkuva-consent-text,html[data-theme="dark"] .liikkuva-consent-modal-text{color:#b6c6dc}
 html[data-theme="dark"] .liikkuva-consent-btn-secondary,html[data-theme="dark"] .liikkuva-consent-btn-ghost{background:#263753;color:#edf4ff;border-color:#52647f}
-@media(max-width:1100px){.theme-picker select{width:140px}.theme-picker{padding:8px 12px}}
+/* Consent stays usable without covering the request card on desktop. */
+body .liikkuva-consent-banner{left:auto;right:20px;max-width:400px;padding:20px}
+@media(max-width:600px){body .liikkuva-consent-banner{left:10px;right:10px;bottom:12px;max-width:none;padding:16px}body .liikkuva-consent-title{font-size:16px;line-height:1.3}body .liikkuva-consent-text{font-size:12px;line-height:1.45}body .liikkuva-consent-badge{display:none}body .liikkuva-consent-actions{gap:8px;margin-top:12px}body .liikkuva-consent-btn{font-size:12px;min-height:44px;padding:10px 12px}}
+html[data-theme="dark"] .hero .hero-form-panel{background:transparent}html[data-theme="dark"] .hero-request,html[data-theme="dark"] .bottom-request{background:#162238;border-color:#35455e;color:#edf4ff}html[data-theme="dark"] .location-action{color:#b2caff}html[data-theme="dark"] .input-with-symbol>span,html[data-theme="dark"] .photo-count{color:#a7bbd8}html[data-theme="dark"] .reviews .stars{color:#ffcd73}
+@media(max-width:980px){html[data-theme="dark"] .hero .hero-form-panel{background:#162238}html[data-theme="dark"] .hero .hero-copy>.eyebrow{color:#9cbcff}html[data-theme="dark"] .hero .hero-points{color:#edf4ff}}

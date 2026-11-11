@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"html"
 	"html/template"
 	"net/http"
 	"net/mail"
@@ -66,9 +65,6 @@ func validateStandaloneEmail(to, subject, message string) error {
 		return fmt.Errorf("Текст обязателен: до 20 000 символов.")
 	}
 	return nil
-}
-func standaloneEmailHTML(message string) string {
-	return `<!doctype html><html><body><div style="font-family:Arial,sans-serif;line-height:1.6;white-space:pre-wrap">` + html.EscapeString(message) + `</div></body></html>`
 }
 func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.Request, send standaloneEmailSender) {
 	w.Header().Set("Cache-Control", "no-store")
@@ -137,7 +133,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		render(http.StatusServiceUnavailable)
 		return
 	}
-	if err := send(h.cfg, data.To, data.Subject, data.Message, standaloneEmailHTML(data.Message), attachments...); err != nil {
+	if err := send(h.cfg, data.To, data.Subject, data.Message, brandedPlainEmailHTML(withEmailSettings(h.cfg), "en", data.Subject, data.Message), attachments...); err != nil {
 		// A lost SMTP response can be ambiguous: never auto-retry and risk duplicate mail.
 		data.Error = "Не удалось подтвердить отправку. Проверьте журнал почтового сервиса перед повтором. Текст сохранён в форме; вложения нужно выбрать заново."
 		render(http.StatusBadGateway)
@@ -157,7 +153,7 @@ var standaloneEmailTemplate = template.Must(template.New("standalone-email").Par
 <label for="to">Кому</label><input id="to" name="email_to" type="email" maxlength="254" required value="{{.To}}" placeholder="name@example.com">
 <label for="subject">Тема</label><input id="subject" name="email_subject" maxlength="200" required value="{{.Subject}}">
 <label for="message">Текст письма</label><textarea id="message" name="email_message" maxlength="20000" required>{{.Message}}</textarea>
-<p class="note">Укажите приветствие и подпись в тексте. Автоматические фразы о заявке или автомобиле не добавляются.</p>
+<p class="note">Напишите приветствие и сообщение. Фирменная шапка, контакты и подпись добавятся автоматически; текст письма не изменяется.</p>
 <label for="files">Вложения</label><input id="files" type="file" name="custom_email_attachments" multiple><small class="note">До 10 файлов, суммарно до 15 МБ.</small>
 <button type="submit" {{if or (not .Enabled) (not .Token)}}disabled{{end}}>Отправить письмо</button><p><a href="/admin/email">Открыть новую форму</a></p></form>
 <script>document.getElementById('compose').addEventListener('submit',function(e){const f=document.getElementById('files').files;if(f.length>10||Array.from(f).reduce((n,x)=>n+x.size,0)>15*1024*1024){e.preventDefault();alert('До 10 файлов, суммарно до 15 МБ.');return;}const b=this.querySelector('button');b.disabled=true;b.textContent='Отправка…';});</script>
