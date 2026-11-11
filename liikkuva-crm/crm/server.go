@@ -170,6 +170,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fail(w, 405, "Method not allowed")
 			return
 		}
+		if path == "/brand/logo-green.png" || path == "/brand/logo-white.png" {
+			b, err := web.ReadFile("web" + path)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(b)
+			return
+		}
 		file := "index.html"
 		if path == "/app.js" {
 			file = "app.js"

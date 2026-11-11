@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.10.31-integrations-theme"
+const releaseVersion = "2026.11.11-orange-brand"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -147,7 +147,7 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 				text = "Saat henkilökohtaisen arvostelulinkin sähköpostitse palvelun jälkeen. Avaamalla linkin voit antaa tähtiarvion ja kirjoittaa arvostelun."
 				button = "Etusivu"
 			}
-			fmt.Fprintf(w, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/css/style.css"><title>Liikkuva — review</title></head><body><header class="subpage-header"><div class="container"><a class="brand" href="/"><img src="/static/img/logo_liikkuva.svg" alt="" width="44" height="44"><span>Liikkuva<span class="brand-small">Auto Korjaamo</span></span></a></div></header><main class="subpage-main"><div class="container"><article class="subpage-card"><h1>%s</h1><p>%s</p><a class="btn btn-orange" href="/">%s</a></article></div></main></body></html>`, title, text, button)
+			fmt.Fprintf(w, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/brand.css?v=20261111"><title>Liikkuva — review</title></head><body><header class="subpage-header"><div class="container"><a class="brand" href="/"><img class="brand-logo" src="/static/img/logo-white.png?v=20261111" alt="Liikkuva auto korjaamo" width="800" height="288"></a></div></header><main class="subpage-main"><div class="container"><article class="subpage-card"><h1>%s</h1><p>%s</p><a class="btn btn-orange" href="/">%s</a></article></div></main></body></html>`, title, text, button)
 			return
 		}
 		if os.Getenv("LIIKKUVA_BOOTSTRAP") == "1" && r.Method != "GET" && !strings.HasPrefix(r.URL.Path, "/admin") {

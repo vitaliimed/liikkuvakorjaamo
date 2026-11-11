@@ -54,7 +54,7 @@ func landingContentFI() LandingContent {
 		SiteName: "Liikkuva Auto Korjaamo",
 		Header: HeaderContent{
 			LogoText: "Liikkuva Auto Korjaamo",
-			LogoURL:  "/static/img/logo_liikkuva.svg",
+			LogoURL:  "/static/img/logo-white.png",
 			Nav: []NavItem{
 				{Label: "Palvelut", Href: "#services"},
 				{Label: "Miten toimii", Href: "#how-it-works"},
@@ -272,7 +272,7 @@ func landingContentEN() LandingContent {
 		SiteName: "Liikkuva Auto Korjaamo",
 		Header: HeaderContent{
 			LogoText: "Liikkuva Auto Korjaamo",
-			LogoURL:  "/static/img/logo_liikkuva.svg",
+			LogoURL:  "/static/img/logo-white.png",
 			Nav: []NavItem{
 				{Label: "Services", Href: "#services"},
 				{Label: "How it works", Href: "#how-it-works"},

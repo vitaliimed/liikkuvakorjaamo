@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="ru">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Доступ к кабинету · Liikkuva</title><link rel="icon" href="/static/img/favicon.svg"><link rel="stylesheet" href="/static/css/admin-access.css?v=20261029"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Доступ к кабинету · Liikkuva</title><link rel="icon" href="/static/img/favicon.svg?v=20261111"><link rel="stylesheet" href="/static/css/admin-access.css?v=20261111"><link rel="stylesheet" href="/static/css/brand.css?v=20261111"></head>
 <body><main class="access-shell {{if eq .Mode "access"}}access-wide{{end}}">
-  <a class="access-brand" href="/"><img src="/static/img/logo_liikkuva.svg" width="42" height="42" alt=""><span>Liikkuva<small>Кабинет управления</small></span></a>
+  <a class="access-brand" href="/"><img class="brand-logo brand-logo-light" src="/static/img/logo-white.png?v=20261111" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.png?v=20261111" alt="" width="800" height="288"><span>Liikkuva<small>Кабинет управления</small></span></a>
   {{if .Error}}<div class="notice error" role="alert">{{.Error}}</div>{{end}}
   {{if .Message}}<div class="notice success" role="status">{{.Message}}</div>{{end}}
   {{if eq .Mode "login"}}
