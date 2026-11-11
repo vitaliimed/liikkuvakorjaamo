@@ -1,0 +1,25 @@
+/* Liikkuva identity: orange movement, pine green service, warm neutral surfaces. */
+:root{--brand:#ff7410;--blue:#ff7410;--orange:#ff7410;--pine:#133e32;--ink:#17221f;--accent-text:#a94000}
+.brand{display:inline-flex;align-items:center;flex-shrink:0;max-width:100%}
+.brand img.brand-logo,.access-brand img.brand-logo{width:clamp(160px,19vw,240px);height:auto;max-width:100%;object-fit:contain;border-radius:0}
+.brand-logo-dark{display:none!important}
+.brand-logo-light{display:block}
+html[data-theme="dark"] .brand-logo-light{display:none!important}
+html[data-theme="dark"] .brand-logo-dark{display:block!important}
+.footer,.subpage-footer,html[data-theme="dark"] .footer,html[data-theme="dark"] .subpage-footer{background:#133e32;color:#f5f8f5;border-top:4px solid #ff7410}
+.footer{padding-top:48px}.subpage-footer{padding:28px 20px;text-align:center}
+.footer a,.subpage-footer a,html[data-theme="dark"] .footer a{color:#fff}
+.footer p,.footer-contacts,.footer-bottom{color:#d4e4d9}
+.footer .footer-bottom{border-color:#ffffff30;padding-block:24px;gap:18px;flex-wrap:wrap}
+.footer .brand-logo-light{display:none!important}.footer .brand-logo-dark{display:block!important}
+.footer .resource-links,html[data-theme="dark"] .footer .resource-links{background:transparent;color:inherit;border-color:#ffffff30}
+.footer .social-icon{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;flex:none;border:1px solid #ffffff55;border-radius:50%;padding:0;transition:background .2s,color .2s}
+.footer .social-icon:hover{background:#ff7410;color:#17221f;border-color:#ff7410}
+.btn-orange,.btn-primary{color:#17221f!important;font-weight:750;border-color:transparent}
+.btn-orange:hover,.btn-primary:hover{background:#ff9140!important;color:#17221f!important}
+.text-link,.service-link,.eyebrow,.big-price{color:#a94000}
+html[data-theme="dark"] .text-link,html[data-theme="dark"] .service-link,html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .big-price{color:#ffac70}
+:focus-visible{outline:3px solid #a94000;outline-offset:4px}
+html[data-theme="dark"] :focus-visible{outline-color:#ffac70}
+html[data-theme="dark"] .capability-card p,html[data-theme="dark"] .area-card p{color:#bacbc1}
+@media(max-width:760px){.brand img.brand-logo,.access-brand img.brand-logo{width:170px}.footer-top{gap:26px}.footer .brand img{width:220px}.subpage-header .container{gap:16px;flex-wrap:wrap}}
