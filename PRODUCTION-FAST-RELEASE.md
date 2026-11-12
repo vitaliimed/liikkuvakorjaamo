@@ -1,3 +1,54 @@
+# Liikkuva — актуальная последовательность выпуска 12.11.2026
+
+**Последняя объединённая ветка:** `release/ux-crm-brevo-20261112`.
+
+Эта ветка включает:
+- Компактную несворачиваемую hero-форму слева, тёмную тему, карту Helsinki, автозаполнение и новые favicon/превью (PR #10).
+- Существующую Go/Firestore CRM, WhatsApp webhook и восстановление пароля по зарегистрированному email (PR #11).
+- Сценарий исправления Brevo **без пересборки** текущего контейнера: `scripts/brevo-no-build.py`.
+- Сценарий отдельного выпуска нового UI, с пересборкой сайта: `scripts/release-ux-20261112.py`.
+
+## 1. Brevo, без пересборки Docker
+
+В Cloud Shell: `cd ~/liikkuva-production-20261112`, переключитесь на `release/ux-crm-brevo-20261112`.
+
+```bash
+python3 scripts/brevo-no-build.py stage
+```
+
+Введите реальный SMTP login и SMTP key из [Brevo SMTP & API](https://app.brevo.com/settings/keys/smtp).
+Ключ вводится скрыто и помещается в Secret Manager.
+Создаётся новая ревизия с **тем же образцом Docker/тем же container image**, `--no-traffic --tag=brevo-smtp-preview`.
+Основной трафик сохраняется на прежней ревизии.
+
+В открытом по результату preview перейдите в CRM → «Забыли пароль?». Укажите **зарегистрированный активный email CRM**. Убедитесь, что письмо действительно пришло. Если оно пришло:
+
+```bash
+python3 scripts/brevo-no-build.py publish
+```
+
+Этот шаг переводит конфигурацию SMTP на 100% после проверки, с откатом при несовпадении домена.
+
+## 2. Сайт и CRM — с пересборкой кода
+
+```bash
+python3 scripts/release-ux-20261112.py stage
+```
+
+Проверяются Go/Node тесты, новая hero-форма FI/EN, доступность CRM/админки, существующие SMTP secret refs и корректная preview-ревизия. После визуального просмотра:
+
+```bash
+python3 scripts/release-ux-20261112.py publish-design-only
+```
+
+Эта явная операция сохраняет `LIIKKUVA_BOOTSTRAP=1` и публикует **только дизайн, CRM и восстановление**. Клиентские заявки будут по-прежнему заблокированы. Для полноценного выпуска заявок нужны Cloud Tasks/Apps Script/другие настройки; не обходите проверки вымышленными параметрами.
+
+В будущем, когда интеграции готовы, используйте полную `publish` при Bootstrap=0 и настоящем тесте заявки. Откат дизайна: `python3 scripts/release-ux-20261112.py rollback`.
+
+Важно: Cloud Run новая конфигурационная ревизия появляется даже без пересборки контейнера. Секреты и SMTP ключи никогда не коммитьте в GitHub.
+
+---
+
 # Liikkuva: expedited Cloud Shell release (12 November 2026)
 
 The release branch is `release/production-20261112`, which combines the
