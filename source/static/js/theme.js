@@ -10,7 +10,7 @@
   try { preference = api.preference(root.localStorage.getItem(key)); } catch (_) {}
   const media = root.matchMedia ? root.matchMedia('(prefers-color-scheme: dark)') : null;
   function apply() {
-    const theme = api.resolve({preference, policy: html.dataset.themePolicy,
+    const theme = api.resolve({preference, policy: html.dataset.themePolicy || 'system',
       start: html.dataset.nightStart, end: html.dataset.nightEnd,
       systemDark: !!(media && media.matches), now: new Date()});
     html.dataset.theme = theme;
