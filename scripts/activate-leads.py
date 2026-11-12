@@ -256,6 +256,7 @@ def main() -> None:
         "CRM_OWNER_EMAIL": "medynikv@gmail.com",
         "CRM_PHOTO_BUCKET": "liikkuva-korjaamo-crm-private",
         "CRM_PUBLIC_URL": DOMAIN,
+        "CRM_MAIL_SEND_ENABLED": "1",  # owner-only action; SMTP required above
     }
     print("Staging enabled intake at 0% traffic, production stays on Bootstrap=1")
     args = ["run", "deploy", SERVICE, "--region=" + REGION,
