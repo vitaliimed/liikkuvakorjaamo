@@ -167,8 +167,13 @@ def main() -> None:
     if len(before) != 1:
         raise RuntimeError("Expected one active production revision, cannot safely promote")
     current_env = environment(snapshot)
-    if current_env.get("LIIKKUVA_BOOTSTRAP", {}).get("value") != "1":
-        raise RuntimeError("This activation expects the site+CRM Bootstrap=1 release first")
+    bootstrap = current_env.get("LIIKKUVA_BOOTSTRAP", {}).get("value")
+    if bootstrap == "0" and "--stage-only" in sys.argv[1:]:
+        print("Intake is already configured as Bootstrap=0 in the current service template.")
+        print("No additional revision created; validate using prod_preflight.py and the UX preview.")
+        return
+    if bootstrap != "1":
+        raise RuntimeError("Intake activation expects Bootstrap=1; got " + str(bootstrap))
     if current_env.get("SITE_URL", {}).get("value") != DOMAIN:
         raise RuntimeError("SITE_URL mismatch")
     if current_env.get("FIRESTORE_PROJECT_ID", {}).get("value") != PROJECT:
@@ -277,6 +282,13 @@ def main() -> None:
     staged_url = routes[0]["url"].rstrip("/")
     check(staged_url, revision)
 
+    if "--stage-only" in sys.argv[1:]:
+        print("INTAKE PREVIEW READY, PRODUCTION TRAFFIC UNCHANGED:", staged_url)
+        print("Candidate:", revision)
+        print("Next: run python3 prod_preflight.py, then")
+        print("python3 scripts/release-ux-20261112.py publish")
+        return
+
     print("Promoting enabled intake to 100% and validating the public domain")
     cloud("run", "services", "update-traffic", SERVICE, "--region=" + REGION,
           "--to-revisions=" + revision + "=100")
@@ -298,6 +310,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     try:
+        if any(arg != "--stage-only" for arg in sys.argv[1:]) or sys.argv[1:].count("--stage-only") > 1:
+            raise RuntimeError("Usage: activate-leads.py [--stage-only]")
         main()
     except (RuntimeError, ValueError, urllib.error.URLError, OSError) as exc:
         print("ACTIVATION STOPPED:", str(exc), file=sys.stderr)

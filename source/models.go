@@ -2,7 +2,7 @@ package main
 
 import "time"
 
-const visitPriceEUR = 70
+const visitPriceEUR = 75
 
 type Lead struct {
 	DiagnosticFromEUR  int      `json:"diagnostic_from_eur" firestore:"diagnostic_from_eur"`

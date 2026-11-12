@@ -39,7 +39,7 @@ func liikkuvaInt(s string, d, min, max int) int {
 }
 func liikkuvaVisitFee(s SiteSettings) int {
 	if s.ProVisitEUR < 1 || s.ProVisitEUR > 2000 {
-		return 70
+		return visitPriceEUR
 	}
 	return s.ProVisitEUR
 }
@@ -47,7 +47,7 @@ func liikkuvaLeadFee(l Lead) int {
 	if l.VisitPriceEUR > 0 {
 		return l.VisitPriceEUR
 	}
-	return 70
+	return visitPriceEUR
 }
 func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	s.ProVisitEUR = liikkuvaVisitFee(s)
