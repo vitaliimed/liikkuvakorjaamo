@@ -216,6 +216,18 @@ def stage():
         print("PASS Node", name)
     before_service = service()
     before = allocation(before_service)
+    if len(before) != 1:
+        raise RuntimeError("Multiple production revisions: inspect before staging")
+    serving_revision = next(iter(before))
+    serving = json.loads(cloud("run","revisions","describe",serving_revision,
+                               "--region="+REGION,"--format=json"))
+    containers = serving.get("spec",{}).get("containers",[])
+    current_env = {e.get("name"): e for c in containers for e in c.get("env",[])}
+    for name in ("SMTP_USERNAME","SMTP_PASSWORD"):
+        if not current_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef"):
+            raise RuntimeError(name+" is not from Secret Manager in the serving revision. "
+                               "Run scripts/brevo-no-build.py stage and publish first.")
+    print("PASS: serving revision has Brevo credentials as Secret Manager references")
     stamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
     backup = STATE_DIR / ("cloudrun-before-ux-" + stamp + ".json")
     save_json(backup, before_service)
@@ -236,6 +248,15 @@ def stage():
     state.update({"phase": "staged", "revision": revision, "preview": preview, "bootstrap": bootstrap})
     save_json(STATE_FILE, state)
     check(preview, revision, bootstrap)
+    # Ensure the newly built UX/CRM image retained Brevo secret references.
+    staged_rev = json.loads(cloud("run","revisions","describe",revision,
+                                  "--region="+REGION,"--format=json"))
+    staged_env = {e.get("name"): e for c in staged_rev.get("spec",{}).get("containers",[])
+                  for e in c.get("env",[])}
+    for name in ("SMTP_USERNAME","SMTP_PASSWORD"):
+        if not staged_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef"):
+            raise RuntimeError("Staged combined revision lost Brevo secret: "+name)
+    print("PASS: staged UX/CRM revision retains Brevo secrets")
     state["phase"] = "validated"
     save_json(STATE_FILE, state)
     print("\nPREVIEW VERIFIED:", preview)
