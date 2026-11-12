@@ -27,6 +27,21 @@ func TestProPriceSettings(t *testing.T) {
 		t.Fatal("Unsafe CSS accepted")
 	}
 }
+func TestFeeFallbackMatchesLivePrice(t *testing.T) {
+    if visitPriceEUR != 75 {
+        t.Fatalf("unexpected public visit price: %d", visitPriceEUR)
+    }
+    if got := liikkuvaVisitFee(SiteSettings{}); got != visitPriceEUR {
+        t.Fatalf("settings default must match public price: %d", got)
+    }
+    if got := liikkuvaLeadFee(Lead{}); got != visitPriceEUR {
+        t.Fatalf("email/notification default must match public price: %d", got)
+    }
+    if got := liikkuvaLeadFee(Lead{VisitPriceEUR: 95}); got != 95 {
+        t.Fatalf("agreed lead price must be preserved: %d", got)
+    }
+}
+
 func TestPhoneRequiredForEmailLead(t *testing.T) {
 	issues := validateLead(Lead{Name: "Test", Email: "client@example.com", Language: "en"})
 	if len(issues) == 0 {
