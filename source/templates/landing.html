@@ -22,7 +22,7 @@
   <link rel="shortcut icon" href="{{.FaviconICOURL}}">
   <link rel="apple-touch-icon" href="{{.AppleTouchIconURL}}">
 
-  <link rel="stylesheet" href="/static/css/style.css?v=20261111-brand2">
+  <link rel="stylesheet" href="/static/css/style.css?v=20261112">
 
   <style>
     .card-scroll-header {
@@ -188,12 +188,12 @@
   
   {{end}}
   {{end}}
-<script src="/static/js/surface.js" defer></script><link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/">
+<script src="/static/js/surface.js?v=20261112" defer></script><link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/">
 <meta property="og:image" content="https://liikkuvakorjaamo.fi/static/img/mobile-mechanic-v2.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://liikkuvakorjaamo.fi/#organization","name":"Liikkuva Auto Korjaamo","url":"https://liikkuvakorjaamo.fi/","logo":"https://liikkuvakorjaamo.fi/static/img/logo_liikkuva.svg"},{"@type":"Service","@id":"https://liikkuvakorjaamo.fi/#service","name":"Liikkuva autokorjaamo Uusimaa","serviceType":"Mobile car diagnostics and suitable on-site repairs","provider":{"@id":"https://liikkuvakorjaamo.fi/#organization"},"areaServed":["Helsinki","Espoo","Vantaa","Kerava","Järvenpää","Hyvinkää","Porvoo","Lohja"],"url":"https://liikkuvakorjaamo.fi/"}]}</script>
-<link rel="stylesheet" href="/static/css/pro.css?v=20261111-brand2"><script src="/static/js/events.js?v=20261025" defer></script><link rel="stylesheet" href="/static/css/responsive.css?v=20261111-brand2">
-<link rel="stylesheet" href="/static/css/brand.css?v=20261111-brand2"></head>{{if eq .Lang "en"}}<body>
+<link rel="stylesheet" href="/static/css/pro.css?v=20261112"><script src="/static/js/events.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/responsive.css?v=20261112">
+<link rel="stylesheet" href="/static/css/brand.css?v=20261112"></head>{{if eq .Lang "en"}}<body>
 <a href="#main" class="skip-link">Skip to content</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -321,7 +321,7 @@ Then we agree.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -375,9 +375,9 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
   </div>
 
 
-<script src="/static/js/app.js?v=20261011" defer></script>
+<script src="/static/js/app.js?v=20261112" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{else}}<body>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{else}}<body>
 <a href="#main" class="skip-link">Siirry sisältöön</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -505,7 +505,7 @@ Sitten sovitaan.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -559,6 +559,6 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
   </div>
 
 
-<script src="/static/js/app.js?v=20261011" defer></script>
+<script src="/static/js/app.js?v=20261112" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{end}}</html>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{end}}</html>

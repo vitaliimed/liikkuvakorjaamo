@@ -21,7 +21,7 @@ REQUIRED = (
     "GCS_BUCKET_NAME", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
     "GOOGLE_APPS_SCRIPT_URL", "GOOGLE_APPS_SCRIPT_TOKEN",
 )
-EMAIL = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
+EMAIL = ("SMTP_HOST", "SMTP_PORT", "SMTP_USERNAME", "SMTP_PASSWORD", "MAIL_FROM")
 SECRET = {"INTERNAL_TASK_TOKEN", "REVIEW_TOKEN_SECRET",
           "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID",
           "GOOGLE_APPS_SCRIPT_TOKEN", "SMTP_PASSWORD", "SMTP_USERNAME"}
@@ -73,7 +73,7 @@ def main():
         state = "OK" if configured(env.get(name)) else "MISSING"
         print(name + ":", state)
         if state == "MISSING":
-            warnings.append("SMTP: " + name)
+            errors.append("SMTP: " + name)
     if getval(env, "LIIKKUVA_BOOTSTRAP") == "1":
         errors.append("bootstrap currently blocks POST /lead on this template")
     if getval(env, "SITE_URL") != "https://liikkuvakorjaamo.fi":
@@ -114,6 +114,36 @@ def main():
             print("Photo bucket: exists")
         except Exception as exc:
             errors.append("photo bucket unavailable: " + str(exc)[:90])
+    # These read-only checks verify resource existence. Effective IAM may include
+    # inherited or conditional bindings; a real candidate test remains mandatory.
+    try:
+        db = json.loads(gcloud("firestore", "databases", "describe", f"--database={DATABASE}", "--format=json"))
+        print("Firestore database:", db.get("name", "UNKNOWN"))
+        if db.get("type") != "FIRESTORE_NATIVE":
+            errors.append("Firestore must use native mode")
+    except Exception:
+        errors.append("cannot inspect named Firestore database")
+    account = template.get("serviceAccountName", "")
+    print("Runtime service account:", account or "DEFAULT (must be resolved)")
+    if not account:
+        errors.append("runtime service account not explicitly identified")
+    else:
+        try:
+            policy = json.loads(gcloud("projects", "get-iam-policy", PROJECT, "--format=json"))
+            roles = {b.get("role") for b in policy.get("bindings", [])
+                     if "serviceAccount:" + account in b.get("members", []) and not b.get("condition")}
+            for role in ("roles/datastore.user", "roles/cloudtasks.enqueuer"):
+                if role not in roles:
+                    errors.append("runtime IAM role not proven by project bindings: " + role)
+            print("Runtime project IAM:", sorted(roles))
+        except Exception:
+            errors.append("cannot inspect runtime project IAM")
+    if not configured(env.get("CRM_OWNER_EMAIL")):
+        errors.append("CRM_OWNER_EMAIL missing")
+    if not configured(env.get("CRM_PHOTO_BUCKET")):
+        errors.append("CRM_PHOTO_BUCKET missing")
+    print("NOTE: service template is a candidate configuration, not proof of every serving revision.")
+    print("NOTE: delivery, secret access, bucket object access, OIDC invocation and Firebase routing require live tests.")
     print("===== RESULT =====")
     for e in warnings:
         print("WARNING:", e)

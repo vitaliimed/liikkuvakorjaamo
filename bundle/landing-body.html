@@ -126,7 +126,7 @@ Then we agree.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -180,9 +180,9 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
   </div>
 
 
-<script src="/static/js/app.js?v=20261011" defer></script>
+<script src="/static/js/app.js?v=20261112" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{else}}<body>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{else}}<body>
 <a href="#main" class="skip-link">Siirry sisältöön</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -310,7 +310,7 @@ Sitten sovitaan.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -364,6 +364,6 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
   </div>
 
 
-<script src="/static/js/app.js?v=20261011" defer></script>
+<script src="/static/js/app.js?v=20261112" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js" defer></script>{{end}}</body>{{end}}</html>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{end}}</html>

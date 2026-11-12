@@ -322,6 +322,9 @@ func (h *PageHandler) servePrivacy(w http.ResponseWriter, r *http.Request, lang 
 	}
 
 	pageURL := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy"
+	if lang == "en" {
+		pageURL += "?lang=en"
+	}
 	alternateFI := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy?lang=fi"
 	alternateEN := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy?lang=en"
 	faviconSVGURL, favicon32URL, favicon16URL, faviconICOURL, appleTouchIconURL := faviconURLs(settings)

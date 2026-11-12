@@ -9,3 +9,4 @@ node_modules/
 *.pem
 *.key
 .deployment/
+source/.crm-backup-*/

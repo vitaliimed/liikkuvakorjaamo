@@ -186,6 +186,13 @@ func processLeadCoreNow(cfg Config, lead Lead) error {
 }
 
 func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
+	release, err := acquireLeadLease(ctx, cfg, leadID)
+	if err != nil {
+		return err
+	}
+	defer release()
 	record, err := getLeadRecord(ctx, cfg, leadID)
 	if err != nil {
 		return err
@@ -210,7 +217,9 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 			processingErrs = append(processingErrs, "telegram: "+err.Error())
 			_ = markTelegramStatus(ctx, cfg, leadID, "failed", err.Error())
 		} else {
-			_ = markTelegramStatus(ctx, cfg, leadID, "success", "")
+			if err := markTelegramStatus(ctx, cfg, leadID, "success", ""); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -219,7 +228,9 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 			processingErrs = append(processingErrs, "apps_script: "+err.Error())
 			_ = markSheetsStatus(ctx, cfg, leadID, "failed", err.Error())
 		} else {
-			_ = markSheetsStatus(ctx, cfg, leadID, "success", "")
+			if err := markSheetsStatus(ctx, cfg, leadID, "success", ""); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -233,8 +244,9 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 		if err := sendLeadConfirmationEmail(cfg, record.Lead); err != nil {
 			log.Printf("Confirmation email failed for %s: %v", leadID, err)
 			_ = markConfirmationEmailFailed(ctx, cfg, leadID, err.Error())
+			return fmt.Errorf("confirmation email failed: %w", err)
 		} else if err := markConfirmationEmailSent(ctx, cfg, leadID); err != nil {
-			log.Printf("Confirmation email sent, but status update failed for %s: %v", leadID, err)
+			return fmt.Errorf("confirmation email status update failed: %w", err)
 		}
 	}
 
@@ -282,7 +294,13 @@ func validateLead(lead Lead) map[string]string {
 		}
 	}
 
-	if lead.Car != "" && !isValidRegistrationNumber(lead.Car) {
+	if strings.TrimSpace(lead.Car) == "" {
+		if lead.Language == "fi" {
+			errors["car"] = "anna auton rekisterinumero"
+		} else {
+			errors["car"] = "enter the vehicle registration number"
+		}
+	} else if !isValidRegistrationNumber(lead.Car) {
 		if lead.Language == "fi" {
 			errors["car"] = "anna kelvollinen rekisterinumero muodossa ABC-123"
 		} else {
