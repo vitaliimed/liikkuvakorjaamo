@@ -223,11 +223,30 @@ def stage():
                                "--region="+REGION,"--format=json"))
     containers = serving.get("spec",{}).get("containers",[])
     current_env = {e.get("name"): e for c in containers for e in c.get("env",[])}
-    for name in ("SMTP_USERNAME","SMTP_PASSWORD"):
-        if not current_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef"):
-            raise RuntimeError(name+" is not from Secret Manager in the serving revision. "
-                               "Run scripts/brevo-no-build.py stage and publish first.")
-    print("PASS: serving revision has Brevo credentials as Secret Manager references")
+    # A SMTP-only 0%-traffic preview may already contain the correct Brevo
+    # secrets even when the current 100%-traffic revision still has old env.
+    # Bring only the two secret REFERENCES into the rebuilt combined revision.
+    secret_names = {"SMTP_USERNAME": "liikkuva-brevo-smtp-login",
+                    "SMTP_PASSWORD": "liikkuva-brevo-smtp-key"}
+    available = all(current_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef")
+                    for name in secret_names)
+    if not available:
+        brevo_rows=[r for r in before_service.get("status",{}).get("traffic",[])
+                    if r.get("tag")=="brevo-smtp-preview"]
+        if len(brevo_rows)!=1 or not brevo_rows[0].get("revisionName"):
+            raise RuntimeError("Brevo secrets missing from production and SMTP preview. "
+                               "First run scripts/brevo-no-build.py stage.")
+        brevo_rev=json.loads(cloud("run","revisions","describe",
+                                   brevo_rows[0]["revisionName"],
+                                   "--region="+REGION,"--format=json"))
+        brevo_env={e.get("name"):e for c in brevo_rev.get("spec",{}).get("containers",[])
+                   for e in c.get("env",[])}
+        for name in secret_names:
+            if not brevo_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef"):
+                raise RuntimeError("Brevo SMTP preview has no secret ref: "+name)
+        print("PASS: Brevo secret references found in the 0%-traffic SMTP preview.")
+    else:
+        print("PASS: serving production revision already uses Secret Manager for SMTP.")
     stamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
     backup = STATE_DIR / ("cloudrun-before-ux-" + stamp + ".json")
     save_json(backup, before_service)
@@ -239,7 +258,10 @@ def stage():
     print("Deploying no-traffic revision; existing CRM, secrets and env settings retained")
     cloud("run", "deploy", SERVICE,
           "--region=" + REGION, "--source=" + str(ROOT / "source"),
-          "--no-traffic", "--tag=" + TAG, "--quiet")
+          "--no-traffic", "--tag=" + TAG,
+          "--update-secrets=" + ",".join(k+"="+v+":latest" for k,v in secret_names.items()),
+          "--update-env-vars=SMTP_HOST=smtp-relay.brevo.com,SMTP_PORT=587",
+          "--quiet")
     after_service = service()
     if allocation(after_service) != before:
         raise RuntimeError("Production traffic changed unexpectedly! Inspect service before proceeding")
