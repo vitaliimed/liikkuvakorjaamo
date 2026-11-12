@@ -5,6 +5,25 @@
 ## 1. Сохраните данные
 Откройте таблицу, Файл → Создать копию (резервная копия). Рабочей остаётся существующая таблица. Новый Code.gs не создаёт таблицу заново, не удаляет старые заявки и не очищает доходы.
 
+## Если Apps Script показывает This app is blocked (12.11.2026)
+
+Здесь две независимые проблемы: `spreadsheets.currentonly` недостаточен для `SpreadsheetApp.openById(SHEET_ID)`; требуется полный `https://www.googleapis.com/auth/spreadsheets`. После исправления Ctrl+S и обновите редактор.
+
+Но если Google всё ещё блокирует OAuth даже с полным scope, это может быть ограничение Google OAuth на Apps Script Default-проектах, о котором сообщили в Google Issue Tracker в октябре 2026: https://issuetracker.google.com/issues/571856421 и https://issuetracker.google.com/issues/572515608. Смена scope сама по себе может не помочь.
+
+### Подключение стандартного Cloud Project (официальная поддерживаемая настройка)
+
+1. В Google Cloud Console выберите **существующий** проект `liikkuva-korjaamo` и откройте Google Auth Platform.
+2. Заполните Branding (название Liikkuva Sheets, support email) и Audience: **External / Testing**, внесите свой Google-аккаунт в Test users.
+3. Получите **Project number**, а не Project ID: `gcloud projects describe liikkuva-korjaamo --format='value(projectNumber)'`.
+4. В Apps Script: Project Settings → GCP project → **Change project**. Введите **числовой** номер и Set project. Примечание: обратно на Default project переключиться нельзя, может потребоваться повторное разрешение OAuth. Предварительно настройте Google Auth Platform.
+5. Сохраните manifest с полным spreadsheets scope, обновите редактор, запустите `setupExistingLiikkuva` и предоставьте права только своему скрипту, если Google разрешит.
+6. Если Google продолжает показывать блокировку, не обходите её. Проверьте настройки Google Auth Platform, разрешения аккаунта и статус ошибки в Google Issue Tracker.
+
+Документы: https://developers.google.com/apps-script/guides/cloud-platform-projects; https://developers.google.com/apps-script/guides/services/authorization; https://developers.google.com/apps-script/reference/spreadsheet/spreadsheet-app#openById(String)
+
+Пока setupExistingLiikkuva не открыл таблицу успешно, свойства SPREADSHEET_ID / SITE_DOMAIN / WEBHOOK_TOKEN не создадутся. Публичный GET /exec сам по себе не доказывает работу записи заявок.
+
 ## 2. Откройте Apps Script из таблицы
 В рабочем документе: Расширения → Apps Script. Если прежний самостоятельный редактор показывает This app is blocked, создайте отдельный проект через таблицу, чтобы избежать испорченной OAuth-конфигурации старого проекта. В новом редакторе удалите пример myFunction и вставьте ВЕСЬ код из apps-script/Code.gs этой GitHub ветки. Сохраните.
 
