@@ -15,7 +15,7 @@ import (
 
 func TestProPriceSettings(t *testing.T) {
 	s := liikkuvaProDefaults(SiteSettings{})
-	if s.ProVisitEUR != 70 || s.ProDiagnosticEUR != 50 || s.ProFontSize != 18 {
+	if s.ProVisitEUR != visitPriceEUR || s.ProDiagnosticEUR != 50 || s.ProFontSize != 18 {
 		t.Fatal(s.ProVisitEUR, s.ProDiagnosticEUR, s.ProFontSize)
 	}
 	custom := SiteSettings{ProVisitEUR: 90, ProDiagnosticEUR: 60}
