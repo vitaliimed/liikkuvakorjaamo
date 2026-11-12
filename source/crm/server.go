@@ -128,6 +128,23 @@ func (s *Server) auth(r *http.Request) (User, error) {
 	}
 	return u, nil
 }
+// crmAllowedOrigin permits requests from the exact host serving this CRM,
+// including tagged Cloud Run previews. Cross-origin requests remain blocked:
+// callers cannot substitute a different Origin than the request Host. The
+// canonical CRM URL is allowed only when it matches that same request host.
+func crmAllowedOrigin(origin, host, canonical string) bool {
+	if origin == "" {
+		return true // same-origin browsers or server clients with X-CRM-Request
+	}
+	if host == "" {
+		return false
+	}
+	if origin == "https://"+host {
+		return true
+	}
+	return strings.HasPrefix(canonical, "http://") && origin == canonical && host == strings.TrimPrefix(canonical, "http://")
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -166,7 +183,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, "Недопустимый запрос")
 			return
 		}
-		if origin := r.Header.Get("Origin"); origin != "" && origin != s.URL {
+		if !crmAllowedOrigin(r.Header.Get("Origin"), r.Host, s.URL) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
 			fail(w, 403, "Недопустимый источник запроса")
 			return
 		}
