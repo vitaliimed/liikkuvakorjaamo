@@ -29,8 +29,21 @@ func TestHeroFormAndRequiredFieldsInBothLanguages(t *testing.T) {
             t.Errorf("unexpected occurrences of %q: got %d, want %d", needle, got, want)
         }
     }
-    if strings.Index(html, `class="hero-form"`) > strings.Index(html, `class="promise-bar"`) {
-        t.Error("form must be present before the first content section")
+    // The old promise-bar was removed by the approved compact redesign.
+    // Check the actual first service section independently for both languages.
+    parts := strings.Split(html, `{{else}}<body>`)
+    if len(parts) != 2 {
+        t.Fatalf("expected EN and FI body branches, got %d", len(parts))
+    }
+    for _, lang := range []struct{name, content string}{
+        {"en", parts[0]},
+        {"fi", parts[1]},
+    } {
+        hero := strings.Index(lang.content, `class="hero-form" id="lead-form"`)
+        service := strings.Index(lang.content, `id="services"`)
+        if hero < 0 || service < 0 || hero >= service {
+            t.Errorf("%s hero form must appear before the services section (hero=%d services=%d)", lang.name, hero, service)
+        }
     }
     if !strings.Contains(html, `/static/css/hero-form-ux.css`) {
         t.Error("compact UX stylesheet is not linked")
