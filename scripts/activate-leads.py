@@ -113,17 +113,25 @@ def firestore_doc(path: str, bearer: str, method: str = "GET", body: dict | None
 
 def migrate_site_settings() -> None:
     token = command(["gcloud", "auth", "print-access-token"], capture=True).strip()
-    old = firestore_doc("site_settings/landing", token)
-    new = firestore_doc("liikkuva_site_settings/landing", token)
-    if old and not new:
-        # Create only when missing; never overwrite existing owner edits.
-        firestore_doc("liikkuva_site_settings?documentId=landing", token,
-                      method="POST", body={"fields": old.get("fields", {})})
-        print("Copied existing site settings to prefixed collection (original preserved)")
-    elif new:
-        print("Prefixed site settings already exist; preserved")
-    else:
-        print("No legacy settings to migrate; initial defaults will apply")
+    for old_path, new_path in (
+        ("site_settings/landing", "liikkuva_site_settings/landing"),
+        ("site_settings_private/admin_access",
+         "liikkuva_site_settings_private/admin_access"),
+    ):
+        source_doc = firestore_doc(old_path, token)
+        dest_doc = firestore_doc(new_path, token)
+        if source_doc and not dest_doc:
+            # Keep admin credentials and revision numbers; never overwrite or delete.
+            collection, doc_id = new_path.rsplit("/", 1)
+            firestore_doc(collection + "?documentId=" + doc_id, token,
+                          method="POST", body={"fields": source_doc.get("fields", {})})
+            print("Copied legacy Firestore document:", old_path, "->", new_path)
+        elif dest_doc:
+            print("Destination already exists; preserved:", new_path)
+        elif old_path.endswith("/admin_access"):
+            print("WARNING: no existing admin_access document found; verify admin login")
+        else:
+            print("No legacy site settings to migrate; defaults will apply")
 
 
 def get_status(url: str, method: str = "GET", data: bytes | None = None) -> tuple[int, bytes]:
