@@ -277,6 +277,13 @@ def main() -> None:
     staged_url = routes[0]["url"].rstrip("/")
     check(staged_url, revision)
 
+    if "--stage-only" in sys.argv[1:]:
+        print("INTAKE PREVIEW READY, PRODUCTION TRAFFIC UNCHANGED:", staged_url)
+        print("Candidate:", revision)
+        print("Next: run python3 prod_preflight.py, then")
+        print("python3 scripts/release-ux-20261112.py publish")
+        return
+
     print("Promoting enabled intake to 100% and validating the public domain")
     cloud("run", "services", "update-traffic", SERVICE, "--region=" + REGION,
           "--to-revisions=" + revision + "=100")
@@ -298,6 +305,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     try:
+        if any(arg != "--stage-only" for arg in sys.argv[1:]) or sys.argv[1:].count("--stage-only") > 1:
+            raise RuntimeError("Usage: activate-leads.py [--stage-only]")
         main()
     except (RuntimeError, ValueError, urllib.error.URLError, OSError) as exc:
         print("ACTIVATION STOPPED:", str(exc), file=sys.stderr)
