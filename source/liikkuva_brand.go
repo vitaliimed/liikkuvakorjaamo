@@ -15,7 +15,7 @@ import (
 )
 
 const liikkuvaDomain = "liikkuvakorjaamo.fi"
-const releaseVersion = "2026.11.11-orange-brand"
+const releaseVersion = "2026.11.11-two-colour"
 
 //go:embed liikkuva-content.json
 var liikkuvaContentJSON []byte
@@ -46,6 +46,26 @@ func liikkuvaTimestamp(t time.Time) string {
 	return t.In(location).Format("2006-01-02 15:04:05")
 }
 
+// liikkuvaAllowedWorkerURL accepts only the project's untagged Cloud Run
+// service URLs for internal queue processing. Tag URLs and foreign domains
+// are rejected so work is not accidentally dispatched to an old preview.
+func liikkuvaAllowedWorkerURL(raw string) bool {
+    u, err := url.Parse(raw)
+    if err != nil || u.Scheme != "https" || u.User != nil ||
+        u.RawQuery != "" || u.Fragment != "" || u.Path != "/internal/process-lead" ||
+        u.Port() != "" {
+        return false
+    }
+    host := strings.ToLower(u.Hostname())
+    if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
+        return true
+    }
+    return strings.HasPrefix(host, "liikkuva-landing-") &&
+       (strings.HasSuffix(host, ".europe-north1.run.app") ||
+        strings.HasSuffix(host, ".a.run.app"))
+}
+
 func validateLiikkuva(cfg Config) error {
 	if os.Getenv("LIIKKUVA_BOOTSTRAP") == "1" {
 		return nil
@@ -67,7 +87,7 @@ func validateLiikkuva(cfg Config) error {
 	if len(cfg.InternalTaskToken) < 32 || len(cfg.ReviewTokenSecret) < 32 {
 		return fmt.Errorf("separate task and review secrets required")
 	}
-	if !strings.HasPrefix(cfg.InternalProcessLeadURL, "https://liikkuva-landing-") || !strings.HasSuffix(cfg.InternalProcessLeadURL, ".run.app/internal/process-lead") {
+	if !liikkuvaAllowedWorkerURL(cfg.InternalProcessLeadURL) {
 		return fmt.Errorf("worker must target the new Cloud Run service")
 	}
 	if cfg.TelegramBotToken == "" || cfg.TelegramChatID == "" || cfg.GoogleAppsScriptURL == "" || cfg.GoogleAppsScriptToken == "" {

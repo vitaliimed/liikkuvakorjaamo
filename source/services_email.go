@@ -147,11 +147,11 @@ func optionalInfoRowHTML(icon, label, value string) string {
 	escapedValue := html.EscapeString(value)
 
 	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
+		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="` + escapedValue + `" style="color:#23372b;text-decoration:none;">` + escapedValue + `</a></div>`
 	}
 
 	if strings.Contains(value, "@") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="mailto:` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
+		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="mailto:` + escapedValue + `" style="color:#23372b;text-decoration:none;">` + escapedValue + `</a></div>`
 	}
 
 	return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> ` + escapedValue + `</div>`
@@ -170,8 +170,8 @@ func optionalPlateRowHTML(value string, lang string) string {
 
 	return `<tr>
 		<td style="padding:0 0 14px 0;">
-			<div style="background:#fff4ea;border:1px solid #ffd3b0;border-radius:14px;padding:14px 16px;">
-				<div style="font-size:13px;line-height:1.4;color:#a94000;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">🚘 ` + html.EscapeString(label) + `</div>
+			<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:14px;padding:14px 16px;">
+				<div style="font-size:13px;line-height:1.4;color:#23372b;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">🚘 ` + html.EscapeString(label) + `</div>
 				<div style="font-size:22px;line-height:1.3;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div>
 			</div>
 		</td>
@@ -344,7 +344,7 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
 		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.</p>
-		<div style="background:#fff4ea;border:1px solid #ffd3b0;border-radius:16px;padding:18px;margin:0 0 18px;">
+		<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 			<div style="font-size:24px;font-weight:800;color:#0f172a;">Asentajan käynti ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
 			<p style="margin:10px 0 0;">Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.</p>
 		</div>
@@ -354,7 +354,7 @@ func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	}
 
 	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully.</p>
-	<div style="background:#fff4ea;border:1px solid #ffd3b0;border-radius:16px;padding:18px;margin:0 0 18px;">
+	<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
 		<p style="margin:10px 0 0;">The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.</p>
 	</div>
@@ -420,13 +420,13 @@ func buildBrandedActionEmailHTML(cfg Config, lead Lead, title, contentHTML, butt
 	}
 	buttonHTML := ""
 	if strings.TrimSpace(buttonLabel) != "" && strings.TrimSpace(buttonURL) != "" {
-		buttonHTML = `<p><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;background:#ff7410;color:#17221f;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:10px;">` + html.EscapeString(buttonLabel) + `</a></p>`
+		buttonHTML = `<p><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;background:#f97315;color:#23372b;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:10px;">` + html.EscapeString(buttonLabel) + `</a></p>`
 	}
 	contactHTML := ""
 	if email := serviceVisibleEmail(cfg); email != "" {
 		contactHTML = `<br>` + contact + `: <a style="color:#ffffff" href="mailto:` + html.EscapeString(email) + `">` + html.EscapeString(email) + `</a>`
 	}
-	return `<!doctype html><html lang="` + lang + `"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>` + html.EscapeString(title) + `</title></head><body style="margin:0;background:#f5f6f2;font-family:Arial,Helvetica,sans-serif;color:#17221f"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dce5de;border-radius:16px;overflow:hidden"><tr><td style="background:#133e32;padding:24px;border-bottom:4px solid #ff7410"><a href="` + html.EscapeString(base+path) + `"><img src="` + html.EscapeString(base) + `/static/img/logo-green.png?v=20261111" alt="Liikkuva auto korjaamo" width="280" style="display:block;width:280px;max-width:100%;height:auto;border:0"></a></td></tr><tr><td style="padding:28px 24px;font-size:16px;line-height:1.75"><h1 style="font-size:26px;line-height:1.3;margin:0 0 24px">` + html.EscapeString(title) + `</h1><p>` + greeting + ` ` + html.EscapeString(name) + `,</p>` + optionalPlateBlockHTML(lead.Car, lang) + contentHTML + buttonHTML + `<p>` + closing + `,<br>Liikkuva Auto Korjaamo</p></td></tr><tr><td style="background:#133e32;padding:24px;color:#ffffff;font-size:14px;line-height:1.8"><a href="` + html.EscapeString(base+path) + `" style="color:#ffffff">liikkuvakorjaamo.fi</a>` + contactHTML + `</td></tr></table></td></tr></table></body></html>`
+	return `<!doctype html><html lang="` + lang + `"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>` + html.EscapeString(title) + `</title></head><body style="margin:0;background:#f5f6f2;font-family:Arial,Helvetica,sans-serif;color:#23372b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dce5de;border-radius:16px;overflow:hidden"><tr><td style="background:#23372b;padding:24px;border-bottom:4px solid #f97315"><a href="` + html.EscapeString(base+path) + `"><img src="` + html.EscapeString(base) + `/static/img/logo-green.png?v=20261111" alt="Liikkuva auto korjaamo" width="280" style="display:block;width:280px;max-width:100%;height:auto;border:0"></a></td></tr><tr><td style="padding:28px 24px;font-size:16px;line-height:1.75"><h1 style="font-size:26px;line-height:1.3;margin:0 0 24px">` + html.EscapeString(title) + `</h1><p>` + greeting + ` ` + html.EscapeString(name) + `,</p>` + optionalPlateBlockHTML(lead.Car, lang) + contentHTML + buttonHTML + `<p>` + closing + `,<br>Liikkuva Auto Korjaamo</p></td></tr><tr><td style="background:#23372b;padding:24px;color:#ffffff;font-size:14px;line-height:1.8"><a href="` + html.EscapeString(base+path) + `" style="color:#ffffff">liikkuvakorjaamo.fi</a>` + contactHTML + `</td></tr></table></td></tr></table></body></html>`
 }
 
 func optionalPlateBlockHTML(value, lang string) string {
@@ -438,7 +438,7 @@ func optionalPlateBlockHTML(value, lang string) string {
 	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
 		label = "Rekisterinumero"
 	}
-	return `<div style="background:#fff4ea;border:1px solid #ffd3b0;border-radius:14px;padding:14px 16px;margin:0 0 18px;"><div style="font-size:13px;color:#a94000;font-weight:700;text-transform:uppercase;">` + html.EscapeString(label) + `</div><div style="font-size:22px;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div></div>`
+	return `<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:14px;padding:14px 16px;margin:0 0 18px;"><div style="font-size:13px;color:#23372b;font-weight:700;text-transform:uppercase;">` + html.EscapeString(label) + `</div><div style="font-size:22px;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div></div>`
 }
 
 func nl2br(value string) string {
