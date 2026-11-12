@@ -127,6 +127,34 @@ def check(url, revision, bootstrap):
         if html.count('id="leadForm"') != 1:
             raise RuntimeError("Page must have exactly one form at " + path)
         print("PASS", path, "compact form and required fields")
+    # This previously failed on tagged Cloud Run revisions: the browser's
+    # Origin was the preview URL, while CRM_PUBLIC_URL was the production URL.
+    # Use a malformed email to avoid sending an actual reset email.
+    test_payload = b'{"email":"not-an-email"}'
+    test_path = url + "/crm/api/password/forgot"
+    req = urllib.request.Request(test_path, data=test_payload, method="POST",
+                                 headers={"Content-Type":"application/json",
+                                          "X-CRM-Request":"1","Origin":url})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            answer = json.load(resp)
+            if resp.status != 200 or "message" not in answer:
+                raise RuntimeError("CRM same-origin recovery API failed")
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError("CRM password recovery POST rejected by origin guard: HTTP " +
+                           str(exc.code))
+    # Reject a forged cross-site Origin from the same endpoint.
+    req = urllib.request.Request(test_path, data=test_payload, method="POST",
+                                 headers={"Content-Type":"application/json",
+                                          "X-CRM-Request":"1",
+                                          "Origin":"https://untrusted.invalid"})
+    try:
+        with urllib.request.urlopen(req, timeout=30):
+            raise RuntimeError("CRM accepted a cross-site password reset request")
+    except urllib.error.HTTPError as exc:
+        if exc.code != 403:
+            raise RuntimeError("CRM cross-site request returned HTTP " + str(exc.code))
+    print("PASS: CRM tagged-preview same-origin POST; cross-site rejected")
     for path, marker in (
         ("/static/css/hero-form-ux.css", ".hero-form"),
         ("/static/js/theme.js", "data-theme-toggle"),
