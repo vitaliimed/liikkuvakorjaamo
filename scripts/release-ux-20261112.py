@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "fix/hero-form-theme-autofill-20261112"
+BRANCH = "release/ux-crm-brevo-20261112"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "ux-nov12-preview"
+TAG = "ux-crm-brevo-preview"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "ux-nov12-release.json"
+STATE_FILE = STATE_DIR / "ux-crm-brevo-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -134,6 +134,7 @@ def check(url, revision, bootstrap):
         ("/static/img/logo-white.png", None),
         ("/static/img/favicon.svg", None),
         ("/crm/", None),
+        ("/crm/password-reset.js", "crmResetPassword"),
         ("/admin", None),
         ("/privacy?lang=fi", None),
     ):
@@ -210,7 +211,7 @@ def stage():
     print("PASS Go tests")
     command(["go", "vet", "./..."], cwd=ROOT / "source")
     print("PASS go vet")
-    for name in ("crm-ui.test.cjs", "theme.test.cjs", "events.test.cjs", "apps-script.test.cjs"):
+    for name in ("crm-ui.test.cjs", "crm-password-reset.test.cjs", "theme.test.cjs", "events.test.cjs", "apps-script.test.cjs"):
         command(["node", "--test", str(ROOT / "tests" / name)])
         print("PASS Node", name)
     before_service = service()
@@ -243,6 +244,80 @@ def stage():
     print("INTAKE:", "ACTIVE (invalid-input validation checked)" if bootstrap == "0"
           else "PAUSED. Do NOT publish before activating and validating integrations.")
     print("NEXT: inspect preview on desktop/mobile; then run 'publish' only when intake is ready.")
+
+
+def publish_design_only():
+    """Publish the site/CRM UI with identical existing Bootstrap settings.
+
+    This mode does not activate /lead. Operator explicitly accepts that
+    submissions remain blocked if current production has BOOTSTRAP=1.
+    """
+    state = load_state()
+    if state.get("phase") != "validated":
+        raise RuntimeError("First run stage; staged UX/CRM checks must pass")
+    if github_state() != state.get("sha"):
+        raise RuntimeError("Checkout changed since staging")
+    current = service()
+    if allocation(current) != state["previous"]:
+        raise RuntimeError("Production changed since UX stage, refusing automatic promotion")
+    staged_rev, preview = tag_route(current)
+    if staged_rev != state["revision"]:
+        raise RuntimeError("Preview revision changed since validation")
+
+    live_bootstrap = env_value(current, "LIIKKUVA_BOOTSTRAP")
+    if state["bootstrap"] != live_bootstrap:
+        raise RuntimeError("Bootstrap differs between preview and live template")
+
+    # Never call this a working form release: no /lead POST enabled.
+    if live_bootstrap == "1":
+        print("IMPORTANT: /lead remains DISABLED on the new design.")
+        print("Cloud Tasks/Apps Script/lead secrets still require activation.")
+        answer = input("Publish UI only, preserving disabled lead form? Type DESIGN_ONLY: ").strip()
+        if answer != "DESIGN_ONLY":
+            raise RuntimeError("Design-only publication not confirmed")
+    elif live_bootstrap != "0":
+        raise RuntimeError("Unrecognized Bootstrap value: "+live_bootstrap)
+    else:
+        raise RuntimeError("Bootstrap=0: use the ordinary 'publish' mode for full lead preflight")
+
+    check(preview, staged_rev, live_bootstrap)
+    pin = firebase_pin()
+    if pin and (pin.startswith("crm-") or pin.startswith("brevo-")):
+        raise RuntimeError("Firebase Hosting tag points to a sensitive CRM/SMTP preview")
+    original_tag_revision = next((row.get("revisionName")
+                                  for row in current["status"]["traffic"]
+                                  if row.get("tag") == pin), None) if pin else None
+    print("Promoting validated UX+CRM revision with Bootstrap=1:",staged_rev)
+    try:
+        cloud("run", "services", "update-traffic", SERVICE,
+              "--region="+REGION, "--to-revisions="+staged_rev+"=100")
+        if pin:
+            cloud("run", "services", "update-traffic", SERVICE,
+                  "--region="+REGION, "--update-tags="+pin+"="+staged_rev)
+        for attempt in range(12):
+            try:
+                if allocation(service()) != {staged_rev:100}:
+                    raise RuntimeError("Cloud Run traffic did not reach 100%")
+                check(DOMAIN, staged_rev, live_bootstrap)
+                break
+            except (RuntimeError, urllib.error.URLError):
+                if attempt == 11:
+                    raise
+                time.sleep(5)
+    except Exception:
+        restore_traffic(state["previous"])
+        if pin and original_tag_revision:
+            cloud("run", "services", "update-traffic", SERVICE,
+                  "--region="+REGION,
+                  "--update-tags="+pin+"="+original_tag_revision)
+        raise
+    state.update({"phase":"published","revision":staged_rev,"preview":preview,
+                  "bootstrap":live_bootstrap,"firebase_pin":pin,
+                  "previous_pin_revision":original_tag_revision})
+    save_json(STATE_FILE,state)
+    print("PUBLISHED UI+CRM:",DOMAIN,"revision:",staged_rev)
+    print("BOOTSTRAP=1: lead form stays disabled until production integration is configured")
+    print("ROLLBACK: python3 scripts/release-ux-20261112.py rollback")
 
 
 def publish():
@@ -355,10 +430,10 @@ def status():
 
 if __name__ == "__main__":
     try:
-        if len(sys.argv) != 2 or sys.argv[1] not in ("stage", "status", "publish", "rollback"):
-            raise RuntimeError("Usage: release-ux-20261112.py stage|status|publish|rollback")
+        if len(sys.argv) != 2 or sys.argv[1] not in ("stage", "status", "publish", "publish-design-only", "rollback"):
+            raise RuntimeError("Usage: release-ux-20261112.py stage|status|publish|publish-design-only|rollback")
         {"stage": stage, "status": status, "publish": publish,
-         "rollback": rollback}[sys.argv[1]]()
+         "publish-design-only": publish_design_only, "rollback": rollback}[sys.argv[1]]()
     except Exception as exc:
         print("RELEASE STOPPED:", str(exc), file=sys.stderr)
         sys.exit(1)
