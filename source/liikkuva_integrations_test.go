@@ -91,7 +91,7 @@ func TestThemeSettingsSaveAndRenderWithoutAttributeInjection(t *testing.T) {
 		t.Fatal("theme settings were not persisted")
 	}
 	w := f.request("GET", "/", nil, nil)
-	for _, marker := range []string{`data-theme-policy="night"`, `data-night-start="22:30"`, `data-night-end="06:45"`, `/static/js/theme.js`, `data-theme-picker`} {
+	for _, marker := range []string{`data-theme-policy="night"`, `data-night-start="22:30"`, `data-night-end="06:45"`, `/static/js/theme.js`, `data-theme-toggle`} {
 		if !strings.Contains(w.Body.String(), marker) {
 			t.Fatal("public theme missing: " + marker)
 		}
