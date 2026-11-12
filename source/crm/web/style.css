@@ -51,3 +51,16 @@ button.primary:hover{background:#ff8b32;border-color:#ff8b32}
  .wa-message-head{align-items:flex-start}
  .wa-empty{padding:35px 16px}
 }
+
+/* CRM account recovery, owner and mechanic. Brand: only #23372b and #f97315. */
+.login{margin:7vh auto;max-width:450px}
+.login .text-action{display:block;width:100%;border:0;background:transparent;color:#23372b;text-decoration:underline;text-underline-offset:4px;margin-top:9px;font-weight:650}
+.login .text-action:hover{color:#f97315;background:transparent}
+.login input[readonly]{background:#f4f5f2;color:#23372b;cursor:not-allowed}
+.password-tools{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:8px 0 17px}
+.password-tools button{width:auto;max-width:100%;background:#fff;border:1px solid #d4dcd4;color:#23372b;font-size:12px;padding:9px 11px}
+.password-tools button[data-generate-password]{background:#23372b;color:#fff;border-color:#23372b}
+.password-tools button[data-generate-password]:hover{background:#23372b;filter:brightness(1.2)}
+.password-strength{font-size:11px;line-height:1.6;flex-basis:100%;color:#59665f}
+.login .muted{font-size:13px;line-height:1.7}
+@media(max-width:600px){.login{margin:14px auto;padding:24px 20px}.password-tools{flex-direction:column;align-items:stretch}.password-tools button{width:100%}}

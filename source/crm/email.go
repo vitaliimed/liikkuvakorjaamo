@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"net/smtp"
 	"net/textproto"
 	"os"
@@ -25,6 +26,7 @@ import (
 )
 
 type Email struct {
+	ResetURL  string    `json:"-"`
 	Language  string    `json:"language,omitempty"`
 	ID        string    `json:"id"`
 	MessageID string    `json:"message_id"`
@@ -382,6 +384,16 @@ func brandedEmailHTML(e Email) string {
 	lang := "fi"
 	if e.Language == "en" {
 		lang = "en"
+	} else if e.Language == "ru" {
+		lang = "ru"
 	}
-	return `<!doctype html><html lang="` + lang + `"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f4f5f2;font:16px/1.7 Arial,sans-serif;color:#23372b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" style="max-width:640px;background:#fff" cellspacing="0" cellpadding="0"><tr><td style="padding:24px;background:#23372b;border-bottom:4px solid #f97315"><img src="https://liikkuvakorjaamo.fi/static/img/logo-green.png?v=20261112" alt="Liikkuva auto korjaamo" width="280" style="display:block;max-width:100%;height:auto"></td></tr><tr><td style="padding:24px"><h1 style="font-size:24px">` + html.EscapeString(e.Subject) + `</h1><div style="white-space:pre-wrap">` + html.EscapeString(e.Body) + `</div></td></tr><tr><td style="padding:20px 24px;background:#23372b;color:#fff">Liikkuva auto korjaamo</td></tr></table></td></tr></table></body></html>`
+	resetAction := ""
+	if e.ResetURL != "" {
+		u, err := url.Parse(e.ResetURL)
+		if err == nil && u.Scheme == "https" && u.Host != "" && u.User == nil &&
+			strings.HasPrefix(u.Path, "/crm/") && strings.HasPrefix(u.Fragment, "reset=") {
+			resetAction = `<p style="margin:24px 0"><a style="display:inline-block;background:#f97315;color:#23372b;padding:14px 20px;text-decoration:none;font-weight:bold;border-radius:8px" href="` + html.EscapeString(e.ResetURL) + `">Установить новый пароль</a></p>`
+		}
+	}
+	return `<!doctype html><html lang="` + lang + `"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f4f5f2;font:16px/1.7 Arial,sans-serif;color:#23372b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" style="max-width:640px;background:#fff" cellspacing="0" cellpadding="0"><tr><td style="padding:24px;background:#23372b;border-bottom:4px solid #f97315"><img src="https://liikkuvakorjaamo.fi/static/img/logo-green.png?v=20261112" alt="Liikkuva auto korjaamo" width="280" style="display:block;max-width:100%;height:auto"></td></tr><tr><td style="padding:24px"><h1 style="font-size:24px">` + html.EscapeString(e.Subject) + `</h1><div style="white-space:pre-wrap">` + html.EscapeString(e.Body) + `</div>` + resetAction + `</td></tr><tr><td style="padding:20px 24px;background:#23372b;color:#fff">Liikkuva auto korjaamo</td></tr></table></td></tr></table></body></html>`
 }

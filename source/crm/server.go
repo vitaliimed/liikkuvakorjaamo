@@ -30,6 +30,7 @@ var web embed.FS
 type Server struct {
 	DB          *firestore.Client
 	Bucket, URL string
+	resetMailer func(Email) (string, error)
 }
 
 func Open(ctx context.Context, project, database, bucket, url string) (*Server, error) {
@@ -76,8 +77,8 @@ func (s *Server) Bootstrap(ctx context.Context) error {
 	if email == "" || pass == "" {
 		return nil
 	}
-	if len(pass) < 12 || len(pass) > 72 {
-		return errors.New("CRM_OWNER_PASSWORD: 12–72 байта")
+	if !validCRMPassword(pass) {
+		return errors.New("CRM_OWNER_PASSWORD: непустой пароль, не более 72 байт")
 	}
 	ref := s.Collection("users").Doc(digest(email))
 	_, e := ref.Get(ctx)
@@ -174,6 +175,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.login(w, r)
 		return
 	}
+	// Reset endpoints are public but still pass the shared same-origin
+	// and X-CRM-Request checks above. No account can be created here.
+	if path == "/api/password/forgot" && r.Method == "POST" {
+		s.passwordForgot(w, r)
+		return
+	}
+	if path == "/api/password/verify" && r.Method == "POST" {
+		s.passwordVerify(w, r)
+		return
+	}
+	if path == "/api/password/reset" && r.Method == "POST" {
+		s.passwordReset(w, r)
+		return
+	}
 	if !strings.HasPrefix(path, "/api/") {
 		if r.Method != "GET" {
 			fail(w, 405, "Method not allowed")
@@ -189,6 +204,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			file, mime = "style.css", "text/css; charset=utf-8"
 		case "/favicon.svg", "/logo-dark.svg", "/logo-light.svg":
 			file, mime = strings.TrimPrefix(path, "/"), "image/svg+xml"
+		case "/password-reset.js":
+			file, mime = "password-reset.js", "text/javascript; charset=utf-8"
 		default:
 			http.NotFound(w, r)
 			return
@@ -351,8 +368,8 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		fail(w, 400, "Укажите имя, email и роль")
 		return
 	}
-	if len(x.Password) > 72 || (x.Password != "" && len(x.Password) < 12) {
-		fail(w, 400, "Пароль: 12–72 байта")
+	if x.Password != "" && !validCRMPassword(x.Password) {
+		fail(w, 400, "Пароль не должен быть пустым; максимум 72 байта")
 		return
 	}
 	candidate := User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff}
