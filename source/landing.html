@@ -189,11 +189,16 @@
   {{end}}
   {{end}}
 <script src="/static/js/surface.js?v=20261112" defer></script><link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/">
-<meta property="og:image" content="https://liikkuvakorjaamo.fi/static/img/mobile-mechanic-v2.png">
+<meta property="og:image" content="https://liikkuvakorjaamo.fi/static/img/logo-white.png?v=20261112-share">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="576">
+<meta property="og:image:alt" content="Liikkuva auto korjaamo – logo">
+<meta name="twitter:image" content="https://liikkuvakorjaamo.fi/static/img/logo-white.png?v=20261112-share">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://liikkuvakorjaamo.fi/#organization","name":"Liikkuva Auto Korjaamo","url":"https://liikkuvakorjaamo.fi/","logo":"https://liikkuvakorjaamo.fi/static/img/logo_liikkuva.svg"},{"@type":"Service","@id":"https://liikkuvakorjaamo.fi/#service","name":"Liikkuva autokorjaamo Uusimaa","serviceType":"Mobile car diagnostics and suitable on-site repairs","provider":{"@id":"https://liikkuvakorjaamo.fi/#organization"},"areaServed":["Helsinki","Espoo","Vantaa","Kerava","Järvenpää","Hyvinkää","Porvoo","Lohja"],"url":"https://liikkuvakorjaamo.fi/"}]}</script>
 <link rel="stylesheet" href="/static/css/pro.css?v=20261112"><script src="/static/js/events.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/responsive.css?v=20261112">
-<link rel="stylesheet" href="/static/css/brand.css?v=20261112"></head>{{if eq .Lang "en"}}<body>
+<link rel="stylesheet" href="/static/css/brand.css?v=20261112"><link rel="stylesheet" href="/static/css/hero-form-ux.css?v=20261112-fix1"><script src="/static/js/theme.js?v=20261112-fix1" defer></script></head>{{if eq .Lang "en"}}<body>
 <a href="#main" class="skip-link">Skip to content</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -214,62 +219,15 @@
  <a href="/en" class="brand" aria-label="Liikkuva Auto Korjaamo">
   <img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288">
  </a>
- <nav id="mainNav" class="nav" aria-label="Main menu">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}<label class="theme-picker"><span class="theme-picker-label">Appearance</span><select data-theme-picker aria-label="Appearance"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>
- <div class="header-actions"><div class="languages"><a href="/">FI</a><span>/</span><a href="/en" aria-current="page">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
+ <nav id="mainNav" class="nav" aria-label="Main menu">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}</nav>
+ <div class="header-actions"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Vaihda tumma tai vaalea tila" title="Vaihda tumma tai vaalea tila" aria-pressed="false"><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"></path></svg></button><div class="languages"><a href="/">FI</a><span>/</span><a href="/en" aria-current="page">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
 </div></header>
 
 <main id="main">
  <section class="hero"><div class="container hero-layout">
-  <div class="hero-copy"><p class="eyebrow">{{.Content.Hero.Badge}}<span class="status-dot"></span></p><h1>{{.Content.Hero.Title}}</h1><p class="hero-description">{{.Content.Hero.Subtitle}}</p>
-   <div class="hero-actions"><a class="btn btn-orange" href="#lead-form">{{.Content.Hero.PrimaryCTA}}<svg class="icon"><use href="#arrow"></use></svg></a><a class="text-link" href="#services">{{.Content.Hero.SecondaryCTA}}<span>↗</span></a></div>
-   <ul class="hero-points">{{range .Content.Hero.Points}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>
-  </div>
-  <figure class="hero-visual"><div class="hero-image-wrap" style="{{.HeroStyleVars}}"><img class="hero-photo" style="{{.HeroSceneImageStyle}}" src="{{.Content.Hero.BackgroundURL}}" width="1536" height="1024" alt="Illustration: car diagnostics in a driveway" fetchpriority="high"><div class="hero-scene-shade"></div>{{if .Content.Hero.PersonDesktopURL}}<div class="hero-person-layer" style="{{.HeroPersonLayerStyle}}"><img src="{{.Content.Hero.PersonDesktopURL}}" alt="{{.Content.Hero.PersonAlt}}" style="{{.HeroPersonImageStyle}}"></div>{{end}}</div>
-   <div class="hero-visual-top"><svg class="icon"><use href="#pin"></use></svg> UUSIMAA</div>
-   <div class="visit-tag"><span class="visit-tag-icon"><svg class="icon"><use href="#car-icon"></use></svg></span><span><small>MECHANIC VISIT</small><strong>70 €</strong></span><span class="visit-tag-note">To your car.</span></div>
-   <figcaption>Service illustration</figcaption>
-  </figure>
- </div></section>
-
- <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
-
- 
-
- 
-
- 
- {{if and .Content.Promo.Enabled .Content.Promo.Title}}<section class="promo container"><div><span class="eyebrow">{{.Content.Promo.Badge}}</span><h2>{{.Content.Promo.Title}}</h2><p>{{.Content.Promo.Text}}</p></div>{{if .Content.Promo.Button}}<a class="btn btn-orange" href="{{.Content.Promo.URL}}">{{.Content.Promo.Button}}</a>{{end}}</section>{{end}}{{if .Content.ShowStats}}<section class="stats-strip"><div class="container stats-grid">{{range .Content.Stats}}<div><strong>{{.Title}}</strong><p>{{.Text}}</p></div>{{end}}</div></section>{{end}}<section class="section" id="services">{{if .Content.ShowServices}}<div class="container">
-  <div class="section-heading"><div><p class="eyebrow">{{.Content.Services.Heading.Kicker}}</p><h2>{{.Content.Services.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Services.Heading.Text}}</p></div>
-  <div class="service-grid">{{range .Content.Services.Items}}<article class="service-entry">
-   <div class="service-top"><span class="service-icon">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy" style="{{$.ServiceImageStyle}}">{{else}}<svg class="icon"><use href="#wrench"></use></svg>{{end}}</span><span class="service-badge">{{.Badge}}</span></div>
-   <h3>{{.Title}}</h3><p>{{.Text}}</p><div class="service-bottom"><span>{{.Price}}</span><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a></div>
-  </article>{{end}}</div>
- </div>{{end}}</section>
-
- <section class="pricing-section" id="pricing"><div class="container pricing-layout">
-  <div class="price-panel"><span class="eyebrow">02 / CLEAR PRICING</span><h2>Know the price.
-Before the visit.</h2><div class="big-price">{visit}<span>€</span></div><p>Mechanic visit to your car</p></div>
-  <div class="price-explanation"><p class="eyebrow">NO SURPRISES</p><h3>First we assess.
-Then we agree.</h3>
-   <div class="price-row"><span>Mechanic visit</span><strong>70 €</strong></div><div class="price-row"><span>Diagnostics, if needed</span><strong>{{if eq .Lang "fi"}}alk.{{else}}from{{end}} 50 €</strong></div><div class="price-row"><span>Repairs and spare parts</span><strong>Agreed separately</strong></div>
-   <p class="price-note">{{.Content.Form.VisitPriceFootnote}}</p><a href="#lead-form" class="text-link">Tell us your car's problem <span>↗</span></a>
-  </div>
- </div></section>
-
- <section class="section process" id="how-it-works">{{if .Content.ShowProcess}}<div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Process.Heading.Kicker}}</span><h2>{{.Content.Process.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Process.Heading.Text}}</p></div><div class="steps">{{range .Content.Process.Items}}<article class="step"><span class="step-number">{{.Number}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></article>{{end}}</div></div>{{end}}</section>
-
- <section class="cases-section">{{if .Content.ShowCases}}<div class="container"><div class="section-heading"><div><p class="eyebrow">{{.Content.Cases.Heading.Kicker}}</p><h2>{{.Content.Cases.Heading.Title}}</h2></div></div><div class="case-grid">{{range .Content.Cases.Items}}<article class="case-entry"><div><span class="eyebrow">{{.Tag}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></div><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a><ul>{{range .Items}}<li>{{.}}</li>{{end}}</ul></article>{{end}}</div></div>{{end}}</section>
-
- {{if .Content.ShowCapability}}<section class="section capability"><div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Capability.Heading.Kicker}}</span><h2>{{.Content.Capability.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Capability.Heading.Text}}</p></div><div class="capability-grid"><article><svg class="icon"><use href="#check"></use></svg><h3>{{.Content.Capability.CanDo.Title}}</h3><ul>{{range .Content.Capability.CanDo.Items}}<li>{{.}}</li>{{end}}</ul></article><article><svg class="icon"><use href="#wrench"></use></svg><h3>{{.Content.Capability.NeedsWorkshop.Title}}</h3><ul>{{range .Content.Capability.NeedsWorkshop.Items}}<li>{{.}}</li>{{end}}</ul></article></div></div></section>{{end}}
-
- {{if .Content.ShowAreas}}<section class="areas-section" id="areas"><div class="container areas-shell"><div class="areas-copy"><span class="eyebrow">{{.Content.Areas.Heading.Kicker}}</span><h2>{{.Content.Areas.Heading.Title}}</h2><div class="city-list">{{range .Content.Areas.Cities}}<span><svg class="icon"><use href="#pin"></use></svg>{{.}}</span>{{end}}</div><p>{{.Content.Areas.NoteText}}</p><a href="#lead-form" class="btn btn-light">{{.Content.Areas.NoteButton}}<svg class="icon"><use href="#arrow"></use></svg></a></div><div class="area-map" style="--areas-overlay-opacity:0.72;"><img class="map-fallback" style="{{.AreasMapImageStyle}}" src="{{.Content.Areas.MapImageURL}}" alt="Uusimaa service area illustration" loading="lazy" width="640" height="440"><div id="areasLiveMap" class="areas-live-map" aria-label="Uusimaa"></div><span class="map-label"><span class="status-dot"></span> UUSIMAA, FINLAND</span></div></div></section>{{end}}
-
- 
-
- {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Still have a question? Send it through the form.</p><a href="#lead-form" class="text-link">Contact us <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
-
- <div class="resource-links"><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="lead-form"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / REQUEST HELP</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-card"><div class="request-card-heading"><span class="eyebrow">FREE TO SEND</span><h3>{{.Content.Form.Title}}</h3><p>{{.Content.Form.Intro}}</p></div>
-<form id="leadForm" action="/lead" method="post" enctype="multipart/form-data" data-success-message="{{.Content.Form.SuccessMessage}}" data-error-message="{{.Content.Form.ErrorMessage}}" data-submit-loading-text="{{.Content.Form.SubmitLoadingText}}" data-name-required="{{.Content.Form.NameRequiredMessage}}" data-contact-required="{{.Content.Form.ContactRequiredMessage}}" data-phone-invalid="{{.Content.Form.PhoneInvalidMessage}}" data-email-invalid="{{.Content.Form.EmailInvalidMessage}}" data-registration-invalid="{{.Content.Form.RegistrationInvalidMessage}}" data-photos-too-many="{{.Content.Form.PhotosTooManyMessage}}" data-photos-type="{{.Content.Form.PhotosTypeMessage}}" data-photos-size="{{.Content.Form.PhotosSizeMessage}}" data-geo-unsupported="{{.Content.Form.GeoUnsupportedMessage}}" data-geo-loading="{{.Content.Form.GeoLoadingText}}" data-geo-added="{{.Content.Form.GeoAddedText}}" data-geo-failed="{{.Content.Form.GeoFailedMessage}}" data-map-pick-first="{{.Content.Form.MapPickFirstMessage}}" data-map-point-added="{{.Content.Form.MapPointAddedText}}" data-reverse-geocode-failed="{{.Content.Form.ReverseGeocodeFailedMessage}}" data-network-error="{{.Content.Form.NetworkErrorMessage}}" data-lang="{{.Lang}}">
+  <div class="hero-form" id="lead-form">
+<div class="request-card hero-request-card"><div class="request-card-heading"><span class="eyebrow">FREE TO SEND</span><h3>{{.Content.Form.Title}}</h3><p>{{.Content.Form.Intro}}</p></div>
+<form autocomplete="on" id="leadForm" action="/lead" method="post" enctype="multipart/form-data" data-success-message="{{.Content.Form.SuccessMessage}}" data-error-message="{{.Content.Form.ErrorMessage}}" data-submit-loading-text="{{.Content.Form.SubmitLoadingText}}" data-name-required="{{.Content.Form.NameRequiredMessage}}" data-contact-required="{{.Content.Form.ContactRequiredMessage}}" data-phone-invalid="{{.Content.Form.PhoneInvalidMessage}}" data-email-invalid="{{.Content.Form.EmailInvalidMessage}}" data-registration-invalid="{{.Content.Form.RegistrationInvalidMessage}}" data-photos-too-many="{{.Content.Form.PhotosTooManyMessage}}" data-photos-type="{{.Content.Form.PhotosTypeMessage}}" data-photos-size="{{.Content.Form.PhotosSizeMessage}}" data-geo-unsupported="{{.Content.Form.GeoUnsupportedMessage}}" data-geo-loading="{{.Content.Form.GeoLoadingText}}" data-geo-added="{{.Content.Form.GeoAddedText}}" data-geo-failed="{{.Content.Form.GeoFailedMessage}}" data-map-pick-first="{{.Content.Form.MapPickFirstMessage}}" data-map-point-added="{{.Content.Form.MapPointAddedText}}" data-reverse-geocode-failed="{{.Content.Form.ReverseGeocodeFailedMessage}}" data-network-error="{{.Content.Form.NetworkErrorMessage}}" data-lang="{{.Lang}}">
             <input type="hidden" name="language" value="{{.Lang}}">
             <input type="hidden" name="source" value="liikkuvakorjaamo.fi">
             <input type="hidden" name="page_url" id="pageUrl" value="">
@@ -300,18 +258,18 @@ Then we agree.</h3>
 
               <div class="field">
                 <label for="phone">{{.Content.Form.LabelPhone}}</label>
-                <input id="phone" type="tel" name="phone" required autocomplete="tel" inputmode="tel" placeholder="{{.Content.Form.PlaceholderPhone}}" inputmode="tel" autocomplete="tel" maxlength="17">
+                <input id="phone" type="tel" name="phone" required autocomplete="tel" inputmode="tel" placeholder="{{.Content.Form.PlaceholderPhone}}" maxlength="17">
                 <div class="field-help">{{.Content.Form.PhoneHelp}}</div>
               </div>
 
               <div class="field field-span-2">
                 <label for="email">{{.Content.Form.LabelEmail}}</label>
-                <input id="email" type="email" name="email" placeholder="{{.Content.Form.PlaceholderEmail}}" autocomplete="email">
+                <input id="email" type="email" name="email" required placeholder="{{.Content.Form.PlaceholderEmail}}" autocomplete="email">
               </div>
 
               <div class="field field-span-2 address-field">
                 <label for="address">{{.Content.Form.LabelAddress}}</label>
-                <input id="address" type="text" name="address" placeholder="{{.Content.Form.PlaceholderAddress}}" autocomplete="street-address">
+                <input id="address" type="text" name="address" required placeholder="{{.Content.Form.PlaceholderAddress}}" autocomplete="street-address">
                 <div class="field-help">{{.Content.Form.AddressHelp}}</div>
                 <div class="inline-actions">
                   <button type="button" id="useLocationBtn" class="btn btn-secondary">{{.Content.Form.UseLocationButton}}</button>
@@ -321,7 +279,7 @@ Then we agree.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="on">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -349,7 +307,58 @@ Then we agree.</h3>
               </div>
             </div>
           </form>
-<p class="form-privacy">We use your details to handle your service request. <a href="/privacy?lang=en">Privacy</a></p></div></div></section>
+<p class="form-privacy">We use your details to handle your service request. <a href="/privacy?lang=en">Privacy</a></p></div>
+  </div>
+
+  <div class="hero-copy"><p class="eyebrow">{{.Content.Hero.Badge}}<span class="status-dot"></span></p><h1>{{.Content.Hero.Title}}</h1><p class="hero-description">{{.Content.Hero.Subtitle}}</p>
+   <div class="hero-actions"><a class="btn btn-orange" href="#lead-form">{{.Content.Hero.PrimaryCTA}}<svg class="icon"><use href="#arrow"></use></svg></a><a class="text-link" href="#services">{{.Content.Hero.SecondaryCTA}}<span>↗</span></a></div>
+   <ul class="hero-points">{{range .Content.Hero.Points}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>
+  </div>
+  <figure class="hero-visual"><div class="hero-image-wrap" style="{{.HeroStyleVars}}"><img class="hero-photo" style="{{.HeroSceneImageStyle}}" src="{{.Content.Hero.BackgroundURL}}" width="1536" height="1024" alt="Illustration: car diagnostics in a driveway" fetchpriority="high"><div class="hero-scene-shade"></div>{{if .Content.Hero.PersonDesktopURL}}<div class="hero-person-layer" style="{{.HeroPersonLayerStyle}}"><img src="{{.Content.Hero.PersonDesktopURL}}" alt="{{.Content.Hero.PersonAlt}}" style="{{.HeroPersonImageStyle}}"></div>{{end}}</div>
+   <div class="hero-visual-top"><svg class="icon"><use href="#pin"></use></svg> UUSIMAA</div>
+   <div class="visit-tag"><span class="visit-tag-icon"><svg class="icon"><use href="#car-icon"></use></svg></span><span><small>MECHANIC VISIT</small><strong>75 €</strong></span><span class="visit-tag-note">To your car.</span></div>
+   <figcaption>Service illustration</figcaption>
+  </figure>
+ </div></section>
+
+ <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
+
+ 
+
+ 
+
+ 
+ {{if and .Content.Promo.Enabled .Content.Promo.Title}}<section class="promo container"><div><span class="eyebrow">{{.Content.Promo.Badge}}</span><h2>{{.Content.Promo.Title}}</h2><p>{{.Content.Promo.Text}}</p></div>{{if .Content.Promo.Button}}<a class="btn btn-orange" href="{{.Content.Promo.URL}}">{{.Content.Promo.Button}}</a>{{end}}</section>{{end}}{{if .Content.ShowStats}}<section class="stats-strip"><div class="container stats-grid">{{range .Content.Stats}}<div><strong>{{.Title}}</strong><p>{{.Text}}</p></div>{{end}}</div></section>{{end}}<section class="section" id="services">{{if .Content.ShowServices}}<div class="container">
+  <div class="section-heading"><div><p class="eyebrow">{{.Content.Services.Heading.Kicker}}</p><h2>{{.Content.Services.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Services.Heading.Text}}</p></div>
+  <div class="service-grid">{{range .Content.Services.Items}}<article class="service-entry">
+   <div class="service-top"><span class="service-icon">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy" style="{{$.ServiceImageStyle}}">{{else}}<svg class="icon"><use href="#wrench"></use></svg>{{end}}</span><span class="service-badge">{{.Badge}}</span></div>
+   <h3>{{.Title}}</h3><p>{{.Text}}</p><div class="service-bottom"><span>{{.Price}}</span><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a></div>
+  </article>{{end}}</div>
+ </div>{{end}}</section>
+
+ <section class="pricing-section" id="pricing"><div class="container pricing-layout">
+  <div class="price-panel"><span class="eyebrow">02 / CLEAR PRICING</span><h2>Know the price.
+Before the visit.</h2><div class="big-price">{visit}<span>€</span></div><p>Mechanic visit to your car</p></div>
+  <div class="price-explanation"><p class="eyebrow">NO SURPRISES</p><h3>First we assess.
+Then we agree.</h3>
+   <div class="price-row"><span>Mechanic visit</span><strong>75 €</strong></div><div class="price-row"><span>Diagnostics, if needed</span><strong>{{if eq .Lang "fi"}}alk.{{else}}from{{end}} 50 €</strong></div><div class="price-row"><span>Repairs and spare parts</span><strong>Agreed separately</strong></div>
+   <p class="price-note">{{.Content.Form.VisitPriceFootnote}}</p><a href="#lead-form" class="text-link">Tell us your car's problem <span>↗</span></a>
+  </div>
+ </div></section>
+
+ <section class="section process" id="how-it-works">{{if .Content.ShowProcess}}<div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Process.Heading.Kicker}}</span><h2>{{.Content.Process.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Process.Heading.Text}}</p></div><div class="steps">{{range .Content.Process.Items}}<article class="step"><span class="step-number">{{.Number}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></article>{{end}}</div></div>{{end}}</section>
+
+ <section class="cases-section">{{if .Content.ShowCases}}<div class="container"><div class="section-heading"><div><p class="eyebrow">{{.Content.Cases.Heading.Kicker}}</p><h2>{{.Content.Cases.Heading.Title}}</h2></div></div><div class="case-grid">{{range .Content.Cases.Items}}<article class="case-entry"><div><span class="eyebrow">{{.Tag}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></div><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a><ul>{{range .Items}}<li>{{.}}</li>{{end}}</ul></article>{{end}}</div></div>{{end}}</section>
+
+ {{if .Content.ShowCapability}}<section class="section capability"><div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Capability.Heading.Kicker}}</span><h2>{{.Content.Capability.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Capability.Heading.Text}}</p></div><div class="capability-grid"><article><svg class="icon"><use href="#check"></use></svg><h3>{{.Content.Capability.CanDo.Title}}</h3><ul>{{range .Content.Capability.CanDo.Items}}<li>{{.}}</li>{{end}}</ul></article><article><svg class="icon"><use href="#wrench"></use></svg><h3>{{.Content.Capability.NeedsWorkshop.Title}}</h3><ul>{{range .Content.Capability.NeedsWorkshop.Items}}<li>{{.}}</li>{{end}}</ul></article></div></div></section>{{end}}
+
+ {{if .Content.ShowAreas}}<section class="areas-section" id="areas"><div class="container areas-shell"><div class="areas-copy"><span class="eyebrow">{{.Content.Areas.Heading.Kicker}}</span><h2>{{.Content.Areas.Heading.Title}}</h2><div class="city-list">{{range .Content.Areas.Cities}}<span><svg class="icon"><use href="#pin"></use></svg>{{.}}</span>{{end}}</div><p>{{.Content.Areas.NoteText}}</p><a href="#lead-form" class="btn btn-light">{{.Content.Areas.NoteButton}}<svg class="icon"><use href="#arrow"></use></svg></a></div><div class="area-map" style="--areas-overlay-opacity:0.72;"><img class="map-fallback" style="{{.AreasMapImageStyle}}" src="{{.Content.Areas.MapImageURL}}" alt="Uusimaa service area illustration" loading="lazy" width="640" height="440"><div id="areasLiveMap" class="areas-live-map" aria-label="Uusimaa"></div><span class="map-label"><span class="status-dot"></span> UUSIMAA, FINLAND</span></div></div></section>{{end}}
+
+ 
+
+ {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Still have a question? Send it through the form.</p><a href="#lead-form" class="text-link">Contact us <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
+
+ <div class="resource-links"><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="request-more"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / REQUEST HELP</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-bottom-action"><a class="btn btn-orange" href="#lead-form">Send a request ↑</a></div></div></section>
 
  {{if .Content.ShowFinalCTA}}<section class="final-cta"><div class="container"><span class="eyebrow">{{.Content.FinalCTA.Kicker}}</span><h2>{{.Content.FinalCTA.Title}}</h2><p>{{.Content.FinalCTA.Text}}</p><a class="btn btn-dark" href="#lead-form">{{.Content.FinalCTA.Button}}<svg class="icon"><use href="#arrow"></use></svg></a></div></section>{{end}}
 </main>
@@ -398,62 +407,15 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p><div class="footer-contacts">{{if .Con
  <a href="/" class="brand" aria-label="Liikkuva Auto Korjaamo">
   <img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288">
  </a>
- <nav id="mainNav" class="nav" aria-label="Päävalikko">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}<label class="theme-picker"><span class="theme-picker-label">Ulkoasu</span><select data-theme-picker aria-label="Ulkoasu"><option value="auto">Auto</option><option value="light">Vaalea</option><option value="dark">Tumma</option></select></label></nav>
- <div class="header-actions"><div class="languages"><a href="/" aria-current="page">FI</a><span>/</span><a href="/en">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
+ <nav id="mainNav" class="nav" aria-label="Päävalikko">{{range .Content.Header.Nav}}<a href="{{.Href}}">{{.Label}}</a>{{end}}</nav>
+ <div class="header-actions"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Vaihda tumma tai vaalea tila" title="Vaihda tumma tai vaalea tila" aria-pressed="false"><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path></svg><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"></path></svg></button><div class="languages"><a href="/" aria-current="page">FI</a><span>/</span><a href="/en">EN</a></div><a href="#lead-form" class="btn btn-small btn-dark">{{.Content.Header.CTA}}<svg class="icon"><use href="#arrow"></use></svg></a><button type="button" id="menuToggle" class="menu-toggle" aria-label="Menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span></button></div>
 </div></header>
 
 <main id="main">
  <section class="hero"><div class="container hero-layout">
-  <div class="hero-copy"><p class="eyebrow">{{.Content.Hero.Badge}}<span class="status-dot"></span></p><h1>{{.Content.Hero.Title}}</h1><p class="hero-description">{{.Content.Hero.Subtitle}}</p>
-   <div class="hero-actions"><a class="btn btn-orange" href="#lead-form">{{.Content.Hero.PrimaryCTA}}<svg class="icon"><use href="#arrow"></use></svg></a><a class="text-link" href="#services">{{.Content.Hero.SecondaryCTA}}<span>↗</span></a></div>
-   <ul class="hero-points">{{range .Content.Hero.Points}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>
-  </div>
-  <figure class="hero-visual"><div class="hero-image-wrap" style="{{.HeroStyleVars}}"><img class="hero-photo" style="{{.HeroSceneImageStyle}}" src="{{.Content.Hero.BackgroundURL}}" width="1536" height="1024" alt="Havainnekuva: autodiagnostiikka kotipihassa" fetchpriority="high"><div class="hero-scene-shade"></div>{{if .Content.Hero.PersonDesktopURL}}<div class="hero-person-layer" style="{{.HeroPersonLayerStyle}}"><img src="{{.Content.Hero.PersonDesktopURL}}" alt="{{.Content.Hero.PersonAlt}}" style="{{.HeroPersonImageStyle}}"></div>{{end}}</div>
-   <div class="hero-visual-top"><svg class="icon"><use href="#pin"></use></svg> UUSIMAA</div>
-   <div class="visit-tag"><span class="visit-tag-icon"><svg class="icon"><use href="#car-icon"></use></svg></span><span><small>ASENTAJAN KÄYNTI</small><strong>70 €</strong></span><span class="visit-tag-note">Autosi luokse.</span></div>
-   <figcaption>Havainnekuva palvelusta</figcaption>
-  </figure>
- </div></section>
-
- <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
-
- 
-
- 
-
- 
- {{if and .Content.Promo.Enabled .Content.Promo.Title}}<section class="promo container"><div><span class="eyebrow">{{.Content.Promo.Badge}}</span><h2>{{.Content.Promo.Title}}</h2><p>{{.Content.Promo.Text}}</p></div>{{if .Content.Promo.Button}}<a class="btn btn-orange" href="{{.Content.Promo.URL}}">{{.Content.Promo.Button}}</a>{{end}}</section>{{end}}{{if .Content.ShowStats}}<section class="stats-strip"><div class="container stats-grid">{{range .Content.Stats}}<div><strong>{{.Title}}</strong><p>{{.Text}}</p></div>{{end}}</div></section>{{end}}<section class="section" id="services">{{if .Content.ShowServices}}<div class="container">
-  <div class="section-heading"><div><p class="eyebrow">{{.Content.Services.Heading.Kicker}}</p><h2>{{.Content.Services.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Services.Heading.Text}}</p></div>
-  <div class="service-grid">{{range .Content.Services.Items}}<article class="service-entry">
-   <div class="service-top"><span class="service-icon">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy" style="{{$.ServiceImageStyle}}">{{else}}<svg class="icon"><use href="#wrench"></use></svg>{{end}}</span><span class="service-badge">{{.Badge}}</span></div>
-   <h3>{{.Title}}</h3><p>{{.Text}}</p><div class="service-bottom"><span>{{.Price}}</span><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a></div>
-  </article>{{end}}</div>
- </div>{{end}}</section>
-
- <section class="pricing-section" id="pricing"><div class="container pricing-layout">
-  <div class="price-panel"><span class="eyebrow">02 / SELKEÄ HINNOITTELU</span><h2>Tiedät hinnan.
-Ennen käyntiä.</h2><div class="big-price">{visit}<span>€</span></div><p>Asentajan käynti auton luokse</p></div>
-  <div class="price-explanation"><p class="eyebrow">EI YLLÄTYKSIÄ</p><h3>Ensin selvitetään.
-Sitten sovitaan.</h3>
-   <div class="price-row"><span>Asentajan saapuminen</span><strong>70 €</strong></div><div class="price-row"><span>Diagnostiikka tarvittaessa</span><strong>{{if eq .Lang "fi"}}alk.{{else}}from{{end}} 50 €</strong></div><div class="price-row"><span>Korjaukset ja varaosat</span><strong>Sovitaan erikseen</strong></div>
-   <p class="price-note">{{.Content.Form.VisitPriceFootnote}}</p><a href="#lead-form" class="text-link">Kerro autosi ongelmasta <span>↗</span></a>
-  </div>
- </div></section>
-
- <section class="section process" id="how-it-works">{{if .Content.ShowProcess}}<div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Process.Heading.Kicker}}</span><h2>{{.Content.Process.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Process.Heading.Text}}</p></div><div class="steps">{{range .Content.Process.Items}}<article class="step"><span class="step-number">{{.Number}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></article>{{end}}</div></div>{{end}}</section>
-
- <section class="cases-section">{{if .Content.ShowCases}}<div class="container"><div class="section-heading"><div><p class="eyebrow">{{.Content.Cases.Heading.Kicker}}</p><h2>{{.Content.Cases.Heading.Title}}</h2></div></div><div class="case-grid">{{range .Content.Cases.Items}}<article class="case-entry"><div><span class="eyebrow">{{.Tag}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></div><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a><ul>{{range .Items}}<li>{{.}}</li>{{end}}</ul></article>{{end}}</div></div>{{end}}</section>
-
- {{if .Content.ShowCapability}}<section class="section capability"><div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Capability.Heading.Kicker}}</span><h2>{{.Content.Capability.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Capability.Heading.Text}}</p></div><div class="capability-grid"><article><svg class="icon"><use href="#check"></use></svg><h3>{{.Content.Capability.CanDo.Title}}</h3><ul>{{range .Content.Capability.CanDo.Items}}<li>{{.}}</li>{{end}}</ul></article><article><svg class="icon"><use href="#wrench"></use></svg><h3>{{.Content.Capability.NeedsWorkshop.Title}}</h3><ul>{{range .Content.Capability.NeedsWorkshop.Items}}<li>{{.}}</li>{{end}}</ul></article></div></div></section>{{end}}
-
- {{if .Content.ShowAreas}}<section class="areas-section" id="areas"><div class="container areas-shell"><div class="areas-copy"><span class="eyebrow">{{.Content.Areas.Heading.Kicker}}</span><h2>{{.Content.Areas.Heading.Title}}</h2><div class="city-list">{{range .Content.Areas.Cities}}<span><svg class="icon"><use href="#pin"></use></svg>{{.}}</span>{{end}}</div><p>{{.Content.Areas.NoteText}}</p><a href="#lead-form" class="btn btn-light">{{.Content.Areas.NoteButton}}<svg class="icon"><use href="#arrow"></use></svg></a></div><div class="area-map" style="--areas-overlay-opacity:0.72;"><img class="map-fallback" style="{{.AreasMapImageStyle}}" src="{{.Content.Areas.MapImageURL}}" alt="Uudenmaan palvelualueen havainnekuva" loading="lazy" width="640" height="440"><div id="areasLiveMap" class="areas-live-map" aria-label="Uusimaa"></div><span class="map-label"><span class="status-dot"></span> UUSIMAA, FINLAND</span></div></div></section>{{end}}
-
- 
-
- {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Jäikö jotain kysyttävää? Kerro meille lomakkeella.</p><a href="#lead-form" class="text-link">Ota yhteyttä <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
-
- <div class="resource-links"><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="lead-form"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / PYYDÄ APUA</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-card"><div class="request-card-heading"><span class="eyebrow">MAKSUTON YHTEYDENOTTO</span><h3>{{.Content.Form.Title}}</h3><p>{{.Content.Form.Intro}}</p></div>
-<form id="leadForm" action="/lead" method="post" enctype="multipart/form-data" data-success-message="{{.Content.Form.SuccessMessage}}" data-error-message="{{.Content.Form.ErrorMessage}}" data-submit-loading-text="{{.Content.Form.SubmitLoadingText}}" data-name-required="{{.Content.Form.NameRequiredMessage}}" data-contact-required="{{.Content.Form.ContactRequiredMessage}}" data-phone-invalid="{{.Content.Form.PhoneInvalidMessage}}" data-email-invalid="{{.Content.Form.EmailInvalidMessage}}" data-registration-invalid="{{.Content.Form.RegistrationInvalidMessage}}" data-photos-too-many="{{.Content.Form.PhotosTooManyMessage}}" data-photos-type="{{.Content.Form.PhotosTypeMessage}}" data-photos-size="{{.Content.Form.PhotosSizeMessage}}" data-geo-unsupported="{{.Content.Form.GeoUnsupportedMessage}}" data-geo-loading="{{.Content.Form.GeoLoadingText}}" data-geo-added="{{.Content.Form.GeoAddedText}}" data-geo-failed="{{.Content.Form.GeoFailedMessage}}" data-map-pick-first="{{.Content.Form.MapPickFirstMessage}}" data-map-point-added="{{.Content.Form.MapPointAddedText}}" data-reverse-geocode-failed="{{.Content.Form.ReverseGeocodeFailedMessage}}" data-network-error="{{.Content.Form.NetworkErrorMessage}}" data-lang="{{.Lang}}">
+  <div class="hero-form" id="lead-form">
+<div class="request-card hero-request-card"><div class="request-card-heading"><span class="eyebrow">MAKSUTON YHTEYDENOTTO</span><h3>{{.Content.Form.Title}}</h3><p>{{.Content.Form.Intro}}</p></div>
+<form autocomplete="on" id="leadForm" action="/lead" method="post" enctype="multipart/form-data" data-success-message="{{.Content.Form.SuccessMessage}}" data-error-message="{{.Content.Form.ErrorMessage}}" data-submit-loading-text="{{.Content.Form.SubmitLoadingText}}" data-name-required="{{.Content.Form.NameRequiredMessage}}" data-contact-required="{{.Content.Form.ContactRequiredMessage}}" data-phone-invalid="{{.Content.Form.PhoneInvalidMessage}}" data-email-invalid="{{.Content.Form.EmailInvalidMessage}}" data-registration-invalid="{{.Content.Form.RegistrationInvalidMessage}}" data-photos-too-many="{{.Content.Form.PhotosTooManyMessage}}" data-photos-type="{{.Content.Form.PhotosTypeMessage}}" data-photos-size="{{.Content.Form.PhotosSizeMessage}}" data-geo-unsupported="{{.Content.Form.GeoUnsupportedMessage}}" data-geo-loading="{{.Content.Form.GeoLoadingText}}" data-geo-added="{{.Content.Form.GeoAddedText}}" data-geo-failed="{{.Content.Form.GeoFailedMessage}}" data-map-pick-first="{{.Content.Form.MapPickFirstMessage}}" data-map-point-added="{{.Content.Form.MapPointAddedText}}" data-reverse-geocode-failed="{{.Content.Form.ReverseGeocodeFailedMessage}}" data-network-error="{{.Content.Form.NetworkErrorMessage}}" data-lang="{{.Lang}}">
             <input type="hidden" name="language" value="{{.Lang}}">
             <input type="hidden" name="source" value="liikkuvakorjaamo.fi">
             <input type="hidden" name="page_url" id="pageUrl" value="">
@@ -484,18 +446,18 @@ Sitten sovitaan.</h3>
 
               <div class="field">
                 <label for="phone">{{.Content.Form.LabelPhone}}</label>
-                <input id="phone" type="tel" name="phone" required autocomplete="tel" inputmode="tel" placeholder="{{.Content.Form.PlaceholderPhone}}" inputmode="tel" autocomplete="tel" maxlength="17">
+                <input id="phone" type="tel" name="phone" required autocomplete="tel" inputmode="tel" placeholder="{{.Content.Form.PlaceholderPhone}}" maxlength="17">
                 <div class="field-help">{{.Content.Form.PhoneHelp}}</div>
               </div>
 
               <div class="field field-span-2">
                 <label for="email">{{.Content.Form.LabelEmail}}</label>
-                <input id="email" type="email" name="email" placeholder="{{.Content.Form.PlaceholderEmail}}" autocomplete="email">
+                <input id="email" type="email" name="email" required placeholder="{{.Content.Form.PlaceholderEmail}}" autocomplete="email">
               </div>
 
               <div class="field field-span-2 address-field">
                 <label for="address">{{.Content.Form.LabelAddress}}</label>
-                <input id="address" type="text" name="address" placeholder="{{.Content.Form.PlaceholderAddress}}" autocomplete="street-address">
+                <input id="address" type="text" name="address" required placeholder="{{.Content.Form.PlaceholderAddress}}" autocomplete="street-address">
                 <div class="field-help">{{.Content.Form.AddressHelp}}</div>
                 <div class="inline-actions">
                   <button type="button" id="useLocationBtn" class="btn btn-secondary">{{.Content.Form.UseLocationButton}}</button>
@@ -505,7 +467,7 @@ Sitten sovitaan.</h3>
 
               <div class="field field-span-2 reg-field">
                 <label for="car">{{.Content.Form.LabelCar}}</label>
-                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="off">
+                <input id="car" type="text" name="car" required placeholder="{{.Content.Form.PlaceholderCar}}" maxlength="7" autocapitalize="characters" autocomplete="on">
                 <div class="field-help">{{.Content.Form.CarHelp}}</div>
               </div>
 
@@ -533,7 +495,58 @@ Sitten sovitaan.</h3>
               </div>
             </div>
           </form>
-<p class="form-privacy">Käsittelemme tietojasi palvelupyynnön hoitamista varten. <a href="/privacy?lang=fi">Tietosuoja</a></p></div></div></section>
+<p class="form-privacy">Käsittelemme tietojasi palvelupyynnön hoitamista varten. <a href="/privacy?lang=fi">Tietosuoja</a></p></div>
+  </div>
+
+  <div class="hero-copy"><p class="eyebrow">{{.Content.Hero.Badge}}<span class="status-dot"></span></p><h1>{{.Content.Hero.Title}}</h1><p class="hero-description">{{.Content.Hero.Subtitle}}</p>
+   <div class="hero-actions"><a class="btn btn-orange" href="#lead-form">{{.Content.Hero.PrimaryCTA}}<svg class="icon"><use href="#arrow"></use></svg></a><a class="text-link" href="#services">{{.Content.Hero.SecondaryCTA}}<span>↗</span></a></div>
+   <ul class="hero-points">{{range .Content.Hero.Points}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>
+  </div>
+  <figure class="hero-visual"><div class="hero-image-wrap" style="{{.HeroStyleVars}}"><img class="hero-photo" style="{{.HeroSceneImageStyle}}" src="{{.Content.Hero.BackgroundURL}}" width="1536" height="1024" alt="Havainnekuva: autodiagnostiikka kotipihassa" fetchpriority="high"><div class="hero-scene-shade"></div>{{if .Content.Hero.PersonDesktopURL}}<div class="hero-person-layer" style="{{.HeroPersonLayerStyle}}"><img src="{{.Content.Hero.PersonDesktopURL}}" alt="{{.Content.Hero.PersonAlt}}" style="{{.HeroPersonImageStyle}}"></div>{{end}}</div>
+   <div class="hero-visual-top"><svg class="icon"><use href="#pin"></use></svg> UUSIMAA</div>
+   <div class="visit-tag"><span class="visit-tag-icon"><svg class="icon"><use href="#car-icon"></use></svg></span><span><small>ASENTAJAN KÄYNTI</small><strong>75 €</strong></span><span class="visit-tag-note">Autosi luokse.</span></div>
+   <figcaption>Havainnekuva palvelusta</figcaption>
+  </figure>
+ </div></section>
+
+ <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
+
+ 
+
+ 
+
+ 
+ {{if and .Content.Promo.Enabled .Content.Promo.Title}}<section class="promo container"><div><span class="eyebrow">{{.Content.Promo.Badge}}</span><h2>{{.Content.Promo.Title}}</h2><p>{{.Content.Promo.Text}}</p></div>{{if .Content.Promo.Button}}<a class="btn btn-orange" href="{{.Content.Promo.URL}}">{{.Content.Promo.Button}}</a>{{end}}</section>{{end}}{{if .Content.ShowStats}}<section class="stats-strip"><div class="container stats-grid">{{range .Content.Stats}}<div><strong>{{.Title}}</strong><p>{{.Text}}</p></div>{{end}}</div></section>{{end}}<section class="section" id="services">{{if .Content.ShowServices}}<div class="container">
+  <div class="section-heading"><div><p class="eyebrow">{{.Content.Services.Heading.Kicker}}</p><h2>{{.Content.Services.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Services.Heading.Text}}</p></div>
+  <div class="service-grid">{{range .Content.Services.Items}}<article class="service-entry">
+   <div class="service-top"><span class="service-icon">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy" style="{{$.ServiceImageStyle}}">{{else}}<svg class="icon"><use href="#wrench"></use></svg>{{end}}</span><span class="service-badge">{{.Badge}}</span></div>
+   <h3>{{.Title}}</h3><p>{{.Text}}</p><div class="service-bottom"><span>{{.Price}}</span><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a></div>
+  </article>{{end}}</div>
+ </div>{{end}}</section>
+
+ <section class="pricing-section" id="pricing"><div class="container pricing-layout">
+  <div class="price-panel"><span class="eyebrow">02 / SELKEÄ HINNOITTELU</span><h2>Tiedät hinnan.
+Ennen käyntiä.</h2><div class="big-price">{visit}<span>€</span></div><p>Asentajan käynti auton luokse</p></div>
+  <div class="price-explanation"><p class="eyebrow">EI YLLÄTYKSIÄ</p><h3>Ensin selvitetään.
+Sitten sovitaan.</h3>
+   <div class="price-row"><span>Asentajan saapuminen</span><strong>75 €</strong></div><div class="price-row"><span>Diagnostiikka tarvittaessa</span><strong>{{if eq .Lang "fi"}}alk.{{else}}from{{end}} 50 €</strong></div><div class="price-row"><span>Korjaukset ja varaosat</span><strong>Sovitaan erikseen</strong></div>
+   <p class="price-note">{{.Content.Form.VisitPriceFootnote}}</p><a href="#lead-form" class="text-link">Kerro autosi ongelmasta <span>↗</span></a>
+  </div>
+ </div></section>
+
+ <section class="section process" id="how-it-works">{{if .Content.ShowProcess}}<div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Process.Heading.Kicker}}</span><h2>{{.Content.Process.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Process.Heading.Text}}</p></div><div class="steps">{{range .Content.Process.Items}}<article class="step"><span class="step-number">{{.Number}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></article>{{end}}</div></div>{{end}}</section>
+
+ <section class="cases-section">{{if .Content.ShowCases}}<div class="container"><div class="section-heading"><div><p class="eyebrow">{{.Content.Cases.Heading.Kicker}}</p><h2>{{.Content.Cases.Heading.Title}}</h2></div></div><div class="case-grid">{{range .Content.Cases.Items}}<article class="case-entry"><div><span class="eyebrow">{{.Tag}}</span><h3>{{.Title}}</h3><p>{{.Text}}</p></div><a href="#lead-form" data-service="{{.Title}}" aria-label="{{.Title}}"><svg class="icon"><use href="#arrow"></use></svg></a><ul>{{range .Items}}<li>{{.}}</li>{{end}}</ul></article>{{end}}</div></div>{{end}}</section>
+
+ {{if .Content.ShowCapability}}<section class="section capability"><div class="container"><div class="section-heading"><div><span class="eyebrow">{{.Content.Capability.Heading.Kicker}}</span><h2>{{.Content.Capability.Heading.Title}}</h2></div><p class="section-intro">{{.Content.Capability.Heading.Text}}</p></div><div class="capability-grid"><article><svg class="icon"><use href="#check"></use></svg><h3>{{.Content.Capability.CanDo.Title}}</h3><ul>{{range .Content.Capability.CanDo.Items}}<li>{{.}}</li>{{end}}</ul></article><article><svg class="icon"><use href="#wrench"></use></svg><h3>{{.Content.Capability.NeedsWorkshop.Title}}</h3><ul>{{range .Content.Capability.NeedsWorkshop.Items}}<li>{{.}}</li>{{end}}</ul></article></div></div></section>{{end}}
+
+ {{if .Content.ShowAreas}}<section class="areas-section" id="areas"><div class="container areas-shell"><div class="areas-copy"><span class="eyebrow">{{.Content.Areas.Heading.Kicker}}</span><h2>{{.Content.Areas.Heading.Title}}</h2><div class="city-list">{{range .Content.Areas.Cities}}<span><svg class="icon"><use href="#pin"></use></svg>{{.}}</span>{{end}}</div><p>{{.Content.Areas.NoteText}}</p><a href="#lead-form" class="btn btn-light">{{.Content.Areas.NoteButton}}<svg class="icon"><use href="#arrow"></use></svg></a></div><div class="area-map" style="--areas-overlay-opacity:0.72;"><img class="map-fallback" style="{{.AreasMapImageStyle}}" src="{{.Content.Areas.MapImageURL}}" alt="Uudenmaan palvelualueen havainnekuva" loading="lazy" width="640" height="440"><div id="areasLiveMap" class="areas-live-map" aria-label="Uusimaa"></div><span class="map-label"><span class="status-dot"></span> UUSIMAA, FINLAND</span></div></div></section>{{end}}
+
+ 
+
+ {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Jäikö jotain kysyttävää? Kerro meille lomakkeella.</p><a href="#lead-form" class="text-link">Ota yhteyttä <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
+
+ <div class="resource-links"><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="request-more"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / PYYDÄ APUA</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-bottom-action"><a class="btn btn-orange" href="#lead-form">Lähetä avunpyyntö ↑</a></div></div></section>
 
  {{if .Content.ShowFinalCTA}}<section class="final-cta"><div class="container"><span class="eyebrow">{{.Content.FinalCTA.Kicker}}</span><h2>{{.Content.FinalCTA.Title}}</h2><p>{{.Content.FinalCTA.Text}}</p><a class="btn btn-dark" href="#lead-form">{{.Content.FinalCTA.Button}}<svg class="icon"><use href="#arrow"></use></svg></a></div></section>{{end}}
 </main>

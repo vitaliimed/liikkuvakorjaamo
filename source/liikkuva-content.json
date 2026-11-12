@@ -35,7 +35,7 @@
       "Subtitle": "Kotipiha, työpaikka tai sovittu pysäköintipaikka. Selvitämme vian ja sovimme korjauksesta ennen työn aloittamista — ilman turhaa matkaa korjaamolle.",
       "Badge": "DIAGNOSTIIKKA JA KORJAUS · UUSIMAA",
       "Points": [
-        "Käynti 70 €",
+        "Käynti 75 €",
         "Työt sovitaan etukäteen",
         "Palvelu paikan päällä"
       ],
@@ -208,8 +208,8 @@
       },
       "Items": [
         {
-          "Question": "Mitä 70 € käyntimaksu sisältää?",
-          "Answer": "70 € käyntimaksu kattaa asentajan saapumisen auton luokse. Diagnostiikka maksaa tarvittaessa lisäksi alkaen 50 €. Varaosat, korjaukset ja muut lisätyöt sovitaan ja veloitetaan erikseen ennen niiden aloittamista."
+          "Question": "Mitä 75 € käyntimaksu sisältää?",
+          "Answer": "75 € käyntimaksu kattaa asentajan saapumisen auton luokse. Diagnostiikka maksaa tarvittaessa lisäksi alkaen 50 €. Varaosat, korjaukset ja muut lisätyöt sovitaan ja veloitetaan erikseen ennen niiden aloittamista."
         },
         {
           "Question": "Kuinka nopeasti voitte vastata?",
@@ -241,7 +241,7 @@
       "Title": "Auto paikallaan. Sinä jatkat päivääsi.",
       "Text": "Kerro ongelma ja sijainti. Tarkistamme saatavuuden, käymme hinnan läpi ja sovimme sopivan ajan.",
       "Items": [
-        "Asentajan käynti 70 €",
+        "Asentajan käynti 75 €",
         "Diagnostiikka tarvittaessa alk. 50 €",
         "Varaosat ja lisätyöt sovitaan erikseen",
         "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"
@@ -315,7 +315,7 @@
       "SubmitButton": "Lähetä avunpyyntö",
       "Title": "Miten voimme auttaa?",
       "Intro": "Kerro lyhyesti, mitä autolle tapahtui ja missä se on. Otamme yhteyttä ja sovimme käynnistä.",
-      "VisitPriceText": "Asentajan saapuminen 70 €. Diagnostiikka tarvittaessa alk. 50 €. Muut työt ja varaosat sovitaan erikseen.",
+      "VisitPriceText": "Asentajan saapuminen 75 €. Diagnostiikka tarvittaessa alk. 50 €. Muut työt ja varaosat sovitaan erikseen.",
       "VisitPriceFootnote": "Lomakkeen lähettäminen on maksutonta. Vahvistamme ajan ja sovitun työn ennen käyntiä.",
       "UseLocationButton": "Käytä sijaintiani",
       "PickMapButton": "Valitse piste kartalta",
@@ -328,7 +328,7 @@
     },
     "Stats": [
       {
-        "Title": "Käynti 70 €",
+        "Title": "Käynti 75 €",
         "Text": "Asentajan saapuminen auton luokse"
       },
       {
@@ -381,7 +381,7 @@
       "Subtitle": "Your driveway, workplace or an agreed parking spot. We investigate the fault and agree the repair before work starts — saving a trip to the workshop.",
       "Badge": "MOBILE DIAGNOSTICS & REPAIR · UUSIMAA",
       "Points": [
-        "Visit €70",
+        "Visit €75",
         "Work agreed in advance",
         "Service at your location"
       ],
@@ -554,8 +554,8 @@
       },
       "Items": [
         {
-          "Question": "What does the €70 visit fee include?",
-          "Answer": "The €70 visit fee covers the mechanic's travel to your car. Diagnostics, if needed, cost from an additional €50. Parts, repairs and other work are agreed and charged separately before they begin."
+          "Question": "What does the €75 visit fee include?",
+          "Answer": "The €75 visit fee covers the mechanic's travel to your car. Diagnostics, if needed, cost from an additional €50. Parts, repairs and other work are agreed and charged separately before they begin."
         },
         {
           "Question": "How fast can you respond?",
@@ -587,7 +587,7 @@
       "Title": "Your car stays put. Your day moves on.",
       "Text": "Tell us the problem and location. We check availability, explain the pricing and arrange a suitable time.",
       "Items": [
-        "Mechanic visit €70",
+        "Mechanic visit €75",
         "Diagnostics, if needed, from €50",
         "Parts and additional work agreed separately",
         "Finnish, English, Russian and Ukrainian service"
@@ -661,7 +661,7 @@
       "SubmitButton": "Send help request",
       "Title": "How can we help?",
       "Intro": "Tell us briefly what happened and where your car is. We will contact you to arrange a visit.",
-      "VisitPriceText": "Mechanic visit €70. Diagnostics, if needed, from €50. Other work and spare parts are agreed separately.",
+      "VisitPriceText": "Mechanic visit €75. Diagnostics, if needed, from €50. Other work and spare parts are agreed separately.",
       "VisitPriceFootnote": "Sending a request is free. We confirm the time and agreed work before the visit.",
       "UseLocationButton": "Use my location",
       "PickMapButton": "Pick point on map",
@@ -674,7 +674,7 @@
     },
     "Stats": [
       {
-        "Title": "Visit €70",
+        "Title": "Visit €75",
         "Text": "Mechanic travel to your car"
       },
       {
