@@ -118,7 +118,7 @@ def check(url, revision, bootstrap):
         required = ('class="hero-form" id="lead-form"', 'id="leadForm"',
                     'name="phone" required', 'name="car" required',
                     'name="email" required', 'name="address" required',
-                    'data-theme-toggle', 'hero-form-ux.css',
+                    '75 €', 'data-theme-toggle', 'hero-form-ux.css',
                     'og:image', 'logo-white.png')
         if not all(s in html for s in required):
             raise RuntimeError("Missing hero-form/required-fields/OG markers at " + path)
