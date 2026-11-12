@@ -306,6 +306,9 @@ def publish():
                   "--update-tags=" + tag + "=" + old_tag_revision)
         raise
     state["phase"] = "published"
+    state["revision"] = revision
+    state["preview"] = preview
+    state["bootstrap"] = bootstrap
     state["firebase_pin"] = tag
     state["previous_pin_revision"] = old_tag_revision
     save_json(STATE_FILE, state)
