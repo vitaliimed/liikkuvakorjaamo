@@ -204,6 +204,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			file, mime = "style.css", "text/css; charset=utf-8"
 		case "/favicon.svg", "/logo-dark.svg", "/logo-light.svg":
 			file, mime = strings.TrimPrefix(path, "/"), "image/svg+xml"
+		case "/password-reset.js":
+			file, mime = "password-reset.js", "text/javascript; charset=utf-8"
 		default:
 			http.NotFound(w, r)
 			return
