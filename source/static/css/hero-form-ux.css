@@ -5,7 +5,7 @@
   width:100%; max-width:none; margin:0;
   display:grid!important; grid-template-columns:minmax(370px,480px) minmax(0,1fr);
   gap:clamp(24px,4vw,64px); align-items:center;
-  min-height:clamp(618px,calc(100svh - 112px),840px); height:auto;
+  min-height:clamp(560px,calc(100svh - 112px),840px); height:auto;
   padding:20px max(24px,calc((100% - 1240px)/2))!important;
 }
 .hero .hero-form{position:relative;z-index:2;grid-column:1;grid-row:1;min-width:0;width:100%;scroll-margin-top:112px}
@@ -44,8 +44,8 @@
 .hero .form-grid>.field:nth-child(3){grid-column:1;grid-row:2}
 .hero .form-grid>.field.reg-field{grid-column:2!important;grid-row:2}
 .hero .form-grid>.field.address-field{grid-column:1/-1!important;grid-row:3}
-.hero .form-grid>.field:has(#message){grid-column:1/-1!important;grid-row:4}
-.hero .form-grid>.field:has(#photos){grid-column:1/-1!important;grid-row:5}
+.hero .form-grid>.field:nth-child(6){grid-column:1/-1!important;grid-row:4}
+.hero .form-grid>.field:nth-child(7){grid-column:1/-1!important;grid-row:5}
 .hero .form-grid>.submit-row{grid-column:1/-1!important;grid-row:6}
 .hero .field label{font-size:12px!important;font-weight:700!important;line-height:1.2!important;color:#e9f1eb!important;margin:0 0 4px!important}
 .hero .field input:not([type=file]),.hero .field textarea,.hero .field select{
@@ -112,7 +112,7 @@ html[data-theme="dark"] .header .theme-icon-moon{display:block}
   .hero .hero-copy h1{font-size:clamp(30px,8vw,40px)!important}
   .hero .form-grid{gap:10px!important}
   .hero .form-grid>.field:nth-child(1),.hero .form-grid>.field:nth-child(2),.hero .form-grid>.field:nth-child(3),.hero .form-grid>.field.reg-field{grid-column:1/-1!important;grid-row:auto!important}
-  .hero .form-grid>.field.address-field,.hero .form-grid>.field:has(#message),.hero .form-grid>.field:has(#photos),.hero .form-grid>.submit-row{grid-column:1/-1!important;grid-row:auto!important}
+  .hero .form-grid>.field.address-field,.hero .form-grid>.field:nth-child(6),.hero .form-grid>.field:nth-child(7),.hero .form-grid>.submit-row{grid-column:1/-1!important;grid-row:auto!important}
   .hero .form-grid{grid-template-columns:1fr!important}
   .header .theme-toggle{width:38px;min-width:38px;height:38px;min-height:38px}
 }
