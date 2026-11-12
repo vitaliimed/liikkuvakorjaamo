@@ -1,0 +1,129 @@
+/* Liikkuva UX refinement: compact, always-visible lead form in the FIRST viewport. */
+.hero{padding:0!important}
+.hero .hero-layout{
+  position:relative; isolation:isolate; box-sizing:border-box;
+  width:100%; max-width:none; margin:0;
+  display:grid!important; grid-template-columns:minmax(370px,480px) minmax(0,1fr);
+  gap:clamp(24px,4vw,64px); align-items:center;
+  min-height:clamp(618px,calc(100svh - 112px),840px); height:auto;
+  padding:20px max(24px,calc((100% - 1240px)/2))!important;
+}
+.hero .hero-form{position:relative;z-index:2;grid-column:1;grid-row:1;min-width:0;width:100%;scroll-margin-top:112px}
+.hero .hero-copy{
+  grid-column:2;grid-row:1;position:relative;z-index:1;
+  flex:initial!important;min-width:0!important;max-width:550px!important;width:100%!important;
+  margin:0!important;padding:clamp(25px,2.5vw,38px)!important;
+  background:rgba(24,46,36,.96)!important;border:1px solid #385348!important;
+  border-radius:16px!important;color:#f7faf8!important;box-shadow:0 15px 45px #0005!important;
+}
+.hero .hero-copy h1{color:#f7faf8!important;font-size:clamp(36px,3.65vw,58px)!important;line-height:1.08!important;margin:13px 0 20px!important;overflow-wrap:normal!important;word-break:normal}
+.hero .hero-copy .eyebrow{color:#c5d8cd!important;font-size:10px!important}
+.hero .hero-description{color:#d2e1d7!important;font-size:clamp(14px,1.2vw,17px)!important;line-height:1.5!important}
+.hero .hero-points{margin:17px 0 0!important;gap:10px 14px!important}
+.hero .hero-points li{color:#f0f5f1!important;font-size:13px!important}
+.hero .hero-actions{margin:16px 0!important;gap:14px!important}
+.hero .hero-actions .btn{min-height:43px!important;font-size:14px!important}
+.hero .hero-actions .text-link{color:#f2fbf4!important}
+.hero .hero-visual{position:absolute!important;inset:0!important;z-index:-1!important;height:100%!important;width:100%!important;margin:0!important;pointer-events:none}
+.hero .hero-image-wrap,.hero .hero-photo{height:100%!important;min-height:100%!important;max-height:none!important;border-radius:0!important}
+.hero .hero-photo{object-fit:cover!important;object-position:center 54%!important}
+.hero .visit-tag{display:none!important}
+.hero .hero-visual-top{top:16px!important;right:20px!important}
+.hero .request-card{
+  background:rgba(23,47,36,.975)!important;color:#f5faf6!important;
+  border:1px solid #466152!important;border-radius:14px!important;
+  box-shadow:0 15px 45px #0005!important;padding:18px 22px 16px!important;
+  width:100%;max-width:480px;margin:0;
+}
+.hero .request-card-heading>.eyebrow,.hero .request-card-heading>p{display:none!important}
+.hero .request-card h3{color:#f6faf7!important;font-size:25px!important;line-height:1.15!important;letter-spacing:-.025em!important;margin:0 0 12px!important}
+.hero .form-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px 12px!important;align-items:start}
+.hero .form-grid>.field{min-width:0!important;grid-column:auto}
+.hero .form-grid>.field:nth-child(1){grid-column:1;grid-row:1}
+.hero .form-grid>.field:nth-child(2){grid-column:2;grid-row:1}
+.hero .form-grid>.field:nth-child(3){grid-column:1;grid-row:2}
+.hero .form-grid>.field.reg-field{grid-column:2!important;grid-row:2}
+.hero .form-grid>.field.address-field{grid-column:1/-1!important;grid-row:3}
+.hero .form-grid>.field:has(#message){grid-column:1/-1!important;grid-row:4}
+.hero .form-grid>.field:has(#photos){grid-column:1/-1!important;grid-row:5}
+.hero .form-grid>.submit-row{grid-column:1/-1!important;grid-row:6}
+.hero .field label{font-size:12px!important;font-weight:700!important;line-height:1.2!important;color:#e9f1eb!important;margin:0 0 4px!important}
+.hero .field input:not([type=file]),.hero .field textarea,.hero .field select{
+  box-sizing:border-box;background:#10271d!important;color:#fff!important;
+  border:1px solid #587364!important;border-radius:6px!important;
+  min-height:38px!important;height:38px!important;width:100%;padding:7px 10px!important;
+  font-size:14px!important;line-height:1.35!important;
+}
+.hero .field input::placeholder,.hero .field textarea::placeholder{color:#b1c1b8!important;opacity:1}
+.hero .field textarea{height:65px!important;min-height:65px!important;resize:vertical!important;max-height:150px!important}
+.hero .field-help{display:none!important}
+.hero .inline-actions{display:flex!important;margin:5px 0 0!important;gap:9px!important;align-items:center!important;flex-wrap:wrap!important}
+.hero .inline-actions .btn{font-size:11px!important;min-height:23px!important;padding:1px 3px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#bde0cb!important;line-height:1.3!important}
+.hero .photo-dropzone{
+  display:flex!important;align-items:center!important;min-height:38px!important;
+  padding:6px 10px!important;border:1px dashed #607769!important;
+  background:#243c30!important;color:#f6faf7!important;border-radius:6px!important;
+}
+.hero .photo-dropzone-icon{height:24px!important;width:24px!important;font-size:18px!important;border-color:#607769!important}
+.hero .photo-dropzone-text{color:#f6faf7!important;font-size:12px!important}
+.hero .photo-dropzone-hint{font-size:10px!important;color:#bcd0c3!important}
+.hero .btn-submit{width:100%!important;min-height:42px!important;font-size:14px!important;border-radius:6px!important;color:#13291f!important}
+.hero .form-privacy{margin:8px 0 0!important;font-size:10px!important;line-height:1.3!important;color:#c7d8ce!important}
+.hero .form-privacy a{color:#fff!important;text-decoration:underline!important}
+.hero .form-message{font-size:12px!important;line-height:1.35!important}
+.hero .photo-preview-list:not(:empty){max-height:95px;overflow-y:auto}
+.request-section#request-more{padding:48px 0!important}
+.request-section#request-more .request-layout{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px}
+.request-section#request-more .request-copy{position:static;padding:0}
+.request-bottom-action{align-self:center}
+.request-bottom-action .btn{display:inline-flex;align-items:center;justify-content:center;white-space:normal}
+/* Light cards must never inherit white or pale text from dark mode. */
+.capability .capability-grid article,html[data-theme="dark"] .capability .capability-grid article{
+  background:#e9f0e7!important;color:#1d3429!important;border:1px solid #b9cbbd!important;
+}
+.capability .capability-grid article+article,html[data-theme="dark"] .capability .capability-grid article+article{background:#f4f3ed!important;color:#1d3429!important}
+.capability .capability-grid h3,html[data-theme="dark"] .capability .capability-grid h3{color:#162d23!important;opacity:1!important}
+.capability .capability-grid ul,.capability .capability-grid li,html[data-theme="dark"] .capability .capability-grid ul,html[data-theme="dark"] .capability .capability-grid li{color:#405b4c!important;opacity:1!important;font-weight:500!important}
+.capability .capability-grid .icon,html[data-theme="dark"] .capability .capability-grid .icon{color:#183b29!important}
+.capability .capability-grid li{border-color:#cad6ca!important}
+/* Single accessible iOS-style sun/moon control, also visible on small screens. */
+.header .theme-toggle{display:inline-flex!important;align-items:center;justify-content:center;flex:none;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:1px solid #657b6e;background:transparent;color:inherit;cursor:pointer;transition:background .2s,border-color .2s}
+.header .theme-toggle svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.header .theme-icon-moon{display:none}
+html[data-theme="dark"] .header .theme-icon-sun{display:none}
+html[data-theme="dark"] .header .theme-icon-moon{display:block}
+.header .theme-toggle:hover{border-color:#f97315;background:#f9731522}
+.header .theme-toggle:focus-visible{outline:3px solid #f97315;outline-offset:3px}
+@media(max-width:1100px){.header .theme-toggle{order:0}}
+@media(max-width:1000px){
+  .hero .hero-layout{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-height:0!important;padding:20px max(16px,calc((100% - 720px)/2)) 28px!important;gap:18px!important}
+  .hero .hero-form{width:100%;max-width:560px;margin:0 auto}
+  .hero .request-card{max-width:none}
+  .hero .hero-copy{width:100%!important;max-width:560px!important;margin:0 auto!important;padding:24px!important}
+  .hero .hero-visual{position:absolute!important;inset:0!important;height:100%!important;z-index:-1!important}
+  .hero .hero-visual-top{display:none!important}
+  .hero .hero-copy h1{font-size:clamp(32px,5vw,44px)!important}
+  .request-section#request-more .request-layout{grid-template-columns:1fr;gap:12px}
+}
+@media(max-width:600px){
+  .hero .hero-layout{padding:12px 12px 24px!important;gap:14px!important}
+  .hero .request-card{padding:18px 15px!important}
+  .hero .hero-copy{padding:22px 18px!important}
+  .hero .hero-copy h1{font-size:clamp(30px,8vw,40px)!important}
+  .hero .form-grid{gap:10px!important}
+  .hero .form-grid>.field:nth-child(1),.hero .form-grid>.field:nth-child(2),.hero .form-grid>.field:nth-child(3),.hero .form-grid>.field.reg-field{grid-column:1/-1!important;grid-row:auto!important}
+  .hero .form-grid>.field.address-field,.hero .form-grid>.field:has(#message),.hero .form-grid>.field:has(#photos),.hero .form-grid>.submit-row{grid-column:1/-1!important;grid-row:auto!important}
+  .hero .form-grid{grid-template-columns:1fr!important}
+  .header .theme-toggle{width:38px;min-width:38px;height:38px;min-height:38px}
+}
+@media(min-width:1001px) and (max-height:760px){
+  .hero .hero-layout{padding-top:10px!important;padding-bottom:10px!important;min-height:calc(100svh - 112px)!important}
+  .hero .request-card{padding:12px 18px!important}
+  .hero .request-card h3{font-size:22px!important;margin-bottom:9px!important}
+  .hero .form-grid{gap:6px 10px!important}
+  .hero .field input:not([type=file]),.hero .field textarea{height:35px!important;min-height:35px!important}
+  .hero .field textarea{height:52px!important;min-height:52px!important}
+  .hero .inline-actions{margin-top:2px!important}
+  .hero .photo-dropzone{min-height:34px!important}
+  .hero .btn-submit{min-height:38px!important}
+}
