@@ -107,8 +107,12 @@ def smtp_check(login,key):
             smtp.login(login,key)
         print("PASS: Brevo accepted SMTP credentials from Cloud Shell")
     except smtplib.SMTPAuthenticationError as exc:
-        raise RuntimeError("Brevo rejected the SMTP login/key (code "+
-                           str(exc.smtp_code)+"). Verify SMTP login, SMTP key and IP allowlist.")
+        if int(exc.smtp_code)==525:
+            print("WARNING: Brevo rejected THIS Cloud Shell IP (525). The Cloud Run "
+                  "outbound IP may differ; proceed to real Cloud Run preview test.")
+        else:
+            raise RuntimeError("Brevo rejected the SMTP login/key (code "+
+                               str(exc.smtp_code)+"). Verify SMTP login/key and IP allowlist.")
     except (OSError,smtplib.SMTPException) as exc:
         print("WARNING: Cloud Shell SMTP connectivity could not be validated ("+
               type(exc).__name__+"). The real email test from Cloud Run is mandatory.")
