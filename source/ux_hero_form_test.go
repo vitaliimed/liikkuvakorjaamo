@@ -69,3 +69,15 @@ func TestPreserveCurrentVisitPrice(t *testing.T) {
         t.Fatal("old 70 EUR price remains in the default public content")
     }
 }
+
+func TestUXUsesExactlyTwoBrandAccents(t *testing.T) {
+    body,err:=os.ReadFile("static/css/hero-form-ux.css")
+    if err!=nil {t.Fatal(err)}
+    css:=strings.ToLower(string(body))
+    if !strings.Contains(css,"#23372b") || !strings.Contains(css,"#f97315"){
+        t.Fatal("hero CSS must use canonical pine green and orange")
+    }
+    for _,old:=range []string{"#223631","#133e32","#ff7410","#f97316","#385348","#1d3429","#13291f","#183b29"}{
+        if strings.Contains(css,old){t.Errorf("legacy secondary brand hue leaked: %s",old)}
+    }
+}
