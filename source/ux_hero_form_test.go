@@ -58,3 +58,14 @@ func TestAutofillAndMetroMapConfiguration(t *testing.T) {
         if !strings.Contains(src, needle) { t.Errorf("missing %s", needle) }
     }
 }
+
+func TestPreserveCurrentVisitPrice(t *testing.T) {
+    if visitPriceEUR != 75 {
+        t.Fatalf("live visit price must remain 75 EUR, got %d", visitPriceEUR)
+    }
+    b, err := os.ReadFile("liikkuva-content.json")
+    if err != nil { t.Fatal(err) }
+    if strings.Contains(string(b), "70 €") || strings.Contains(string(b), "€70") {
+        t.Fatal("old 70 EUR price remains in the default public content")
+    }
+}
