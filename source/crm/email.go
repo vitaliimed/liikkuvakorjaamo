@@ -384,6 +384,8 @@ func brandedEmailHTML(e Email) string {
 	lang := "fi"
 	if e.Language == "en" {
 		lang = "en"
+	} else if e.Language == "ru" {
+		lang = "ru"
 	}
 	resetAction := ""
 	if e.ResetURL != "" {
