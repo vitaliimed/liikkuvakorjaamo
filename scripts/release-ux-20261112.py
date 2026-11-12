@@ -31,10 +31,15 @@ def command(args, cwd=ROOT):
     result = subprocess.run(list(args), cwd=cwd, text=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
-        # Do not leak environment settings from a detailed gcloud error.
+        # Go/Node failures are usually on stdout, not stderr.
+        # Show their diagnostics so operators can fix build failures.
+        # Keep gcloud stderr short: it can contain deployment metadata.
+        if args and args[0] in ("go", "node"):
+            diagnostics = (result.stdout or "")[-6500:] + "\n" + (result.stderr or "")[-1500:]
+        else:
+            diagnostics = (result.stderr or "")[-900:]
         raise RuntimeError("Command failed: " + " ".join(map(str, args[:5])) +
-                           " (exit " + str(result.returncode) + ")\n" +
-                           result.stderr[-900:])
+                           " (exit " + str(result.returncode) + ")\n" + diagnostics)
     return result.stdout
 
 
