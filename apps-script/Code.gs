@@ -38,7 +38,7 @@ function doPost(event){
   const sheet=book.getSheetByName(month),last=sheet.getLastRow();
   if(last>1&&sheet.getRange(2,20,last-1,1).createTextFinder(l.submission_id).matchEntireCell(true).findNext())return json_({ok:true,sheet:month,message:'Already saved'});
   if(last>=sheet.getMaxRows()){const n=sheet.getMaxRows();sheet.insertRowsAfter(n,500);status_(sheet,n+1,500);}
-  sheet.appendRow(['В процессе','','',safe_(l.created_at),safe_(l.name),safe_(l.phone),safe_(l.email),safe_(l.car),safe_(l.address),safe_(l.message),safe_(l.language),safe_((l.photo_urls||[]).join('\n')),safe_(l.maps_url),safe_(l.source),safe_(l.utm_source),safe_(l.utm_medium),safe_(l.utm_campaign),safe_(l.page_url),SITE,l.submission_id,Number(l.visit_price_eur)||70,Number(l.diagnostic_from_eur)||50]);
+  sheet.appendRow(['В процессе','','',safe_(l.created_at),safe_(l.name),safe_(l.phone),safe_(l.email),safe_(l.car),safe_(l.address),safe_(l.message),safe_(l.language),safe_((l.photo_urls||[]).join('\n')),safe_(l.maps_url),safe_(l.source),safe_(l.utm_source),safe_(l.utm_medium),safe_(l.utm_campaign),safe_(l.page_url),SITE,l.submission_id,Number(l.visit_price_eur)||75,Number(l.diagnostic_from_eur)||50]);
   SpreadsheetApp.flush();
   const current=Utilities.formatDate(new Date(),ZONE,'yyyy-MM');year_(book,Number(current.slice(0,4)));first_(book,current);
   return json_({ok:true,sheet:month});

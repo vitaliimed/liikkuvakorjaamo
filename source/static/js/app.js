@@ -65,16 +65,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const cookiePrefix = "liikkuva_";
   const leadSuccessStorageKey = "liikkuva_lead_success_v1";
-  const fieldCookies = []; // Do not persist personal form fields in browser cookies.
+  // Device-only draft. Contact details expire after 30 days; problem text lasts this tab session.
+  // Photos and exact geolocation are never persisted.
+  const fieldCookies = [["name", nameInput], ["phone", phoneInput],
+    ["email", emailInput], ["address", addressInput], ["car", carInput],
+    ["message", messageInput]];
 
   const mapAssets = {
     css: mapModal ? mapModal.dataset.leafletCss : "",
     js: mapModal ? mapModal.dataset.leafletJs : ""
   };
 
+  // Zoom to the Helsinki–Espoo–Vantaa metropolitan area, not the whole Uusimaa region.
   const areasBounds = [
-    [59.75, 22.9],
-    [61.55, 26.9]
+    [60.06, 24.48],
+    [60.40, 25.38]
   ];
 
   let hasTrackedFormStart = false;
@@ -138,24 +143,41 @@ document.addEventListener("DOMContentLoaded", function () {
     button.disabled = !!disabled;
   }
 
-  function setCookie(name, value, days) { /* Personal form data is not stored in cookies. */
+  const draftKey = "liikkuva_lead_autofill_v2";
+  const problemDraftKey = "liikkuva_problem_draft_v2";
+  const draftTTL = 30 * 24 * 60 * 60 * 1000;
+
+  function setCookie(name, value) {
+    // Historical function name kept for existing submit handlers. No cookies are written.
+    try {
+      if (name === "message") {
+        sessionStorage.setItem(problemDraftKey, String(value || "").slice(0, 4000));
+        return;
+      }
+      if (!["name", "phone", "email", "address", "car"].includes(name)) return;
+      const prior = JSON.parse(localStorage.getItem(draftKey) || "{}");
+      const values = prior && typeof prior.values === "object" && prior.updated > Date.now() - draftTTL
+        ? prior.values : {};
+      values[name] = String(value || "").slice(0, name === "address" ? 250 : 140);
+      localStorage.setItem(draftKey, JSON.stringify({updated: Date.now(), values}));
+    } catch (_) { /* Browser storage disabled: native autofill still works. */ }
   }
 
   function getCookie(name) {
-    const needle = `${cookiePrefix}${name}=`;
-    const parts = document.cookie.split(";");
-    for (const part of parts) {
-      const trimmed = part.trim();
-      if (trimmed.startsWith(needle)) {
-        return decodeURIComponent(trimmed.slice(needle.length));
+    try {
+      if (name === "message") return sessionStorage.getItem(problemDraftKey) || "";
+      const data = JSON.parse(localStorage.getItem(draftKey) || "{}");
+      if (!data || !data.updated || Date.now() - data.updated > draftTTL) {
+        localStorage.removeItem(draftKey);
+        return "";
       }
-    }
-    return "";
+      return String((data.values && data.values[name]) || "");
+    } catch (_) { return ""; }
   }
 
   function restoreFieldCookies() {
     for (const [name, input] of fieldCookies) {
-      if (!input) continue;
+      if (!input || String(input.value || "").trim()) continue;
       const value = getCookie(name);
       if (!value) continue;
       input.value = value;
@@ -698,7 +720,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (emailValue && !isValidEmail(emailValue)) {
+    if (!emailValue || !isValidEmail(emailValue)) {
       showMessage(i18n.emailInvalid, "error");
       setSubmitState(false);
       if (emailInput) emailInput.focus();
@@ -709,6 +731,13 @@ document.addEventListener("DOMContentLoaded", function () {
       showMessage(i18n.registrationInvalid, "error");
       setSubmitState(false);
       if (carInput) carInput.focus();
+      return;
+    }
+
+    if (!addressInput || !addressInput.value.trim()) {
+      showMessage(i18n.lang === "fi" ? "Lisää auton sijaintiosoite." : "Please enter the car location address.", "error");
+      setSubmitState(false);
+      if (addressInput) addressInput.focus();
       return;
     }
 
@@ -738,6 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (response.ok && result && result.ok) {
         rememberSuccessfulLead();
+        try { sessionStorage.removeItem(problemDraftKey); } catch (_) {}
         if(window.liikkuvaSavedLead) window.liikkuvaSavedLead(result.submission_id);
         
 

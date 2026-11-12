@@ -10,14 +10,30 @@
   try { preference = api.preference(root.localStorage.getItem(key)); } catch (_) {}
   const media = root.matchMedia ? root.matchMedia('(prefers-color-scheme: dark)') : null;
   function apply() {
-    const theme = api.resolve({preference, policy: html.dataset.themePolicy,
+    const theme = api.resolve({preference, policy: html.dataset.themePolicy || 'system',
       start: html.dataset.nightStart, end: html.dataset.nightEnd,
       systemDark: !!(media && media.matches), now: new Date()});
     html.dataset.theme = theme;
     document.querySelectorAll('[data-theme-picker]').forEach(select => { select.value = preference; });
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+      const dark = theme === 'dark';
+      const fi = html.lang === 'fi';
+      button.setAttribute('aria-pressed', String(dark));
+      button.setAttribute('aria-label', fi ? (dark ? 'Vaihda vaaleaan tilaan' : 'Vaihda tummaan tilaan')
+        : (dark ? 'Switch to light mode' : 'Switch to dark mode'));
+      button.title = button.getAttribute('aria-label');
+    });
   }
   apply();
   document.addEventListener('DOMContentLoaded', () => {
+    apply();
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+      button.addEventListener('click', () => {
+        preference = html.dataset.theme === 'dark' ? 'light' : 'dark';
+        try { root.localStorage.setItem(key, preference); } catch (_) {}
+        apply();
+      });
+    });
     document.querySelectorAll('[data-theme-picker]').forEach(select => {
       select.value = preference;
       select.addEventListener('change', () => {
