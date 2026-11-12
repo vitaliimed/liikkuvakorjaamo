@@ -254,13 +254,24 @@ def publish():
     now = service()
     if allocation(now) != state["previous"]:
         raise RuntimeError("Production traffic changed since staging. Do not overwrite it.")
-    revision, preview = tag_route(now)
-    if revision != state["revision"]:
-        raise RuntimeError("Tagged preview revision changed since testing")
     bootstrap = env_value(now, "LIIKKUVA_BOOTSTRAP")
     if bootstrap != "0":
         raise RuntimeError("BLOCKED: LIIKKUVA_BOOTSTRAP=" + bootstrap +
-                           "; website form cannot receive leads. Resolve infrastructure first.")
+                           "; run python3 scripts/activate-leads.py --stage-only first.")
+    if state.get("bootstrap") == "0":
+        revision, preview = tag_route(now)
+        if revision != state["revision"]:
+            raise RuntimeError("The tested UX revision changed")
+    else:
+        # The original UX preview inherited the paused setup. Activate intake in a
+        # separate no-traffic revision; only that validated revision can go live.
+        candidates = [r for r in now.get("status", {}).get("traffic", [])
+                      if r.get("tag") == "intake-release"]
+        if len(candidates) != 1 or not candidates[0].get("revisionName") or not candidates[0].get("url"):
+            raise RuntimeError("No staged intake-release revision. Run activate-leads.py --stage-only")
+        revision, preview = candidates[0]["revisionName"], candidates[0]["url"].rstrip("/")
+        if revision == state["revision"]:
+            raise RuntimeError("Intake candidate must be a separate enabled revision")
     print("CONFIGURATION PREFLIGHT:")
     command(["python3", str(ROOT / "prod_preflight.py")])
     check(preview, revision, bootstrap)
