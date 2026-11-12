@@ -6,9 +6,7 @@ import (
     "fmt"
     "log"
     "net/http"
-    "net/mail"
     "net/url"
-    "os"
     "strings"
     "time"
 
@@ -267,6 +265,9 @@ func (s *Server) passwordReset(w http.ResponseWriter, r *http.Request) {
         // Session authentication uses the hash fingerprint. All old sessions
         // automatically stop being authorized as soon as this update commits.
         if err = tx.Update(userRef, []firestore.Update{{Path:"Hash", Value:string(hash)}}); err != nil {
+            return err
+        }
+        if err = tx.Delete(s.Collection("login_limits").Doc(record.User)); err != nil {
             return err
         }
         return tx.Delete(tokenRef)
