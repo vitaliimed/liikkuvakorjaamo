@@ -6,6 +6,7 @@ Preserves ALL existing environment/secret refs and LIIKKUVA_BOOTSTRAP state,
 checks exact revision and public domain, and rolls back Cloud Run traffic on
 failure. Does not submit a real password reset, create accounts or send email.
 """
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -92,6 +93,32 @@ def rollback(baseline):
     cloud("run","services","update-traffic",SERVICE,"--region="+REGION,"--to-revisions="+data)
     print("ROLLBACK: previous Cloud Run allocation restored")
 
+def verify_owner_registered(env):
+    owner=env.get("CRM_OWNER_EMAIL",{}).get("value","").strip().lower()
+    if not owner:
+        print("WARNING: CRM_OWNER_EMAIL not configured; registered owner account cannot be verified")
+        return
+    token=cloud("auth","print-access-token",capture=True).strip()
+    ident=hashlib.sha256(owner.encode("utf-8")).hexdigest()
+    endpoint=("https://firestore.googleapis.com/v1/projects/"+PROJECT+
+              "/databases/liikkuvakorjaamo/documents/crm_users/"+ident)
+    req=urllib.request.Request(endpoint,headers={"Authorization":"Bearer "+token})
+    try:
+        with urllib.request.urlopen(req,timeout=30) as response:
+            document=json.load(response)
+    except urllib.error.HTTPError as err:
+        if err.code==404:
+            raise RuntimeError("CRM owner account is NOT registered in Firestore. Bootstrap or invite owner before password recovery.")
+        raise
+    fields=document.get("fields",{})
+    active=fields.get("Active",{}).get("booleanValue") is True
+    role=fields.get("Role",{}).get("stringValue")
+    registered=fields.get("Email",{}).get("stringValue","").lower()
+    if not active or role!="owner" or registered!=owner:
+        raise RuntimeError("CRM owner record is inactive or inconsistent; recovery cannot be used until fixed")
+    print("PASS: registered active CRM owner account exists (email hidden)")
+
+
 def main():
     branch=run("git","branch","--show-current",capture=True).strip()
     if branch!="feat/crm-email-password-recovery":
@@ -116,6 +143,7 @@ def main():
     missing=[k for k in required if k not in initial_env]
     if missing:
         raise RuntimeError("Production missing required configured values: "+", ".join(missing))
+    verify_owner_registered(initial_env)
     backup=Path.home()/".liikkuva-releases"
     backup.mkdir(mode=0o700,parents=True,exist_ok=True)
     os.chmod(backup,0o700)
