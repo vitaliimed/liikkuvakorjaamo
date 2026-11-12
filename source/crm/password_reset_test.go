@@ -47,6 +47,9 @@ func TestPasswordResetHTMLHasSafeClickableLink(t *testing.T) {
 }
 
 func TestEmulatorCRMRegisteredOwnerPasswordReset(t *testing.T){
+    t.Setenv("MAIL_FROM","service@liikkuvakorjaamo.fi")
+    t.Setenv("SMTP_HOST","smtp.example.test")
+    t.Setenv("SMTP_PORT","587")
     s:=emulator(t)
     ctx:=context.Background()
     email:="owner@example.test"
