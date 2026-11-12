@@ -167,8 +167,13 @@ def main() -> None:
     if len(before) != 1:
         raise RuntimeError("Expected one active production revision, cannot safely promote")
     current_env = environment(snapshot)
-    if current_env.get("LIIKKUVA_BOOTSTRAP", {}).get("value") != "1":
-        raise RuntimeError("This activation expects the site+CRM Bootstrap=1 release first")
+    bootstrap = current_env.get("LIIKKUVA_BOOTSTRAP", {}).get("value")
+    if bootstrap == "0" and "--stage-only" in sys.argv[1:]:
+        print("Intake is already configured as Bootstrap=0 in the current service template.")
+        print("No additional revision created; validate using prod_preflight.py and the UX preview.")
+        return
+    if bootstrap != "1":
+        raise RuntimeError("Intake activation expects Bootstrap=1; got " + str(bootstrap))
     if current_env.get("SITE_URL", {}).get("value") != DOMAIN:
         raise RuntimeError("SITE_URL mismatch")
     if current_env.get("FIRESTORE_PROJECT_ID", {}).get("value") != PROJECT:
