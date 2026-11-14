@@ -498,7 +498,14 @@ func applySiteSettingsToContent(content LandingContent, settings SiteSettings, l
 	applySectionVisibility(&content, settings)
 	applyStringOverride(&content.Header.LogoURL, settings.LogoURL)
 	applyStringOverride(&content.Hero.PersonDesktopURL, settings.HeroPersonDesktopURL)
-	applyStringOverride(&content.Hero.BackgroundURL, settings.HeroBackgroundURL)
+	// /media/site/... belongs to the legacy upload handler and is not a
+	// published Liikkuva route. Never turn the first viewport into a broken IMG.
+	// Keep the bundled licensed mechanic image until the admin supplies a real
+	// /static/img/... or HTTPS image that passes the browser's load check.
+	if image := strings.TrimSpace(settings.HeroBackgroundURL); image != "" &&
+		!strings.HasPrefix(image, "/media/site/") {
+		applyStringOverride(&content.Hero.BackgroundURL, image)
+	}
 	applyStringOverride(&content.Areas.MapImageURL, settings.AreasMapImageURL)
 	if len(content.Services.Items) > 0 {
 		content.Services.Items[0].ImageURL = strings.TrimSpace(settings.ServicesImage1URL)

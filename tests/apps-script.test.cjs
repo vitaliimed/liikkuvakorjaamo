@@ -20,7 +20,7 @@ const source=fs.readFileSync('apps-script/Code.gs','utf8');
 vm.createContext(ctx);
 vm.runInContext(source,ctx);
 
-assert.equal(vm.runInContext('HEADERS.length',ctx),23,'monthly headers must have a channel column');
+assert.equal(vm.runInContext('HEADERS.length',ctx),24,'monthly headers must preserve channel and append masked IP network');
 assert.equal(vm.runInContext('SUMMARY_HEADERS.length',ctx),13,'income summary must include ROAS CR CPL CPA');
 assert.equal(vm.runInContext('SHEET_ID',ctx),'14HHvj7skyve3K9ugFFgdlobD9De-2BICFdkSZdrVHKU');
 assert.ok(!source.includes('SpreadsheetApp.create('),'never create a second Google Sheet');
@@ -48,6 +48,12 @@ for(const dangerous of ['=IMPORTXML("x")','+123','@SUM(A1:A2)',' -4']){
 }
 assert.equal(ctx.safe_('Normal text'),'Normal text');
 assert.equal(ctx.safe_(null),'');
+assert.equal(ctx.maskIP_('192.0.2.145'),'192.0.2.0/24');
+assert.equal(ctx.maskIP_('2001:db8:abcd:1234::1'),'2001:db8:abcd::/48');
+assert.equal(ctx.maskIP_('2001:db8::1'),'2001:db8:0::/48');
+assert.equal(ctx.maskIP_('999.2.2.1'),'');
+assert.equal(ctx.maskIP_('malicious input'),'');
+
 assert.equal(ctx.doPost({postData:{contents:'{}'}}).error,'Unauthorized');
 assert.equal(ctx.doPost({postData:{contents:JSON.stringify({script_token:secret,site:'autohelp.fi'})}}).error,'Wrong site');
 assert.equal(ctx.doPost({postData:{contents:'x'.repeat(100001)}}).error,'Invalid payload');

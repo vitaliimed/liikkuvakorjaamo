@@ -17,6 +17,12 @@ func liikkuvaThemeHTML(body string, settings SiteSettings) string {
 	attributes := fmt.Sprintf(` data-theme="%s" data-theme-policy="%s" data-night-start="%s" data-night-end="%s"`,
 		initial, html.EscapeString(settings.ProTheme), html.EscapeString(settings.ProNightStart), html.EscapeString(settings.ProNightEnd))
 	body = strings.Replace(body, "<html", "<html"+attributes, 1)
-	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261111"><script src="/static/js/theme.js?v=20261111"></script>`
+	assets := `<link rel="stylesheet" href="/static/css/theme.css?v=20261114">`
+	// The landing template already loads the theme controller with defer.
+	// Injecting a second copy registered TWO click handlers: dark -> light -> dark.
+	// Additional pages without this asset still receive the controller exactly once.
+	if !strings.Contains(body, "/static/js/theme.js") {
+		assets += `<script src="/static/js/theme.js?v=20261114" defer></script>`
+	}
 	return strings.Replace(body, "</head>", assets+"</head>", 1)
 }

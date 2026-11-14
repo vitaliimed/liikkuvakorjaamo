@@ -178,6 +178,18 @@ func optionalPlateRowHTML(value string, lang string) string {
 	</tr>`
 }
 
+// isSMTPIPAuthorizationDenied recognizes Brevo's permanent SMTP key IP
+// authorization rejection. It is not a connectivity/transient/delivery error.
+// Keep the original failure in Firestore for manual retry once IP policy is fixed.
+func isSMTPIPAuthorizationDenied(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "525") &&
+		strings.Contains(message, "unauthorized ip address")
+}
+
 func sendSMTPMail(cfg Config, to, subject, textBody, htmlBody string, attachments ...EmailAttachment) error {
 	return liikkuvaSendSMTP(cfg, to, subject, textBody, htmlBody, attachments...)
 }

@@ -32,7 +32,31 @@
   select.addEventListener('change',()=>{const u=new URL(select.value);if(u.pathname==='/admin'&&activate(u.searchParams.get('tab'),true))return;location.assign(u);});
   addEventListener('popstate',()=>activate(new URL(location.href).searchParams.get('tab')||'overview',false));
   const markDirty=()=>{dirty=true;updateSave();}; form.addEventListener('input',markDirty);form.addEventListener('change',markDirty);
-  form.addEventListener('submit',()=>{dirty=false;save.disabled=true;save.textContent='Сохраняем…';});
+  // The browser may block submit for a required control in a *hidden* panel.
+  // Reveal the tab and focus the actual invalid input instead of a silent no-op.
+  form.addEventListener('invalid', event => {
+   const field=event.target;
+   const panel=field.closest('[data-panel]');
+   if(panel && panel.dataset.panel) activate(panel.dataset.panel,true);
+   const title=field.closest('.field')?.querySelector('label')?.textContent?.trim() || field.name || 'поле';
+   status.textContent='Исправьте поле: '+title;
+   status.setAttribute('role','alert');
+   field.scrollIntoView({block:'center',behavior:'auto'});
+  },true);
+  form.addEventListener('submit',()=>{dirty=false;save.disabled=true;save.textContent='Сохраняем…';status.textContent='Отправка настроек на сервер…';});
+  // Confirmation is only shown after the 303 redirect and successful Firestore write.
+  // Never show "saved" simply because a button was clicked.
+  if (document.querySelector('[data-settings-save-success]')) {
+   const toast=document.createElement('div');
+   toast.className='admin-save-toast';
+   toast.setAttribute('role','status');
+   toast.textContent='Настройки сохранены на сервере ✓';
+   document.body.append(toast);
+   status.textContent=toast.textContent;
+  } else if (document.querySelector('.msg-err')) {
+   status.textContent='Ошибка сохранения. Проверьте сообщение вверху страницы.';
+   status.setAttribute('role','alert');
+  }
   addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   const fields=[...form.querySelectorAll('.field,.pro-settings>label')].map((node,i)=>{
    const input=node.querySelector('input:not([type="hidden"]),textarea,select');const title=(node.querySelector('label')?.textContent||node.childNodes[0]?.textContent||'').trim();const panel=node.closest('[data-panel]');

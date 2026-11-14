@@ -3,6 +3,9 @@
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (!root.document) return;
+  // In case an older template includes the script twice, bind only once.
+  if (root.__liikkuvaThemeInitialized) return;
+  root.__liikkuvaThemeInitialized = true;
   const document = root.document;
   const html = document.documentElement;
   const key = 'liikkuva_theme_v1';

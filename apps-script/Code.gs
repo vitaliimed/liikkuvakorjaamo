@@ -8,7 +8,7 @@ const HEADERS=[
   'Статус','Доход, €','За что получили','Дата Helsinki','Имя','Телефон','Email',
   'Автомобиль','Адрес','Сообщение','Язык','Фото','Карта','Источник','UTM source',
   'UTM medium','UTM campaign','Страница','Сайт','ID заявки','Выезд, €',
-  'Диагностика от, €','Канал'
+  'Диагностика от, €','Канал','IP (маска сети)'
 ];
 const SUMMARY_HEADERS=[
   'Месяц','Доход всего, €','Успешные заказы',
@@ -96,7 +96,7 @@ function doPost(event){
       safe_((l.photo_urls||[]).join('\n')),safe_(l.maps_url),safe_(l.source),
       safe_(l.utm_source),safe_(l.utm_medium),safe_(l.utm_campaign),
       safe_(l.page_url),SITE,l.submission_id,Number(l.visit_price_eur)||75,
-      Number(l.diagnostic_from_eur)||50,channel_(l.utm_medium,l.source)
+      Number(l.diagnostic_from_eur)||50,channel_(l.utm_medium,l.source),maskIP_(l.ip)
     ]);
     SpreadsheetApp.flush();
     const current=Utilities.formatDate(new Date(),ZONE,'yyyy-MM');
@@ -112,6 +112,31 @@ function doPost(event){
 function safe_(v){
   const s=String(v==null?'':v).slice(0,20000);
   return /^\s*[=+@-]/.test(s)?"'"+s:s;
+}
+// Client IPs are personal data. For anti-abuse analysis, retain only a
+// non-identifying network prefix in the marketing spreadsheet, never full IP.
+// The exact client IP remains in restricted Firestore lead records.
+function maskIP_(value){
+  const ip=String(value||'').trim();
+  if(/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)){
+    const parts=ip.split('.').map(Number);
+    if(parts.some(n=>n<0||n>255))return '';
+    return parts.slice(0,3).join('.')+'.0/24';
+  }
+  if(/^[0-9a-f:]+$/i.test(ip)&&ip.includes(':')){
+    const short=ip.toLowerCase();
+    const halves=short.split('::');
+    if(halves.length>2)return '';
+    const head=halves[0]?halves[0].split(':'):[];
+    const tail=halves.length===2&&halves[1]?halves[1].split(':'):[];
+    const present=head.length+tail.length;
+    const gap=8-present;
+    if((halves.length===1&&present!==8)||(halves.length===2&&gap<1))return '';
+    const pieces=halves.length===2 ? [...head,...Array(gap).fill('0'),...tail] : head;
+    if(pieces.length!==8||pieces.some(p=>!/^[0-9a-f]{1,4}$/.test(p)))return '';
+    return pieces.slice(0,3).map(p=>parseInt(p,16).toString(16)).join(':')+'::/48';
+  }
+  return '';
 }
 function channel_(medium,source){
   const m=String(medium||'').toLowerCase().trim().replace(/[\s-]/g,'_');
@@ -147,6 +172,7 @@ function month_(book,name){
     s.setColumnWidths(5,5,180);
     s.setColumnWidth(10,340);
     s.setColumnWidth(23,160);
+    s.setColumnWidth(24,180);
     s.hideColumns(20); // Internal deduplication ID
     status_(s,2,s.getMaxRows()-1);
     channelValidation_(s,2,s.getMaxRows()-1);
@@ -154,8 +180,9 @@ function month_(book,name){
     s.getRange(1,1,s.getMaxRows(),HEADERS.length).createFilter();
     return s;
   }
-  // Older monthly sheets have 22 columns: add W without deleting/reordering data.
-  if(s.getMaxColumns()<23)s.insertColumnsAfter(s.getMaxColumns(),23-s.getMaxColumns());
+  // Keep historical customer cells and the deduplication column untouched.
+  // Add the new, privacy-minimized IP network only in an empty X column.
+  if(s.getMaxColumns()<24)s.insertColumnsAfter(s.getMaxColumns(),24-s.getMaxColumns());
   const channelHeader=s.getRange('W1').getValue();
   if(channelHeader===''){
     s.getRange('W1').setValue('Канал').setBackground(GREEN).setFontColor('#fff').setFontWeight('bold');
@@ -166,6 +193,17 @@ function month_(book,name){
     }
   }else if(channelHeader!=='Канал'){
     throw new Error('Column W has user data; cannot repurpose it automatically');
+  }
+  const ipHeader=s.getRange('X1').getValue();
+  if(ipHeader===''){
+    const last=s.getLastRow();
+    if(last>1&&s.getRange(2,24,last-1,1).getValues().some(row=>row[0]!=='')){
+      throw new Error('Column X already contains user data; do not overwrite');
+    }
+    s.getRange('X1').setValue('IP (маска сети)').setBackground(GREEN).setFontColor('#fff').setFontWeight('bold');
+    s.setColumnWidth(24,180);
+  }else if(ipHeader!=='IP (маска сети)'){
+    throw new Error('Column X has user data; cannot repurpose automatically');
   }
   channelValidation_(s,2,s.getMaxRows()-1);
   return s;

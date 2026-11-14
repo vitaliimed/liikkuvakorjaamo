@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -144,6 +145,8 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		return
 	}
 	if err := send(h.cfg, data.To, data.Subject, data.Message, standaloneEmailHTMLLanguage(data.Message, data.Language), attachments...); err != nil {
+		// Do not log recipient addresses, message bodies, credentials or attachments.
+		log.Printf("Liikkuva standalone SMTP failure (no recipient logged): %T: %v", err, err)
 		// A lost SMTP response can be ambiguous: never auto-retry and risk duplicate mail.
 		data.Error = "Не удалось подтвердить отправку. Проверьте журнал почтового сервиса перед повтором. Текст сохранён в форме; вложения нужно выбрать заново."
 		render(http.StatusBadGateway)

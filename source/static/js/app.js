@@ -1077,3 +1077,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Restore a usable hero even when a saved admin image URL is missing or 404.
+  document.querySelectorAll("img.hero-photo").forEach(function (img) {
+    const fallback = "/static/img/mobile-mechanic-v2.png";
+    let attempted = false;
+    function recover() {
+      if (attempted || img.getAttribute("src") === fallback) return;
+      attempted = true;
+      img.src = fallback;
+    }
+    img.addEventListener("error", recover);
+    if (img.complete && img.naturalWidth === 0) recover();
+  });
+});

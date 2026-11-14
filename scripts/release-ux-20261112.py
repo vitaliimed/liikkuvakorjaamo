@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "release/ux-crm-brevo-seo-20261114"
+BRANCH = "fix/post-launch-ux-crm-20261114"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "ux-crm-seo-preview"
+TAG = "postlaunch-ux-preview"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "ux-crm-seo-release.json"
+STATE_FILE = STATE_DIR / "postlaunch-ux-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -131,7 +131,11 @@ def check(url, revision, bootstrap):
             raise RuntimeError("Form must appear before hero copy at " + path)
         if html.count('id="leadForm"') != 1:
             raise RuntimeError("Page must have exactly one form at " + path)
-        print("PASS", path, "compact form and required fields")
+        if "footerLeadFormMount" not in html or "footer-form.js" not in html:
+            raise RuntimeError("Second/footer form missing at "+path)
+        if "15 vuoden" not in html and "15 years" not in html:
+            raise RuntimeError("Experience trust text missing at "+path)
+        print("PASS", path, "compact form, footer form and required fields")
     # This previously failed on tagged Cloud Run revisions: the browser's
     # Origin was the preview URL, while CRM_PUBLIC_URL was the production URL.
     # Use a malformed email to avoid sending an actual reset email.
@@ -167,6 +171,9 @@ def check(url, revision, bootstrap):
         ("/static/css/hero-form-ux.css", ".hero-form"),
         ("/static/js/theme.js", "data-theme-toggle"),
         ("/static/js/app.js", "liikkuva_lead_autofill_v2"),
+        ("/static/js/footer-form.js", "footerLeadFormMount"),
+        ("/static/css/footer-form.css", ".footer-lead-layout"),
+        ("/static/img/mobile-mechanic-v2.png", None),
         ("/static/img/logo-white.png", None),
         ("/static/img/favicon.svg", None),
         ("/crm/", None),

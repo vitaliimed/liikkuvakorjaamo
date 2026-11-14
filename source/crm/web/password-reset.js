@@ -43,8 +43,8 @@ function crmAttachPasswordTools(form){
 function crmForgotPassword(prefill){
  $('#app').innerHTML='<form class="login" id="forgot-form">'+
  '<div class="logo"><img src="/crm/logo-light.svg" alt="Liikkuva auto korjaamo"></div>'+
- '<h2>Восстановление пароля</h2><p class="muted">Введите email, зарегистрированный в CRM. На него придёт одноразовая ссылка для установки нового пароля.</p>'+
- '<label>Email<input name="email" type="email" autocomplete="username" value="'+esc(prefill||'')+'" required></label>'+
+ '<h2>Восстановление пароля</h2><p class="muted">Введите адрес электронной почты, используемый как логин CRM. Если учётная запись активна, мы отправим на этот адрес одноразовую ссылку для установки нового пароля.</p>'+
+ '<label>Email — логин CRM<input name="email" type="email" autocomplete="username" value="'+esc(prefill||'')+'" required></label>'+
  '<div class="error" id="forgot-error" role="alert"></div><p id="forgot-result" class="muted" role="status"></p>'+
  '<button class="primary" type="submit">Отправить ссылку</button>'+
  '<button class="text-action" type="button" id="forgot-back">Назад ко входу</button></form>';
