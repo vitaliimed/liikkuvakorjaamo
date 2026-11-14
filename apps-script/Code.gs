@@ -124,8 +124,17 @@ function maskIP_(value){
     return parts.slice(0,3).join('.')+'.0/24';
   }
   if(/^[0-9a-f:]+$/i.test(ip)&&ip.includes(':')){
-    const chunks=ip.toLowerCase().split(':').filter(Boolean);
-    if(chunks.length>=3)return chunks.slice(0,3).join(':')+'::/48';
+    const short=ip.toLowerCase();
+    const halves=short.split('::');
+    if(halves.length>2)return '';
+    const head=halves[0]?halves[0].split(':'):[];
+    const tail=halves.length===2&&halves[1]?halves[1].split(':'):[];
+    const present=head.length+tail.length;
+    const gap=8-present;
+    if((halves.length===1&&present!==8)||(halves.length===2&&gap<1))return '';
+    const pieces=halves.length===2 ? [...head,...Array(gap).fill('0'),...tail] : head;
+    if(pieces.length!==8||pieces.some(p=>!/^[0-9a-f]{1,4}$/.test(p)))return '';
+    return pieces.slice(0,3).map(p=>parseInt(p,16).toString(16)).join(':')+'::/48';
   }
   return '';
 }
