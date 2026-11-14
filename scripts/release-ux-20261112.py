@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "release/ux-crm-brevo-20261112"
+BRANCH = "release/ux-crm-brevo-seo-20261114"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "ux-crm-brevo-preview"
+TAG = "ux-crm-seo-preview"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "ux-crm-brevo-release.json"
+STATE_FILE = STATE_DIR / "ux-crm-seo-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -177,6 +177,25 @@ def check(url, revision, bootstrap):
         if marker and marker.encode("utf-8") not in body:
             raise RuntimeError("Expected marker missing in " + path)
         print("PASS", path)
+    # SEO pages must render through the real router, not only exist as static files.
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto",
+                 "/hinnasto", "/palvelualue", "/vikadiagnostiikka"):
+        code, body = request(url + path)
+        if code != 200:
+            raise RuntimeError("SEO route failed: " + path + " (HTTP " + str(code) + ")")
+        doc = body.decode("utf-8")
+        canonical = "https://liikkuvakorjaamo.fi" + path
+        if ('rel="canonical" href="' + canonical + '"') not in doc or "<h1" not in doc:
+            raise RuntimeError("SEO canonical/H1 missing on " + path)
+        print("PASS SEO:", path)
+    code, body = request(url + "/sitemap.xml")
+    if code != 200:
+        raise RuntimeError("SEO sitemap is unavailable")
+    sitemap = body.decode("utf-8")
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        if "https://liikkuvakorjaamo.fi" + path not in sitemap:
+            raise RuntimeError("SEO sitemap missing " + path)
+    print("PASS SEO: sitemap")
     if bootstrap == "0":
         code, _ = request(url + "/lead", method="POST", data=b"language=fi")
         if code != 400:

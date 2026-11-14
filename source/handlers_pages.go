@@ -133,16 +133,11 @@ func fallbackRobotsTXT(siteURL string) string {
 }
 
 func fallbackSitemapXML(siteURL string) string {
-	baseURL := strings.TrimRight(siteURL, "/")
-	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-		"<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n" +
-		"  <url><loc>" + baseURL + "/</loc></url>\n" +
-		"  <url><loc>" + baseURL + "/en</loc></url>\n" +
-		"  <url><loc>" + baseURL + "/privacy?lang=fi</loc></url>\n" +
-		"  <url><loc>" + baseURL + "/privacy?lang=en</loc></url>\n" +
-		"  <url><loc>" + baseURL + "/thank-you-fi</loc></url>\n" +
-		"  <url><loc>" + baseURL + "/thank-you-en</loc></url>\n" +
-		"</urlset>\n"
+	content := `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`
+	for _, path := range []string{"/", "/en", "/hinnasto", "/palvelualue", "/vikadiagnostiikka", "/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"} {
+		content += "<url><loc>https://" + liikkuvaDomain + path + "</loc></url>"
+	}
+	return content + "</urlset>"
 }
 
 func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang string) {
@@ -175,7 +170,9 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		}
 	}
 
-	pageURL := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang(lang)
+	// Public SEO launch deliberately replaces the legacy stored noindex value.
+	robotsMeta = liikkuvaLandingRobots(r)
+	pageURL := "https://" + liikkuvaDomain + landingPathByLang(lang)
 	alternateFI := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang("fi")
 	alternateEN := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang("en")
 	faviconSVGURL, favicon32URL, favicon16URL, faviconICOURL, appleTouchIconURL := faviconURLs(settings)
