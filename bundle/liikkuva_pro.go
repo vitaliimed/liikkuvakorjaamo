@@ -29,7 +29,7 @@ func liikkuvaPro(cfg Config,next http.Handler) http.Handler {return http.Handler
   b,_:=json.Marshal(map[string]string{"ga4MeasurementId":s.GA4MeasurementID,"googleAdsTagId":s.GoogleAdsTagID,"googleAdsLeadConversionLabel":s.GoogleAdsLeadConversionLabel,"metaPixelId":s.MetaPixelID,"linkedinPartnerId":s.LinkedInPartnerID,"linkedinLeadConversionID":s.LinkedInLeadConversionID,"tiktokPixelId":s.TikTokPixelID})
   w.Header().Set("Content-Type","application/javascript; charset=utf-8");w.Header().Set("Cache-Control","no-cache");fmt.Fprintf(w,"window.LIIKKUVA_TRACKING=%s;",b);return
  }
- public:=r.URL.Path=="/"||r.URL.Path=="/en"||r.URL.Path=="/hinnasto"||r.URL.Path=="/palvelualue"||r.URL.Path=="/vikadiagnostiikka"||strings.HasPrefix(r.URL.Path,"/thank-you")||r.URL.Path=="/fi"
+ public:=r.URL.Path=="/"||r.URL.Path=="/en"||liikkuvaSEOPath(r.URL.Path)||strings.HasPrefix(r.URL.Path,"/thank-you")||r.URL.Path=="/fi"
  if (r.Method!=http.MethodGet&&r.Method!=http.MethodHead)||!public {next.ServeHTTP(w,r);return}
  settings,err:=loadSiteSettings(r.Context(),cfg);if err!=nil {http.Error(w,"Service temporarily unavailable",503);return};settings=liikkuvaProDefaults(settings)
  rec:=&liikkuvaResponse{headers:make(http.Header)};next.ServeHTTP(rec,r);if rec.Code==0 {rec.Code=200}
