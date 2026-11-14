@@ -243,7 +243,23 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 	if strings.TrimSpace(record.Lead.Email) != "" && record.ConfirmationEmailStatus != "sent" {
 		if err := sendLeadConfirmationEmail(cfg, record.Lead); err != nil {
 			log.Printf("Confirmation email failed for %s: %v", leadID, err)
-			_ = markConfirmationEmailFailed(ctx, cfg, leadID, err.Error())
+			if saveErr := markConfirmationEmailFailed(ctx, cfg, leadID, err.Error()); saveErr != nil {
+				return fmt.Errorf("persist confirmation email failure: %w", saveErr)
+			}
+			if isSMTPIPAuthorizationDenied(err) {
+				// Brevo 525 is a permanent configuration denial. Returning a 5xx
+				// to Cloud Tasks causes an aggressive retry storm, but cannot
+				// succeed until the owner authorizes outbound SMTP access.
+				// Keep the email status FAILED; acknowledge this task only
+				// after the core lead integrations are complete.
+				if !coreAlreadyDone {
+					if finishErr := markLeadDone(ctx, cfg, leadID); finishErr != nil {
+						return fmt.Errorf("persist core lead completion: %w", finishErr)
+					}
+				}
+				log.Printf("Lead %s: SMTP IP access denied; saved confirmation failure for explicit retry after Brevo configuration is repaired", leadID)
+				return nil
+			}
 			return fmt.Errorf("confirmation email failed: %w", err)
 		} else if err := markConfirmationEmailSent(ctx, cfg, leadID); err != nil {
 			return fmt.Errorf("confirmation email status update failed: %w", err)
