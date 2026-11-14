@@ -2,6 +2,18 @@
 
 Только отдельная ветка `fix/post-launch-ux-crm-20261114`. Основной сайт на Cloud Run не переключать, пока не пройдены QA и проверка владельца. Текущий production на момент начала работы: `liikkuva-preview-00058-dup` (100%), реальные заявки уже приходят.
 
+## Срочное исправление Brevo 525 (14.11.2026)
+
+**Подтверждено Cloud Run, revision `liikkuva-preview-00058-dup`:** `525 "5.7.1 Unauthorized IP address"`. Это SMTP IP allowlist, а не ошибка контакта клиента или сброса CRM. У Cloud Run по умолчанию динамические исходящие IP, единичное ручное одобрение старого IP не гарантирует стабильность.
+
+В Brevo: Settings → Security → Authorized IPs → Blocking unauthorized IP addresses → **SMTP keys → Deactivate for SMTP** (временное восстановление). Не выключать API IP protection. Ограничение безопасности: SMTP-ключ с любого IP сможет использоваться при его компрометации; хранить только в Secret Manager, просмотреть журнал необычных IP. Постоянное решение при требовании IP-allowlist: Direct VPC egress + Cloud NAT + собственный статический IP, затем один IP в Brevo. Это отдельное сетевое изменение с расходами и проверкой всех интеграций.
+
+Почему логи многократно повторяли одну заявку: в `processLeadFromRecord` SMTP-отказ возвращался HTTP 500 в Cloud Tasks. Новое исправление в ветке классифицирует строго `525 Unauthorized IP address`, сохраняет в Firestore `confirmation_email_status=failed`, завершает основной этап обработки и отвечает 200, чтобы не создавать retry storm. После устранения блокировки не повторять отправку без проверки Brevo Logs и статуса `confirmation_email_status` — возможны ожидающие старые задачи. Если письмо так и не отправилось, использовать управляемый ручной повтор из админки.
+
+Тесты: `source/smtp_retry_policy_test.go`. Изменения коммита ПОСЛЕ `liikkuva-preview-00060-zok`: старый PREVIEW VERIFIED уже не подтверждает этот код — выполнить `stage` снова и убедиться в новой revision.
+
+Источники: https://help.brevo.com/hc/en-us/articles/115000188150-Troubleshooting-Issues-with-Brevo-SMTP ; https://help.brevo.com/hc/en-us/articles/5740111683858-Authorize-and-block-IP-addresses-for-API-and-SMTP-security ; https://docs.cloud.google.com/run/docs/configuring/static-outbound-ip
+
 ## Исправлено в коде (не опубликовано)
 1. Двойное подключение theme.js → два обработчика click компенсировали друг друга. Одна загрузка + защита от повторного запуска.
 2. Недоступный сохранённый `/media/site/...` вместо публичного `/static/img/...` → штатное hero фото + обработчик загрузки изображения с fallback.
