@@ -8,3 +8,7 @@ body{font-size:16px;line-height:1.55;background:#f3f5f7;padding-bottom:96px;colo
 @media(max-width:480px){.admin-shortcuts{grid-template-columns:1fr}.admin-stats strong{font-size:23px}.wrap{padding-inline:12px}.panel{padding:18px 14px!important}.titlebox h1{font-size:25px}.topbar p{font-size:15px}.admin-stats>a,.admin-stats>div{padding:14px 10px}.admin-stats span{font-size:12px}.grid{grid-template-columns:1fr!important}.pro-settings{padding:16px}.pro-save{padding:12px;min-height:48px}}
 
 .admin-tools{margin-top:12px}.admin-tools>summary{cursor:pointer;color:#f97315;font-size:14px;font-weight:650;padding:7px 0}.admin-tools .quick-links{margin-top:6px}.admin-tools:not([open]) .quick-links{display:none}@media(max-width:900px){.topbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px}.topbar .top-actions{margin:0}.top-actions button{font-size:14px!important;min-height:44px;padding:10px 14px}.titlebox p{font-size:14px;line-height:1.5}.titlebox h1{font-size:24px}.admin-tools>summary{font-size:13px}.admin-stats strong{font-size:clamp(19px,5vw,24px)}}
+
+/* Server-confirmed save notification, visible on desktop and mobile. */
+.admin-save-toast{position:fixed;right:18px;bottom:90px;z-index:10000;max-width:min(420px,calc(100vw - 36px));background:#23372b;color:#fff;border:2px solid #f97315;border-radius:14px;padding:15px 20px;font-weight:700;box-shadow:0 12px 38px #0004;pointer-events:none}
+@media(max-width:640px){.admin-save-toast{left:12px;right:12px;bottom:110px;max-width:none}}
