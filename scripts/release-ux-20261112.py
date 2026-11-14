@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "release/ux-crm-brevo-20261112"
+BRANCH = "release/ux-crm-brevo-seo-20261114"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "ux-crm-brevo-preview"
+TAG = "ux-crm-seo-preview"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "ux-crm-brevo-release.json"
+STATE_FILE = STATE_DIR / "ux-crm-seo-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -146,8 +146,11 @@ def check(url, revision, bootstrap):
             if resp.status != 200 or "message" not in answer:
                 raise RuntimeError("CRM same-origin recovery API failed")
     except urllib.error.HTTPError as exc:
-        raise RuntimeError("CRM password recovery POST rejected by origin guard: HTTP " +
-                           str(exc.code))
+        snippet = exc.read(900).decode("utf-8", errors="replace")
+        kind = ("CRM application rejected Origin/Host" if "Недопустимый источник запроса" in snippet
+                else "CRM middleware / reverse proxy / Cloudflare rejected POST")
+        raise RuntimeError(kind + ": HTTP " + str(exc.code) +
+                           " at " + test_path + " response=" + snippet[:320])
     # Reject a forged cross-site Origin from the same endpoint.
     req = urllib.request.Request(test_path, data=test_payload, method="POST",
                                  headers={"Content-Type":"application/json",
@@ -177,6 +180,36 @@ def check(url, revision, bootstrap):
         if marker and marker.encode("utf-8") not in body:
             raise RuntimeError("Expected marker missing in " + path)
         print("PASS", path)
+    # SEO pages must render through the real router, not only exist as static files.
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto",
+                 "/hinnasto", "/palvelualue", "/vikadiagnostiikka"):
+        code, body = request(url + path)
+        if code != 200:
+            raise RuntimeError("SEO route failed: " + path + " (HTTP " + str(code) + ")")
+        doc = body.decode("utf-8")
+        canonical = "https://liikkuvakorjaamo.fi" + path
+        if ('rel="canonical" href="' + canonical + '"') not in doc or "<h1" not in doc:
+            raise RuntimeError("SEO canonical/H1 missing on " + path)
+        print("PASS SEO:", path)
+    code, body = request(url + "/sitemap.xml")
+    if code != 200:
+        raise RuntimeError("SEO sitemap is unavailable")
+    sitemap = body.decode("utf-8")
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        if "https://liikkuvakorjaamo.fi" + path not in sitemap:
+            raise RuntimeError("SEO sitemap missing " + path)
+    print("PASS SEO: sitemap")
+    # Do not accidentally index tagged previews or ship noindex on the live host.
+    probe = urllib.request.Request(url + "/", headers={"Cache-Control": "no-cache"})
+    with urllib.request.urlopen(probe, timeout=35) as response:
+        robots_header = response.headers.get("X-Robots-Tag", "").lower()
+    is_live_domain = url.rstrip("/") == DOMAIN
+    if is_live_domain and "noindex" in robots_header:
+        raise RuntimeError("SEO BLOCKED: production X-Robots-Tag still says noindex")
+    if not is_live_domain and "noindex" not in robots_header:
+        raise RuntimeError("SEO BLOCKED: tagged preview lacks X-Robots-Tag noindex")
+    print("PASS SEO: public/preview indexing headers")
+
     if bootstrap == "0":
         code, _ = request(url + "/lead", method="POST", data=b"language=fi")
         if code != 400:
@@ -315,6 +348,8 @@ def stage():
     state["phase"] = "validated"
     save_json(STATE_FILE, state)
     print("\nPREVIEW VERIFIED:", preview)
+    for suffix in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        print("SEO PREVIEW:", preview + suffix)
     print("PREVIEW CRM:", preview + "/crm/")
     print("LIVE DOMAIN UNCHANGED:", DOMAIN)
     print("INTAKE:", "ACTIVE (invalid-input validation checked)" if bootstrap == "0"

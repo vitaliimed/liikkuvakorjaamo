@@ -86,6 +86,10 @@ def main():
         if value and (not value.startswith("liikkuva_") or "/" in value):
             errors.append(name + " must use the liikkuva_ prefix")
     queue = getval(env, "CLOUD_TASKS_QUEUE")
+    tasks_location = getval(env, "CLOUD_TASKS_LOCATION")
+    # Cloud Tasks queue regions differ from Cloud Run regions.
+    if tasks_location not in ("europe-west3", "europe-west1", "europe-west2", "europe-west6", "europe-central2"):
+        errors.append("Cloud Tasks location must be a supported EU/Europe region: " + (tasks_location or "<empty>"))
     if queue and queue != "liikkuva-lead-processing":
         errors.append("CLOUD_TASKS_QUEUE has unexpected name")
     worker = getval(env, "INTERNAL_PROCESS_LEAD_URL")
@@ -101,7 +105,7 @@ def main():
     if queue == "liikkuva-lead-processing":
         try:
             state = json.loads(gcloud("tasks", "queues", "describe", queue,
-                                      f"--location={REGION}", "--format=json"))
+                                      f"--location={tasks_location}", "--format=json"))
             print("Cloud Tasks queue state:", state.get("state", "UNKNOWN"))
             if state.get("state") not in ("RUNNING",):
                 errors.append("Cloud Tasks queue is not RUNNING")
