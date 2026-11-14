@@ -196,6 +196,17 @@ def check(url, revision, bootstrap):
         if "https://liikkuvakorjaamo.fi" + path not in sitemap:
             raise RuntimeError("SEO sitemap missing " + path)
     print("PASS SEO: sitemap")
+    # Do not accidentally index tagged previews or ship noindex on the live host.
+    probe = urllib.request.Request(url + "/", headers={"Cache-Control": "no-cache"})
+    with urllib.request.urlopen(probe, timeout=35) as response:
+        robots_header = response.headers.get("X-Robots-Tag", "").lower()
+    is_live_domain = url.rstrip("/") == DOMAIN
+    if is_live_domain and "noindex" in robots_header:
+        raise RuntimeError("SEO BLOCKED: production X-Robots-Tag still says noindex")
+    if not is_live_domain and "noindex" not in robots_header:
+        raise RuntimeError("SEO BLOCKED: tagged preview lacks X-Robots-Tag noindex")
+    print("PASS SEO: public/preview indexing headers")
+
     if bootstrap == "0":
         code, _ = request(url + "/lead", method="POST", data=b"language=fi")
         if code != 400:
@@ -334,6 +345,8 @@ def stage():
     state["phase"] = "validated"
     save_json(STATE_FILE, state)
     print("\nPREVIEW VERIFIED:", preview)
+    for suffix in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        print("SEO PREVIEW:", preview + suffix)
     print("PREVIEW CRM:", preview + "/crm/")
     print("LIVE DOMAIN UNCHANGED:", DOMAIN)
     print("INTAKE:", "ACTIVE (invalid-input validation checked)" if bootstrap == "0"
