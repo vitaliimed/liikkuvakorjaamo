@@ -41,6 +41,13 @@ python3 scripts/release-ux-20261112.py status
 ```
 Если локальная ветка уже создана — `git switch fix/post-launch-ux-crm-20261114` и `git pull --ff-only origin fix/post-launch-ux-crm-20261114`. Stage не переключает production.
 
+### Диагностика CRM owner и SMTP (только чтение)
+```bash
+cd ~/liikkuva
+python3 scripts/diagnose-crm-owner.py
+```
+Отчёт покажет только существование/активность/роль настроенной владельческой учётной записи, не email и не хеш пароля. Даже PASS здесь не доказывает доставку восстановления: обязательно проверить Brevo Transactional logs и Cloud Run logs. При неопределённом результате отправки не нажимать повторно, пока не исключена доставка дубликата.
+
 ### QA перед publish
 - На новом preview светлая/тёмная тема в одном клике и сохраняется после перезагрузки.
 - Изображение hero отображается, нет ошибок 404 на `/static/img/mobile-mechanic-v2.png`.
