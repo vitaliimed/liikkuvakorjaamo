@@ -171,3 +171,84 @@ func TestSEOLandingReplacesStoredNoindex(t *testing.T) {
 		}
 	}
 }
+
+
+// Regression for the failed 2026-11-14 production promotion:
+// Firebase Hosting passes Cloud Run's backend as r.Host, not the public domain.
+// A correct frontend header must produce an indexable public response.
+func TestSEOFirebaseHostingProxyOriginalHost(t *testing.T) {
+	t.Setenv("LIIKKUVA_SEO_NOINDEX", "")
+	t.Setenv("LIIKKUVA_BOOTSTRAP", "0")
+	backend := "liikkuva-preview-knrjxcx2bq-lz.a.run.app"
+	tag := "site-crm-release---" + backend
+	cases := []struct {
+		name, host, header, value string
+		index bool
+	}{
+		{"public apex direct", "liikkuvakorjaamo.fi", "", "", true},
+		{"public www direct", "www.liikkuvakorjaamo.fi", "", "", true},
+		{"Firebase requested apex", backend, "X-Fh-Requested-Host", "liikkuvakorjaamo.fi", true},
+		{"Firebase requested www", backend, "X-Fh-Requested-Host", "www.liikkuvakorjaamo.fi", true},
+		{"Firebase tagged rewrite", tag, "X-Fh-Requested-Host", "liikkuvakorjaamo.fi", true},
+		{"Firebase alternate hosted region", "liikkuva-preview-451713593869.europe-north1.run.app",
+			"X-Fh-Requested-Host", "liikkuvakorjaamo.fi", true},
+		{"forwarded host fallback", backend, "X-Forwarded-Host", "https://liikkuvakorjaamo.fi", true},
+		{"www forwarded host fallback", tag, "X-Forwarded-Host", "www.liikkuvakorjaamo.fi", true},
+		{"bare Cloud Run is noindex", backend, "", "", false},
+		{"tagged preview is noindex", "ux-crm-seo-preview---" + backend, "", "", false},
+		{"Firebase web.app is noindex", backend, "X-Fh-Requested-Host", "liikkuva-liikkuva-korjaamo.web.app", false},
+		{"untrusted backend cannot claim public", "evil-service.a.run.app", "X-Fh-Requested-Host", "liikkuvakorjaamo.fi", false},
+		{"lookalike public domain", backend, "X-Forwarded-Host", "liikkuvakorjaamo.fi.evil.test", false},
+		{"public domain port rejected", backend, "X-Fh-Requested-Host", "liikkuvakorjaamo.fi:8443", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "https://"+tc.host+"/", nil)
+			if tc.header != "" {
+				req.Header.Set(tc.header, tc.value)
+			}
+			if got := liikkuvaIndexable(req); got != tc.index {
+				t.Errorf("host=%s %s=%q got indexable=%v, want %v",
+					tc.host, tc.header, tc.value, got, tc.index)
+			}
+			rec := httptest.NewRecorder()
+			liikkuvaSecurity(Config{}, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})).ServeHTTP(rec, req)
+			if got := strings.Contains(rec.Header().Get("X-Robots-Tag"), "noindex"); got == tc.index {
+				t.Errorf("X-Robots-Tag=%q for indexable=%v", rec.Header().Get("X-Robots-Tag"), tc.index)
+			}
+		})
+	}
+}
+
+func TestSEOFirebaseHostingProxyLandingRobots(t *testing.T) {
+	t.Setenv("LIIKKUVA_SEO_NOINDEX", "")
+	renderer, err := newTemplateRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := Config{SiteURL: "https://liikkuvakorjaamo.fi",
+		SettingsStore: seoSettingsStore{SiteSettings{LandingRobotsMeta: "noindex, follow"}}}
+	handler := NewPageHandler(cfg, renderer)
+	req := httptest.NewRequest("GET", "https://liikkuva-preview-knrjxcx2bq-lz.a.run.app/", nil)
+	req.Header.Set("X-Fh-Requested-Host", "liikkuvakorjaamo.fi")
+	rec := httptest.NewRecorder()
+	handler.LandingFI(rec, req)
+	if rec.Code != http.StatusOK ||
+		!strings.Contains(rec.Body.String(), `name="robots" content="index, follow, max-image-preview:large"`) {
+		t.Fatalf("Firebase proxied production homepage must be indexable; HTTP %d", rec.Code)
+	}
+	req = httptest.NewRequest("GET", "https://ux-crm-seo-preview---liikkuva-preview-knrjxcx2bq-lz.a.run.app/", nil)
+	rec = httptest.NewRecorder()
+	handler.LandingFI(rec, req)
+	if !strings.Contains(rec.Body.String(), `name="robots" content="noindex, follow"`) {
+		t.Fatal("tagged Cloud Run preview must remain noindex")
+	}
+	t.Setenv("LIIKKUVA_SEO_NOINDEX", "1")
+	req = httptest.NewRequest("GET", "https://liikkuva-preview-knrjxcx2bq-lz.a.run.app/", nil)
+	req.Header.Set("X-Fh-Requested-Host", "liikkuvakorjaamo.fi")
+	if liikkuvaIndexable(req) {
+		t.Fatal("emergency noindex override ignored behind Firebase Hosting")
+	}
+}
