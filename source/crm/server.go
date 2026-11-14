@@ -105,8 +105,20 @@ type session struct {
 	Expires time.Time
 }
 
+const crmSessionCookieName = "__session" // Firebase Hosting forwards this cookie to Cloud Run.
+
+// Allow existing direct-Cloud-Run sessions while migrating clients to Firebase's
+// only forwarded session-cookie name. No session token or hash is exposed.
+func crmSessionCookie(r *http.Request) (*http.Cookie, error) {
+    cookie, err := r.Cookie(crmSessionCookieName)
+    if err == nil {
+        return cookie, nil
+    }
+    return r.Cookie("crm_session")
+}
+
 func (s *Server) auth(r *http.Request) (User, error) {
-	c, e := r.Cookie("crm_session")
+	c, e := crmSessionCookie(r)
 	if e != nil {
 		return User{}, ErrForbidden
 	}
@@ -143,6 +155,43 @@ func crmAllowedOrigin(origin, host, canonical string) bool {
 		return true
 	}
 	return strings.HasPrefix(canonical, "http://") && origin == canonical && host == strings.TrimPrefix(canonical, "http://")
+}
+
+// Firebase Hosting's Cloud Run rewrite can send the backend's service Host
+// while the browser's Origin is liikkuvakorjaamo.fi. Keep strict same-origin
+// checks for tagged previews, and allow the fixed production origin only for
+// the exact Liikkuva Cloud Run service / a matching Hosting forwarding header.
+func crmTrustedCloudRunHost(host string) bool {
+    host = strings.ToLower(strings.TrimSpace(host))
+    return host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" ||
+        strings.HasSuffix(host, "---liikkuva-preview-knrjxcx2bq-lz.a.run.app")
+}
+
+func crmRequestedHostEquals(candidate, expected string) bool {
+    candidate = strings.ToLower(strings.TrimSpace(candidate))
+    return candidate == expected || candidate == "https://"+expected
+}
+
+func crmAllowedOriginForRequest(r *http.Request, canonical string) bool {
+    origin := r.Header.Get("Origin")
+    if crmAllowedOrigin(origin, r.Host, canonical) {
+        return true
+    }
+    if canonical != "https://liikkuvakorjaamo.fi" ||
+        origin != canonical || !crmTrustedCloudRunHost(r.Host) {
+        return false
+    }
+    // Exact Cloud Run service host is the rewrite target; Firebase may
+    // preserve the requested public host separately. Never trust arbitrary
+    // X-Forwarded-Host values to grant access to another Origin.
+    host := strings.ToLower(strings.TrimSpace(r.Host))
+    if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
+        return true
+    }
+    return crmRequestedHostEquals(r.Header.Get("X-Fh-Requested-Host"), "liikkuvakorjaamo.fi") ||
+        crmRequestedHostEquals(r.Header.Get("X-Forwarded-Host"), "liikkuvakorjaamo.fi")
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +232,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, "Недопустимый запрос")
 			return
 		}
-		if !crmAllowedOrigin(r.Header.Get("Origin"), r.Host, s.URL) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
+		if !crmAllowedOriginForRequest(r, s.URL) || r.Header.Get("Sec-Fetch-Site") == "cross-site" {
 			fail(w, 403, "Недопустимый источник запроса")
 			return
 		}
@@ -245,12 +294,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case path == "/api/me" && r.Method == "GET":
 		write(w, 200, u)
 	case path == "/api/logout" && r.Method == "POST":
-		c, _ := r.Cookie("crm_session")
+		c, _ := crmSessionCookie(r)
 		_, e := s.Collection("sessions").Doc(digest(c.Value)).Delete(r.Context())
 		if e != nil {
 			fail(w, 503, "Не удалось завершить сеанс")
 			return
 		}
+		http.SetCookie(w, &http.Cookie{Name: crmSessionCookieName, Path: "/crm", MaxAge: -1, Secure: strings.HasPrefix(s.URL, "https://"), HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		http.SetCookie(w, &http.Cookie{Name: "crm_session", Path: "/crm", MaxAge: -1, Secure: strings.HasPrefix(s.URL, "https://"), HttpOnly: true, SameSite: http.SameSiteStrictMode})
 		write(w, 200, map[string]bool{"ok": true})
 	case path == "/api/users":
@@ -333,7 +383,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, "Ошибка создания сеанса")
 		return
 	}
-	http.SetCookie(w, &http.Cookie{Name: "crm_session", Value: token, Path: "/crm", MaxAge: 43200, Secure: strings.HasPrefix(s.URL, "https://"), HttpOnly: true, SameSite: http.SameSiteStrictMode})
+	http.SetCookie(w, &http.Cookie{Name: crmSessionCookieName, Value: token, Path: "/crm", MaxAge: 43200, Secure: strings.HasPrefix(s.URL, "https://"), HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	write(w, 200, u)
 }
 func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
