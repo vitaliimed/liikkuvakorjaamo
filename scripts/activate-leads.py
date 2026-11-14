@@ -200,6 +200,19 @@ def main() -> None:
     if (parsed.scheme != "https" or parsed.hostname != "script.google.com" or
         not parsed.path.startswith("/macros/s/") or not parsed.path.endswith("/exec")):
         raise RuntimeError("Real Apps Script /exec URL required; cannot generate it from GitHub code")
+    # A valid-looking URL can still point to an undeployed/unauthorized Apps Script.
+    # doGet() is read-only; require the actual Liikkuva service response.
+    try:
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=25) as response:
+            content = response.read(8192)
+        handshake = json.loads(content)
+        if handshake.get("ok") is not True or handshake.get("site") != "liikkuvakorjaamo.fi":
+            raise RuntimeError("Apps Script /exec returned the wrong site or is not initialized")
+    except (urllib.error.URLError, ValueError) as exc:
+        raise RuntimeError("Apps Script /exec is not ready (GET must return Liikkuva JSON): " +
+                           type(exc).__name__) from exc
+    print("PASS: deployed Apps Script /exec identifies Liikkuva (GET only)")
 
     BACKUPS.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(BACKUPS, 0o700)
@@ -228,7 +241,8 @@ def main() -> None:
                         "--location=" + TASKS_REGION, "--project=" + PROJECT],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if p.returncode:
-        cloud("tasks", "queues", "create", queue, "--location=" + TASKS_REGION)
+        cloud("tasks", "queues", "create", queue, "--location=" + TASKS_REGION,
+              "--max-dispatches-per-second=2", "--max-concurrent-dispatches=2")
     q = json.loads(cloud("tasks", "queues", "describe", queue,
                          "--location=" + TASKS_REGION, "--format=json"))
     if q.get("state") != "RUNNING":
