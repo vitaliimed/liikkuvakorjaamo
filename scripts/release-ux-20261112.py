@@ -146,8 +146,11 @@ def check(url, revision, bootstrap):
             if resp.status != 200 or "message" not in answer:
                 raise RuntimeError("CRM same-origin recovery API failed")
     except urllib.error.HTTPError as exc:
-        raise RuntimeError("CRM password recovery POST rejected by origin guard: HTTP " +
-                           str(exc.code))
+        snippet = exc.read(900).decode("utf-8", errors="replace")
+        kind = ("CRM application rejected Origin/Host" if "Недопустимый источник запроса" in snippet
+                else "CRM middleware / reverse proxy / Cloudflare rejected POST")
+        raise RuntimeError(kind + ": HTTP " + str(exc.code) +
+                           " at " + test_path + " response=" + snippet[:320])
     # Reject a forged cross-site Origin from the same endpoint.
     req = urllib.request.Request(test_path, data=test_payload, method="POST",
                                  headers={"Content-Type":"application/json",
