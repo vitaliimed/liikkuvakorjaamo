@@ -178,8 +178,18 @@ func crmAllowedOriginForRequest(r *http.Request, canonical string) bool {
     if crmAllowedOrigin(origin, r.Host, canonical) {
         return true
     }
-    if canonical != "https://liikkuvakorjaamo.fi" ||
-        origin != canonical || !crmTrustedCloudRunHost(r.Host) {
+    if canonical != "https://liikkuvakorjaamo.fi" || !crmTrustedCloudRunHost(r.Host) {
+        return false
+    }
+    // www is also an allowed frontend hostname; only the actual requested
+    // hostname (not a suffix match) can satisfy this same-origin proxy case.
+    requestedHost := ""
+    switch origin {
+    case "https://liikkuvakorjaamo.fi":
+        requestedHost = "liikkuvakorjaamo.fi"
+    case "https://www.liikkuvakorjaamo.fi":
+        requestedHost = "www.liikkuvakorjaamo.fi"
+    default:
         return false
     }
     // Exact Cloud Run service host is the rewrite target; Firebase may
@@ -190,8 +200,8 @@ func crmAllowedOriginForRequest(r *http.Request, canonical string) bool {
         host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
         return true
     }
-    return crmRequestedHostEquals(r.Header.Get("X-Fh-Requested-Host"), "liikkuvakorjaamo.fi") ||
-        crmRequestedHostEquals(r.Header.Get("X-Forwarded-Host"), "liikkuvakorjaamo.fi")
+    return crmRequestedHostEquals(r.Header.Get("X-Fh-Requested-Host"), requestedHost) ||
+        crmRequestedHostEquals(r.Header.Get("X-Forwarded-Host"), requestedHost)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
