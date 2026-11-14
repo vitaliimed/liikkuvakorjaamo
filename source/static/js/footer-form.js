@@ -141,7 +141,7 @@
         say(form.dataset.photosTooMany || "Please use up to three images under 10 MB.", "error");
         return;
       }
-      if (plate && !/^[A-Z]{1,3}-?[0-9]{1,3}$/.test(plate.value.toUpperCase())) {
+      if (plate && !/^[A-Z]{3}-[0-9]{1,3}$/.test(plate.value.toUpperCase())) {
         say(form.dataset.registrationInvalid || "Invalid registration number", "error");
         plate.focus();
         return;
