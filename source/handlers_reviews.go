@@ -170,7 +170,7 @@ func (h *ReviewHandler) render(w http.ResponseWriter, r *http.Request, data Revi
 	}
 	data.Lang = sanitizeLanguage(data.Lang, h.cfg.DefaultLanguage)
 	data.CanonicalURL = strings.TrimRight(h.cfg.SiteURL, "/") + "/review"
-	data.LogoURL = assetOrFallback(settings.LogoURL, "/static/img/logo_liikkuva.svg?v=20260327b")
+	data.LogoURL = assetOrFallback(settings.LogoURL, "/static/img/logo-white.png?v=20260327b")
 	data.FaviconSVGURL, data.Favicon32URL, data.Favicon16URL, data.FaviconICOURL, data.AppleTouchIconURL = faviconURLs(settings)
 	if data.Lang == "fi" {
 		data.PageTitle = "Jätä arvostelu | Liikkuva"

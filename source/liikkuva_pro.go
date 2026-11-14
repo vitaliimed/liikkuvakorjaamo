@@ -57,9 +57,8 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	if s.ProFontSize < 16 || s.ProFontSize > 22 {
 		s.ProFontSize = 18
 	}
-	if !regexp.MustCompile(`^#[a-fA-F0-9]{6}$`).MatchString(s.ProAccent) {
-		s.ProAccent = "#2458d6"
-	}
+	// One approved brand accent. Legacy/custom database values cannot leak into public CSS.
+	s.ProAccent = "#f97315"
 	switch s.ProTheme {
 	case "light", "dark", "system", "night":
 	default:
@@ -93,7 +92,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 			fmt.Fprintf(w, "window.LIIKKUVA_TRACKING=%s;", b)
 			return
 		}
-		public := r.URL.Path == "/" || r.URL.Path == "/en" || r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi"
+		public := r.URL.Path == "/" || r.URL.Path == "/en" || r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review"
 		if (r.Method != http.MethodGet && r.Method != http.MethodHead) || !public {
 			next.ServeHTTP(w, r)
 			return

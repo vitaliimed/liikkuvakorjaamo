@@ -1,0 +1,1 @@
+Recovery completed into feat/crm-complete-v2. See CRM-ACCESS-V2-RU.md for implemented features, validation and remaining external integration/deployment checks. Earlier recovery-only checkpoint is superseded.

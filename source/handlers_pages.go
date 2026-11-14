@@ -282,7 +282,7 @@ func (h *PageHandler) serveThankYou(w http.ResponseWriter, r *http.Request, lang
 		OGTitle:                      texts["PAGE_TITLE"],
 		OGDescription:                texts["META_DESCRIPTION"],
 		OGURL:                        pageURL,
-		LogoURL:                      assetOrFallback(settings.LogoURL, "/static/img/logo_liikkuva.svg?v=20260327b"),
+		LogoURL:                      assetOrFallback(settings.LogoURL, "/static/img/logo-white.png?v=20260327b"),
 		FaviconSVGURL:                faviconSVGURL,
 		Favicon32URL:                 favicon32URL,
 		Favicon16URL:                 favicon16URL,
@@ -322,6 +322,9 @@ func (h *PageHandler) servePrivacy(w http.ResponseWriter, r *http.Request, lang 
 	}
 
 	pageURL := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy"
+	if lang == "en" {
+		pageURL += "?lang=en"
+	}
 	alternateFI := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy?lang=fi"
 	alternateEN := strings.TrimRight(h.cfg.SiteURL, "/") + "/privacy?lang=en"
 	faviconSVGURL, favicon32URL, favicon16URL, faviconICOURL, appleTouchIconURL := faviconURLs(settings)
@@ -337,7 +340,7 @@ func (h *PageHandler) servePrivacy(w http.ResponseWriter, r *http.Request, lang 
 		OGTitle:                      texts["PAGE_TITLE"],
 		OGDescription:                texts["META_DESCRIPTION"],
 		OGURL:                        pageURL,
-		LogoURL:                      assetOrFallback(settings.LogoURL, "/static/img/logo_liikkuva.svg?v=20260327b"),
+		LogoURL:                      assetOrFallback(settings.LogoURL, "/static/img/logo-white.png?v=20260327b"),
 		FaviconSVGURL:                faviconSVGURL,
 		Favicon32URL:                 favicon32URL,
 		Favicon16URL:                 favicon16URL,

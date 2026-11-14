@@ -23,7 +23,7 @@ func TestProPriceSettings(t *testing.T) {
 	if got != "90 €; €90; 60 €; €60; 90; 60; 150" {
 		t.Fatal(got)
 	}
-	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#2458d6" {
+	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#f97315" {
 		t.Fatal("Unsafe CSS accepted")
 	}
 }
@@ -32,7 +32,7 @@ func TestPhoneRequiredForEmailLead(t *testing.T) {
 	if len(issues) == 0 {
 		t.Fatal("email-only request accepted")
 	}
-	if issues := validateLead(Lead{Name: "Test", Phone: "+358401234567", Language: "fi"}); len(issues) != 0 {
+	if issues := validateLead(Lead{Name: "Test", Phone: "+358401234567", Car: "ABC-123", Language: "fi"}); len(issues) != 0 {
 		t.Fatal(issues)
 	}
 }

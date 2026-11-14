@@ -705,7 +705,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    if (carValue && !isValidRegistrationNumber(carValue)) {
+    if (!carValue || !isValidRegistrationNumber(carValue)) {
       showMessage(i18n.registrationInvalid, "error");
       setSubmitState(false);
       if (carInput) carInput.focus();

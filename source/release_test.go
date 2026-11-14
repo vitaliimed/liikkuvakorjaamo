@@ -12,6 +12,7 @@ import (
 func TestLeadDoesNotRequireVisitPriceConsent(t *testing.T) {
 	valid := Lead{
 		Name:     "Test Client",
+		Car:      "ABC-123",
 		Phone:    "+358401234567",
 		Email:    "client@example.com",
 		Language: "en",

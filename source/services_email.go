@@ -81,10 +81,10 @@ func buildReadyEmailTextBody(cfg Config, lead Lead) string {
 		)
 
 		if serviceEmail != "" {
-			lines = append(lines, "📧 Service email: "+serviceEmail)
+			lines = append(lines, "📧 Sähköposti: "+serviceEmail)
 		}
 		if website != "" {
-			lines = append(lines, "🌐 Website: "+website)
+			lines = append(lines, "🌐 Verkkosivusto: "+website)
 		}
 
 		lines = append(lines,
@@ -128,162 +128,13 @@ func buildReadyEmailTextBody(cfg Config, lead Lead) string {
 }
 
 func buildReadyEmailHTMLBody(cfg Config, lead Lead) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-			name = "asiakas"
-		} else {
-			name = "customer"
-		}
-	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
+	title := "Your vehicle is ready"
+	message := "Your vehicle is ready. You can reply to this email to arrange pickup or handover."
 	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		return `<!DOCTYPE html>
-<html lang="fi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">🚗 Ajoneuvosi on valmis</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hei ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 18px 0;">
-                    <div style="background:#f8fafc;border:1px solid #dbe7f3;border-radius:16px;padding:18px 18px;font-size:18px;line-height:1.6;color:#0f172a;font-weight:700;">
-                      ✅ Ajoneuvosi on valmis.
-                    </div>
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0 0 20px 0;">
-                    Voit vastata tähän viestiin tai ottaa meihin yhteyttä sopiaksesi luovutuksesta.
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Ystävällisin terveisin,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+		title = "Ajoneuvosi on valmis"
+		message = "Ajoneuvosi on valmis. Voit vastata tähän viestiin sopiaksesi luovutuksesta."
 	}
-
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">🚗 Your vehicle is ready</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hello ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 18px 0;">
-                    <div style="background:#f8fafc;border:1px solid #dbe7f3;border-radius:16px;padding:18px 18px;font-size:18px;line-height:1.6;color:#0f172a;font-weight:700;">
-                      ✅ Your vehicle is ready.
-                    </div>
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0 0 20px 0;">
-                    You can reply to this email or contact us to arrange pickup or handover.
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Best regards,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+	return buildBrandedActionEmailHTML(cfg, lead, title, "<p>"+html.EscapeString(message)+"</p>", "", "")
 }
 
 func optionalInfoRowHTML(icon, label, value string) string {
@@ -296,11 +147,11 @@ func optionalInfoRowHTML(icon, label, value string) string {
 	escapedValue := html.EscapeString(value)
 
 	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
+		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="` + escapedValue + `" style="color:#23372b;text-decoration:none;">` + escapedValue + `</a></div>`
 	}
 
 	if strings.Contains(value, "@") {
-		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="mailto:` + escapedValue + `" style="color:#0369a1;text-decoration:none;">` + escapedValue + `</a></div>`
+		return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> <a href="mailto:` + escapedValue + `" style="color:#23372b;text-decoration:none;">` + escapedValue + `</a></div>`
 	}
 
 	return `<div style="font-size:15px;line-height:1.8;margin:6px 0;"><span style="margin-right:8px;">` + icon + `</span><strong>` + escapedLabel + `:</strong> ` + escapedValue + `</div>`
@@ -319,8 +170,8 @@ func optionalPlateRowHTML(value string, lang string) string {
 
 	return `<tr>
 		<td style="padding:0 0 14px 0;">
-			<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;">
-				<div style="font-size:13px;line-height:1.4;color:#1d4ed8;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">🚘 ` + html.EscapeString(label) + `</div>
+			<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:14px;padding:14px 16px;">
+				<div style="font-size:13px;line-height:1.4;color:#23372b;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">🚘 ` + html.EscapeString(label) + `</div>
 				<div style="font-size:22px;line-height:1.3;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div>
 			</div>
 		</td>
@@ -371,24 +222,28 @@ func buildCustomEmailTextBody(cfg Config, lead Lead, message string) string {
 	serviceEmail := serviceVisibleEmail(cfg)
 	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
 
+	greeting, plateLabel, emailLabel, websiteLabel, closing := "Hello", "Vehicle registration", "Service email", "Website", "Best regards"
+	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
+		greeting, plateLabel, emailLabel, websiteLabel, closing = "Hei", "Rekisterinumero", "Sähköposti", "Verkkosivusto", "Ystävällisin terveisin"
+	}
 	lines := []string{
-		"Hello " + name + ",",
+		greeting + " " + name + ",",
 		"",
 		message,
 	}
 
 	if car != "" {
-		lines = append(lines, "", "Vehicle registration: "+car)
+		lines = append(lines, "", plateLabel+": "+car)
 	}
 
 	if serviceEmail != "" {
-		lines = append(lines, "", "Service email: "+serviceEmail)
+		lines = append(lines, "", emailLabel+": "+serviceEmail)
 	}
 	if website != "" {
-		lines = append(lines, "Website: "+website)
+		lines = append(lines, websiteLabel+": "+website)
 	}
 
-	lines = append(lines, "", "Best regards,", "Liikkuva Auto Korjaamo")
+	lines = append(lines, "", closing+",", "Liikkuva Auto Korjaamo")
 	return strings.Join(lines, "\n")
 }
 
@@ -415,79 +270,7 @@ func serviceVisibleEmail(cfg Config) string {
 }
 
 func buildCustomEmailHTMLBody(cfg Config, lead Lead, subject, message string) string {
-	name := strings.TrimSpace(lead.Name)
-	if name == "" {
-		name = "customer"
-	}
-
-	car := strings.TrimSpace(lead.Car)
-	serviceEmail := serviceVisibleEmail(cfg)
-	website := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
-
-	messageHTML := nl2br(html.EscapeString(message))
-
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light only">
-  <meta name="supported-color-schemes" content="light only">
-  <title>Liikkuva Auto Korjaamo</title>
-</head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf3f9;margin:0;padding:0;">
-    <tr>
-      <td align="center" style="padding:24px 12px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#ffffff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-          <tr>
-            <td style="background:#0b3b66;padding:24px 28px;">
-              <div style="font-size:12px;line-height:1.4;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div>
-              <div style="font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;margin-top:10px;">📩 ` + html.EscapeString(subject) + `</div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:18px;line-height:1.6;color:#0f172a;padding:0 0 18px 0;">
-                    Hello ` + html.EscapeString(name) + `,
-                  </td>
-                </tr>
-
-                ` + optionalPlateRowHTML(car, lead.Language) + `
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.8;color:#334155;padding:0 0 20px 0;">
-                    ` + messageHTML + `
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:0 0 22px 0;">
-                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;">
-                      ` + optionalInfoRowHTML("📧", "Service email", serviceEmail) + `
-                      ` + optionalInfoRowHTML("🌐", "Website", website) + `
-                    </div>
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="font-size:16px;line-height:1.75;color:#334155;padding:0;">
-                    Best regards,<br>
-                    <strong style="color:#0f172a;">Liikkuva Auto Korjaamo</strong>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+	return buildBrandedActionEmailHTML(cfg, lead, subject, "<p>"+nl2br(html.EscapeString(message))+"</p>", "", "")
 }
 
 func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
@@ -561,7 +344,7 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
 		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.</p>
-		<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:18px;margin:0 0 18px;">
+		<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 			<div style="font-size:24px;font-weight:800;color:#0f172a;">Asentajan käynti ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
 			<p style="margin:10px 0 0;">Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.</p>
 		</div>
@@ -571,7 +354,7 @@ func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	}
 
 	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully.</p>
-	<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:18px;margin:0 0 18px;">
+	<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
 		<p style="margin:10px 0 0;">The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.</p>
 	</div>
@@ -618,18 +401,32 @@ func clientEmailName(lead Lead) string {
 }
 
 func buildBrandedActionEmailHTML(cfg Config, lead Lead, title, contentHTML, buttonLabel, buttonURL string) string {
+	lang, greeting, closing, contact := "en", "Hello", "Best regards", "Contact us"
+	path := "/en"
+	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
+		lang, greeting, closing, contact, path = "fi", "Hei", "Ystävällisin terveisin", "Ota yhteyttä", "/"
+	}
+	base := strings.TrimRight(strings.TrimSpace(cfg.SiteURL), "/")
+	if base == "" {
+		base = "https://liikkuvakorjaamo.fi"
+	}
+	name := strings.TrimSpace(lead.Name)
+	if name == "" {
+		if lang == "fi" {
+			name = "asiakas"
+		} else {
+			name = "customer"
+		}
+	}
 	buttonHTML := ""
 	if strings.TrimSpace(buttonLabel) != "" && strings.TrimSpace(buttonURL) != "" {
-		buttonHTML = `<p style="margin:22px 0 0;"><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;background:#f59e0b;color:#111827;text-decoration:none;font-size:16px;font-weight:800;padding:14px 22px;border-radius:14px;">` + html.EscapeString(buttonLabel) + `</a></p>`
+		buttonHTML = `<p><a href="` + html.EscapeString(buttonURL) + `" style="display:inline-block;background:#f97315;color:#23372b;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:10px;">` + html.EscapeString(buttonLabel) + `</a></p>`
 	}
-
-	return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Liikkuva Auto Korjaamo</title></head>
-<body style="margin:0;padding:0;background:#edf3f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;background:#fff;border:1px solid #dbe7f3;border-radius:22px;overflow:hidden;">
-<tr><td style="background:#0b3b66;padding:24px 28px;color:#fff;"><div style="font-size:12px;color:#cfe8ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Liikkuva Auto Korjaamo</div><div style="font-size:30px;line-height:1.2;font-weight:800;margin-top:10px;">` + html.EscapeString(title) + `</div></td></tr>
-<tr><td style="padding:28px 24px;font-size:16px;line-height:1.75;color:#334155;"><p style="margin:0 0 18px;font-size:18px;color:#0f172a;">` + html.EscapeString(clientEmailName(lead)) + `,</p>` + optionalPlateBlockHTML(lead.Car, lead.Language) + contentHTML + buttonHTML + `<p style="margin:24px 0 0;">Liikkuva Auto Korjaamo<br><a href="` + html.EscapeString(strings.TrimRight(cfg.SiteURL, "/")) + `" style="color:#0369a1;">` + html.EscapeString(strings.TrimRight(cfg.SiteURL, "/")) + `</a></p></td></tr>
-</table></td></tr></table></body></html>`
+	contactHTML := ""
+	if email := serviceVisibleEmail(cfg); email != "" {
+		contactHTML = `<br>` + contact + `: <a style="color:#ffffff" href="mailto:` + html.EscapeString(email) + `">` + html.EscapeString(email) + `</a>`
+	}
+	return `<!doctype html><html lang="` + lang + `"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>` + html.EscapeString(title) + `</title></head><body style="margin:0;background:#f5f6f2;font-family:Arial,Helvetica,sans-serif;color:#23372b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dce5de;border-radius:16px;overflow:hidden"><tr><td style="background:#23372b;padding:24px;border-bottom:4px solid #f97315"><a href="` + html.EscapeString(base+path) + `"><img src="` + html.EscapeString(base) + `/static/img/logo-green.png?v=20261111" alt="Liikkuva auto korjaamo" width="280" style="display:block;width:280px;max-width:100%;height:auto;border:0"></a></td></tr><tr><td style="padding:28px 24px;font-size:16px;line-height:1.75"><h1 style="font-size:26px;line-height:1.3;margin:0 0 24px">` + html.EscapeString(title) + `</h1><p>` + greeting + ` ` + html.EscapeString(name) + `,</p>` + optionalPlateBlockHTML(lead.Car, lang) + contentHTML + buttonHTML + `<p>` + closing + `,<br>Liikkuva Auto Korjaamo</p></td></tr><tr><td style="background:#23372b;padding:24px;color:#ffffff;font-size:14px;line-height:1.8"><a href="` + html.EscapeString(base+path) + `" style="color:#ffffff">liikkuvakorjaamo.fi</a>` + contactHTML + `</td></tr></table></td></tr></table></body></html>`
 }
 
 func optionalPlateBlockHTML(value, lang string) string {
@@ -641,7 +438,7 @@ func optionalPlateBlockHTML(value, lang string) string {
 	if strings.EqualFold(strings.TrimSpace(lang), "fi") {
 		label = "Rekisterinumero"
 	}
-	return `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin:0 0 18px;"><div style="font-size:13px;color:#1d4ed8;font-weight:700;text-transform:uppercase;">` + html.EscapeString(label) + `</div><div style="font-size:22px;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div></div>`
+	return `<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:14px;padding:14px 16px;margin:0 0 18px;"><div style="font-size:13px;color:#23372b;font-weight:700;text-transform:uppercase;">` + html.EscapeString(label) + `</div><div style="font-size:22px;color:#0f172a;font-weight:800;margin-top:6px;">` + html.EscapeString(value) + `</div></div>`
 }
 
 func nl2br(value string) string {

@@ -18,8 +18,8 @@ import (
 const standaloneEmailRoute = "/admin/email"
 
 type standaloneEmailData struct {
-	Token, AccessCSRF, To, Subject, Message, Error, From string
-	Sent, Enabled                                        bool
+	Token, AccessCSRF, To, Subject, Message, Error, From, Language string
+	Sent, Enabled                                                  bool
 }
 type standaloneEmailSender func(Config, string, string, string, string, ...EmailAttachment) error
 
@@ -67,9 +67,14 @@ func validateStandaloneEmail(to, subject, message string) error {
 	}
 	return nil
 }
-func standaloneEmailHTML(message string) string {
-	return `<!doctype html><html><body><div style="font-family:Arial,sans-serif;line-height:1.6;white-space:pre-wrap">` + html.EscapeString(message) + `</div></body></html>`
+func standaloneEmailHTML(message string) string { return standaloneEmailHTMLLanguage(message, "ru") }
+func standaloneEmailHTMLLanguage(message, lang string) string {
+	if lang != "fi" && lang != "en" && lang != "ru" {
+		lang = "fi"
+	}
+	return `<!doctype html><html lang="` + lang + `"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f5f6f2;font:16px/1.7 Arial,sans-serif;color:#23372b"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" style="max-width:640px;background:#fff;border:1px solid #dce5de" cellspacing="0" cellpadding="0"><tr><td style="padding:24px;background:#23372b;border-bottom:4px solid #f97315"><img src="https://liikkuvakorjaamo.fi/static/img/logo-green.png?v=20261111" width="280" alt="Liikkuva auto korjaamo" style="display:block;width:280px;max-width:100%;height:auto"></td></tr><tr><td style="padding:28px 24px;white-space:pre-wrap">` + html.EscapeString(message) + `</td></tr><tr><td style="padding:20px 24px;background:#23372b;color:#fff">Liikkuva auto korjaamo</td></tr></table></td></tr></table></body></html>`
 }
+
 func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.Request, send standaloneEmailSender) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -83,7 +88,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	data := standaloneEmailData{AccessCSRF: accessCSRF(r), From: h.cfg.MailFrom, Enabled: mailNotificationsEnabled(h.cfg)}
+	data := standaloneEmailData{Language: "fi", AccessCSRF: accessCSRF(r), From: h.cfg.MailFrom, Enabled: mailNotificationsEnabled(h.cfg)}
 	render := func(status int) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
@@ -111,6 +116,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		render(http.StatusBadRequest)
 		return
 	}
+	data.Language = sanitizeLanguage(r.FormValue("email_language"), "fi")
 	data.To = strings.TrimSpace(r.PostFormValue("email_to"))
 	data.Subject = strings.TrimSpace(r.PostFormValue("email_subject"))
 	data.Message = strings.TrimSpace(r.PostFormValue("email_message"))
@@ -137,7 +143,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		render(http.StatusServiceUnavailable)
 		return
 	}
-	if err := send(h.cfg, data.To, data.Subject, data.Message, standaloneEmailHTML(data.Message), attachments...); err != nil {
+	if err := send(h.cfg, data.To, data.Subject, data.Message, standaloneEmailHTMLLanguage(data.Message, data.Language), attachments...); err != nil {
 		// A lost SMTP response can be ambiguous: never auto-retry and risk duplicate mail.
 		data.Error = "Не удалось подтвердить отправку. Проверьте журнал почтового сервиса перед повтором. Текст сохранён в форме; вложения нужно выбрать заново."
 		render(http.StatusBadGateway)
@@ -148,14 +154,14 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 
 var standaloneEmailTemplate = template.Must(template.New("standalone-email").Parse(`<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Новое письмо — Liikkuva Auto Korjaamo</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#16324f;font:16px/1.5 Arial,sans-serif}main{max-width:820px;margin:32px auto;padding:28px;background:white;border-radius:18px}a{color:#1766aa}h1{margin:12px 0}label{display:block;margin-top:18px;font-weight:bold}input,textarea{width:100%;padding:12px;border:1px solid #b8c6d6;border-radius:8px;font:inherit}textarea{min-height:260px}button{margin-top:22px;padding:14px 24px;border:0;border-radius:8px;background:#16324f;color:white;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.note{color:#536779;font-size:14px}.ok,.err{padding:14px;border-radius:8px}.ok{background:#e1f5e8}.err{background:#ffebe8}small{display:block}@media(max-width:600px){main{margin:0;padding:20px;border-radius:0}}</style></head>
+<style>*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#23372b;font:16px/1.5 Arial,sans-serif}main{max-width:820px;margin:32px auto;padding:28px;background:white;border-radius:18px}a{color:#f97315}h1{margin:12px 0}label{display:block;margin-top:18px;font-weight:bold}input,textarea,select{width:100%;padding:12px;border:1px solid #b8c6d6;border-radius:8px;font:inherit}textarea{min-height:260px}button{margin-top:22px;padding:14px 24px;border:0;border-radius:8px;background:#23372b;color:white;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.note{color:#536779;font-size:14px}.ok,.err{padding:14px;border-radius:8px}.ok{background:#f4f5f2}.err{background:#f4f5f2}small{display:block}@media(max-width:600px){main{margin:0;padding:20px;border-radius:0}}</style></head>
 <body><main><a href="/admin">← Админка</a><h1>Новое письмо</h1><p>Любой получатель, своя тема и текст. Заявка не требуется.</p><p class="note">Отправитель: {{.From}}</p>
 {{if .Sent}}<p class="ok" role="status">Почтовый сервер принял письмо. Доставка во входящие зависит от почтового сервиса получателя.</p>{{end}}
 {{if .Error}}<p class="err" role="alert">{{.Error}}</p>{{end}}{{if not .Enabled}}<p class="err">Отправка отключена: настройки почты не заполнены.</p>{{end}}
 <form method="post" action="/admin/email" enctype="multipart/form-data" id="compose">
 <input type="hidden" name="csrf_token" value="{{.Token}}"><input type="hidden" name="access_csrf" value="{{.AccessCSRF}}">
 <label for="to">Кому</label><input id="to" name="email_to" type="email" maxlength="254" required value="{{.To}}" placeholder="name@example.com">
-<label for="subject">Тема</label><input id="subject" name="email_subject" maxlength="200" required value="{{.Subject}}">
+<label for="language">Язык оформления письма</label><select id="language" name="email_language"><option value="fi" {{if eq .Language "fi"}}selected{{end}}>Suomi</option><option value="en" {{if eq .Language "en"}}selected{{end}}>English</option></select><p class="note">Текст письма вводится на выбранном языке; автоматического перевода нет.</p><label for="subject">Тема</label><input id="subject" name="email_subject" maxlength="200" required value="{{.Subject}}">
 <label for="message">Текст письма</label><textarea id="message" name="email_message" maxlength="20000" required>{{.Message}}</textarea>
 <p class="note">Укажите приветствие и подпись в тексте. Автоматические фразы о заявке или автомобиле не добавляются.</p>
 <label for="files">Вложения</label><input id="files" type="file" name="custom_email_attachments" multiple><small class="note">До 10 файлов, суммарно до 15 МБ.</small>
