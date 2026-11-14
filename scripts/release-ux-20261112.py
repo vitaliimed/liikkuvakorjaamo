@@ -209,9 +209,13 @@ def check(url, revision, bootstrap):
         server_header = response.headers.get("Server", "")
         page = response.read(512 * 1024).decode("utf-8", errors="replace")
     is_live_domain = url.rstrip("/") == DOMAIN
-    meta_noindex = bool(__import__("re").search(
-        r'<meta\\s+name=["\\\']robots["\\\']\\s+content=["\\\'][^"\\\']*noindex',
-        page, __import__("re").IGNORECASE))
+    import re
+    meta_match = re.search(r'<meta\s+name="robots"\s+content="([^"]+)"',
+                           page, re.IGNORECASE)
+    if not meta_match:
+        raise RuntimeError("SEO BLOCKED: robots meta not found")
+    robots_meta = meta_match.group(1).lower()
+    meta_noindex = "noindex" in robots_meta
     if is_live_domain and ("noindex" in robots_header or meta_noindex):
         raise RuntimeError("SEO BLOCKED: public domain still noindex "
                            "(X-Robots-Tag=" + repr(robots_header) +
