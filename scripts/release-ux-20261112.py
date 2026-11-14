@@ -199,16 +199,28 @@ def check(url, revision, bootstrap):
         if "https://liikkuvakorjaamo.fi" + path not in sitemap:
             raise RuntimeError("SEO sitemap missing " + path)
     print("PASS SEO: sitemap")
-    # Do not accidentally index tagged previews or ship noindex on the live host.
-    probe = urllib.request.Request(url + "/", headers={"Cache-Control": "no-cache"})
+    # Distinct cache-busted request: Firebase Hosting / Cloudflare may retain
+    # an older cached "/" response during the promotion.
+    probe_url = url + "/?seo_release_probe=" + str(time.time_ns())
+    probe = urllib.request.Request(probe_url, headers={"Cache-Control": "no-cache"})
     with urllib.request.urlopen(probe, timeout=35) as response:
         robots_header = response.headers.get("X-Robots-Tag", "").lower()
+        cache_header = response.headers.get("Cache-Control", "")
+        server_header = response.headers.get("Server", "")
+        page = response.read(512 * 1024).decode("utf-8", errors="replace")
     is_live_domain = url.rstrip("/") == DOMAIN
-    if is_live_domain and "noindex" in robots_header:
-        raise RuntimeError("SEO BLOCKED: production X-Robots-Tag still says noindex")
-    if not is_live_domain and "noindex" not in robots_header:
-        raise RuntimeError("SEO BLOCKED: tagged preview lacks X-Robots-Tag noindex")
-    print("PASS SEO: public/preview indexing headers")
+    meta_noindex = bool(__import__("re").search(
+        r'<meta\\s+name=["\\\']robots["\\\']\\s+content=["\\\'][^"\\\']*noindex',
+        page, __import__("re").IGNORECASE))
+    if is_live_domain and ("noindex" in robots_header or meta_noindex):
+        raise RuntimeError("SEO BLOCKED: public domain still noindex "
+                           "(X-Robots-Tag=" + repr(robots_header) +
+                           ", robots meta noindex=" + str(meta_noindex) +
+                           ", cache=" + repr(cache_header) +
+                           ", server=" + repr(server_header) + ")")
+    if not is_live_domain and ("noindex" not in robots_header or not meta_noindex):
+        raise RuntimeError("SEO BLOCKED: preview must have BOTH X-Robots-Tag and robots meta noindex")
+    print("PASS SEO: public/preview indexing headers and meta")
 
     if bootstrap == "0":
         code, _ = request(url + "/lead", method="POST", data=b"language=fi")
@@ -281,6 +293,8 @@ def stage():
         command(["node", "--test", str(ROOT / "tests" / name)])
         print("PASS Node", name)
     before_service = service()
+    if env_value(before_service, "LIIKKUVA_SEO_NOINDEX") == "1":
+        raise RuntimeError("SEO BLOCKED: LIIKKUVA_SEO_NOINDEX=1; remove only this emergency override before staging")
     before = allocation(before_service)
     if len(before) != 1:
         raise RuntimeError("Multiple production revisions: inspect before staging")
@@ -438,6 +452,8 @@ def publish():
     if github_state() != state.get("sha"):
         raise RuntimeError("Git checkout changed since staging")
     now = service()
+    if env_value(now, "LIIKKUVA_SEO_NOINDEX") == "1":
+        raise RuntimeError("SEO BLOCKED: emergency LIIKKUVA_SEO_NOINDEX=1 still active")
     if allocation(now) != state["previous"]:
         raise RuntimeError("Production traffic changed since staging. Do not overwrite it.")
     bootstrap = env_value(now, "LIIKKUVA_BOOTSTRAP")
