@@ -22,6 +22,9 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
+# Cloud Tasks is not available in europe-north1; Cloud Run stays in Finland.
+TASKS_REGION = "europe-west3"  # Frankfurt, Germany (EU)
+
 SERVICE = "liikkuva-preview"
 DATABASE = "liikkuvakorjaamo"
 DOMAIN = "https://liikkuvakorjaamo.fi"
@@ -219,15 +222,15 @@ def main() -> None:
         raise RuntimeError("Firestore native database required")
     migrate_site_settings()
 
-    print("Ensuring separate Cloud Tasks queue exists")
+    print("Ensuring Cloud Tasks queue in", TASKS_REGION, "(Cloud Run remains in", REGION + ")")
     queue = "liikkuva-lead-processing"
     p = subprocess.run(["gcloud", "tasks", "queues", "describe", queue,
-                        "--location=" + REGION, "--project=" + PROJECT],
+                        "--location=" + TASKS_REGION, "--project=" + PROJECT],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if p.returncode:
-        cloud("tasks", "queues", "create", queue, "--location=" + REGION)
+        cloud("tasks", "queues", "create", queue, "--location=" + TASKS_REGION)
     q = json.loads(cloud("tasks", "queues", "describe", queue,
-                         "--location=" + REGION, "--format=json"))
+                         "--location=" + TASKS_REGION, "--format=json"))
     if q.get("state") != "RUNNING":
         raise RuntimeError("Queue not RUNNING; inspect before activation")
 
@@ -254,7 +257,7 @@ def main() -> None:
         "FIRESTORE_REVIEWS_COLLECTION": "liikkuva_reviews",
         "SITE_SETTINGS_COLLECTION": "liikkuva_site_settings",
         "CLOUD_TASKS_PROJECT_ID": PROJECT,
-        "CLOUD_TASKS_LOCATION": REGION,
+        "CLOUD_TASKS_LOCATION": TASKS_REGION,
         "CLOUD_TASKS_QUEUE": queue,
         "INTERNAL_PROCESS_LEAD_URL": worker,
         "GOOGLE_APPS_SCRIPT_URL": url,
