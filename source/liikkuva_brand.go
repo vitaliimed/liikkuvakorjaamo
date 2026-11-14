@@ -105,11 +105,45 @@ func liikkuvaSEOPath(path string) bool {
 	return false
 }
 
-// Index the public domain; keep Cloud Run, Firebase previews and opt-out releases out.
+// The public Host is replaced by Cloud Run's service Host when Firebase Hosting
+// proxies traffic. Firebase supplies the originally requested frontend hostname
+// via X-Fh-Requested-Host (or X-Forwarded-Host). Only the exact Liikkuva
+// backend and exact real domain qualify. Direct/tagged preview URLs remain noindex.
+func liikkuvaPublicHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == liikkuvaDomain || host == "www."+liikkuvaDomain
+}
+
+func liikkuvaBackendHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+		host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" ||
+		strings.HasSuffix(host, "---liikkuva-preview-knrjxcx2bq-lz.a.run.app")
+}
+
+func liikkuvaForwardedPublicHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return liikkuvaPublicHost(host) ||
+		host == "https://"+liikkuvaDomain ||
+		host == "https://www."+liikkuvaDomain
+}
+
+// This function controls *only SEO indexing*, not authentication or CSRF.
 // LIIKKUVA_SEO_NOINDEX=1 is the explicit emergency/staging opt-out.
 func liikkuvaIndexable(r *http.Request) bool {
-	host := strings.ToLower(strings.Split(r.Host, ":")[0])
-	return os.Getenv("LIIKKUVA_SEO_NOINDEX") != "1" && (host == liikkuvaDomain || host == "www."+liikkuvaDomain)
+	if os.Getenv("LIIKKUVA_SEO_NOINDEX") == "1" {
+		return false
+	}
+	if liikkuvaPublicHost(r.Host) {
+		return true
+	}
+	if !liikkuvaBackendHost(r.Host) {
+		return false
+	}
+	// Never infer a frontend hostname from URLs or arbitrary suffix matches.
+	// The proxy header is expected only on requests routed through Hosting.
+	return liikkuvaForwardedPublicHost(r.Header.Get("X-Fh-Requested-Host")) ||
+		liikkuvaForwardedPublicHost(r.Header.Get("X-Forwarded-Host"))
 }
 
 func liikkuvaLandingRobots(r *http.Request) string {
