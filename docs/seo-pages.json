@@ -1,0 +1,107 @@
+[
+  [
+    "auton-korjaus-kotona",
+    "Auton korjaus kotona | Helsinki, Espoo ja Vantaa",
+    "Auton korjaus kotona tai työpaikalla Helsingissä, Espoossa ja Vantaalla. Kerro auton oire ja sijainti. Vahvistamme työn soveltuvuuden ja hinnan ennen käyntiä.",
+    "Auton korjaus kotona ja työpaikalla",
+    "Kun auton vieminen korjaamolle on hankalaa, liikkuva asentaja voi selvittää vian auton luona. Liikkuva Auto Korjaamo tekee diagnostiikkaa ja soveltuvia korjauksia kotipihalla tai työpaikan pysäköintialueella Helsingissä, Espoossa ja Vantaalla. Työ ja saapumisaika sovitaan etukäteen.",
+    [
+      [
+        "Millaisia töitä auton luona voidaan tehdä?",
+        "Akun ja käynnistysjärjestelmän tarkastus, vikakoodien luku sekä pienet sähkö- ja mekaaniset korjaukset voivat onnistua paikan päällä. Soveltuvuus riippuu auton mallista, osan sijainnista, tarvittavista työkaluista ja työskentelytilasta. Kuvaus oireesta auttaa rajaamaan työn ennen lähtöä."
+      ],
+      [
+        "Millainen paikka sopii korjaukseen?",
+        "Kerro, onko auto kotipihalla, kadun varressa vai pysäköintihallissa. Tarvitsemme turvallisen työskentelypaikan ja luvan tehdä työn alueella. Ilmoita porttikoodi, hallin korkeusrajoitus ja muut pääsyyn vaikuttavat asiat. Ahtaassa tai vilkkaassa paikassa kaikkea työtä ei voida tehdä."
+      ],
+      [
+        "Milloin auto tarvitsee korjaamon?",
+        "Nosturia, laajaa purkamista tai erityisiä laitteita vaativa työ voi edellyttää korjaamoa. Sää ja pysäköintipaikan olosuhteet vaikuttavat myös. Jos vikaa ei voi korjata kohteessa, kerromme havainnot ja sovimme seuraavan vaiheen. Käynti ei ole lupaus kaikkien vikojen korjaamisesta samalla kertaa."
+      ],
+      [
+        "Näin pyydät korjausta kotiin",
+        "Lähetä rekisterinumero, tarkka osoite ja oirekuvaus. Kerro myös, käynnistyykö auto ja voiko sitä siirtää. Lisää halutessasi kuva mittariston ilmoituksesta tai näkyvästä viasta. Vahvistamme saatavuuden, hinnan ja suunnitellun työn ennen käyntiä."
+      ]
+    ],
+    [
+      [
+        "Voiko asentajan tilata työpaikalle?",
+        "Kyllä, kun sijainti ja työskentelyolosuhteet sopivat tehtävään. Kerro pysäköintialue ja kulkuohjeet pyynnössä."
+      ],
+      [
+        "Tarkoittaako lomakkeen lähettäminen vahvistettua varausta?",
+        "Ei. Tarkistamme pyynnön ja vahvistamme ajan sekä työn ehdot erikseen."
+      ]
+    ]
+  ],
+  [
+    "auto-ei-kaynnisty",
+    "Auto ei käynnisty? Apua auton luokse | Liikkuva",
+    "Auto ei käynnisty kotipihalla? Käynnistysongelman selvitys Helsingissä, Espoossa ja Vantaalla. Kerro oire, rekisterinumero ja sijainti. Sovitaan tarkistus.",
+    "Auto ei käynnisty – apua auton luokse",
+    "Jos auto ei käynnisty kotona tai työpaikalla, vian selvitys voidaan usein aloittaa auton luona. Liikkuva Auto Korjaamo arvioi käynnistysongelmia Helsingissä, Espoossa ja Vantaalla. Pelkkä käynnistymättömyys ei vielä kerro, mikä osa on viallinen.",
+    [
+      [
+        "Mitä auto tekee käynnistettäessä?",
+        "Kerro, pyörittääkö käynnistin moottoria, kuuluuko vain naksahdus vai pysyykö auto täysin hiljaisena. Mainitse myös, syttyvätkö mittariston valot ja näkyykö ilmoituksia. Nämä havainnot auttavat suunnittelemaan tarkistuksen, mutta eivät yksin varmista vian syytä."
+      ],
+      [
+        "Akku, lataus vai muu käynnistysvika?",
+        "Heikko akku on yksi mahdollinen syy. Ongelma voi liittyä myös liitoksiin, lataukseen, käynnistimeen tai auton ohjausjärjestelmiin. Tarkistukset valitaan oireen ja automallin mukaan. Emme suosittele osan vaihtoa vain yhden oireen perusteella."
+      ],
+      [
+        "Käynnistysapu vai vianmääritys?",
+        "Apuvirta voi auttaa silloin, kun ongelma liittyy akun varaustilaan ja menetelmä sopii autolle. Se ei korjaa esimerkiksi latausvikaa. Kerro, onko auto jo käynnistetty apuvirralla ja toistuiko ongelma. Tarkistamme sopivan toimintatavan ennen työn aloittamista."
+      ],
+      [
+        "Mitä tehdä ennen käyntiä?",
+        "Pidä auton avain saatavilla ja ilmoita, jos ovia tai konepeltiä ei saa auki. Älä jatka toistuvia käynnistysyrityksiä, jos ilmenee poikkeavaa hajua, savua tai muuta vaaraa. Noudata auton käyttöohjetta. Tämä on ajanvarauksella sovittava palvelu; saatavuus vahvistetaan erikseen."
+      ]
+    ],
+    [
+      [
+        "Onko vika aina akussa?",
+        "Ei. Samankaltaisen oireen taustalla voi olla eri vikoja. Tarkistus tehdään havaintojen ja auton tietojen perusteella."
+      ],
+      [
+        "Voitteko tulla heti?",
+        "Kerro sijainti ja toivottu aika. Vahvistamme vapaan ajan erikseen emmekä lupaa ympärivuorokautista päivystystä."
+      ]
+    ]
+  ],
+  [
+    "akun-vaihto",
+    "Auton akun vaihto kotona | Helsinki, Espoo ja Vantaa",
+    "Auton akun tarkastus ja soveltuva akun vaihto kotona tai työpaikalla. Palvelemme Helsingissä, Espoossa ja Vantaalla. Akun sopivuus ja hinta sovitaan ensin.",
+    "Auton akun tarkastus ja vaihto kotona",
+    "Heikosti käynnistyvä auto ei aina tarvitse uutta akkua. Liikkuva Auto Korjaamo tarkistaa akun ja tilanteeseen sopivat liitännät ennen vaihtopäätöstä. Akun vaihto voidaan sopia auton luokse Helsinkiin, Espooseen tai Vantaalle, kun työ soveltuu kohteessa tehtäväksi.",
+    [
+      [
+        "Ensin tarkistus, sitten päätös vaihdosta",
+        "Kerro, milloin ongelma alkoi, onko auto seissyt pitkään ja onko akku vaihdettu äskettäin. Akun varaustila, kunto ja latauksen toiminta ovat eri asioita. Tarkistuksen avulla arvioidaan, riittääkö muu toimenpide vai onko akun vaihtaminen perusteltua."
+      ],
+      [
+        "Mikä akku autoon sopii?",
+        "Rekisterinumero ja automalli auttavat sopivan akun selvittämisessä. Akun tyyppi, koko ja auton varusteet vaikuttavat valintaan. Start-stop-auton tai muun erityisjärjestelmän vaatimukset tarkistetaan ennen varaosan hankintaa. Akun hinta vahvistetaan erikseen."
+      ],
+      [
+        "Onnistuuko vaihto kaikissa autoissa?",
+        "Akun sijainti ja mahdollinen rekisteröinti tai muu mallikohtainen toimenpide vaikuttavat työn toteutukseen. Kerromme ennen käyntiä, voidaanko pyydetty työ tehdä käytettävissä olevilla välineillä. Sivun palvelu koskee auton 12 voltin akkua, ei sähköauton tai hybridin ajoakun vaihtoa."
+      ],
+      [
+        "Paljonko akun vaihto maksaa?",
+        "Kokonaishintaan vaikuttavat käynti, tarvittava tarkistus, vaihtotyö ja akku. Varaosa ei sisälly käyntimaksuun. Pyydä arvio rekisterinumerolla ja osoitteella; sovimme työn sisällön ja hinnan ennen vaihtoa."
+      ]
+    ],
+    [
+      [
+        "Sisältyykö uusi akku käyntimaksuun?",
+        "Ei. Akun ja vaihtotyön hinta sovitaan erikseen auton ja tarvittavan akun perusteella."
+      ],
+      [
+        "Voiko akun vaihtaa pysäköintihallissa?",
+        "Mahdollisuus arvioidaan hallin sääntöjen, kulkuyhteyksien ja työskentelytilan perusteella. Kerro olosuhteet yhteydenoton yhteydessä."
+      ]
+    ]
+  ]
+]
