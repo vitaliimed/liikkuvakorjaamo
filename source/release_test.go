@@ -84,7 +84,7 @@ func TestReviewAliasAndClientStageHelpers(t *testing.T) {
 
 func TestConfirmationEmailContainsRequiredMessage(t *testing.T) {
 	body := buildLeadConfirmationText(Config{SiteURL: "https://liikkuvakorjaamo.fi"}, Lead{Name: "Matti", Language: "fi"})
-	for _, required := range []string{"Kiitos pyynnöstäsi", strconv.Itoa(visitPriceEUR) + " €", "Odota viestiämme"} {
+	for _, required := range []string{"Kiitos pyynnöstäsi", strconv.Itoa(visitPriceEUR) + " €", "Vianmääritys", "sovittuna ajankohtana"} {
 		if !strings.Contains(body, required) {
 			t.Fatalf("confirmation email is missing %q", required)
 		}
