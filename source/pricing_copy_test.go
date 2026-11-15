@@ -79,7 +79,7 @@ func TestPriceCopyDoesNotPromiseRepairAsPartOfVisit(t *testing.T) {
             content.FAQ.Items[0].Answer,
         } {
             copy := strings.ToLower(raw)
-            if !strings.Contains(copy, "erikseen") && !strings.Contains(copy, "in addition") && !strings.Contains(copy, "separately") {
+            if !strings.Contains(copy, "erikseen") && !strings.Contains(copy, "in addition") && !strings.Contains(copy, "separately") && !strings.Contains(copy, "lisäksi") {
                 t.Errorf("%s: diagnostic fee not explicitly separate from visit: %s", lang, raw)
             }
         }
