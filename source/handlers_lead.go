@@ -549,7 +549,7 @@ func successMessageByLanguage(lang string) string {
 	if lang == "fi" {
 		return "Kiitos pyynnöstäsi. Otamme sinuun yhteyttä sopiaksemme käyntiajan. Kun aika on vahvistettu, odota mekaanikkoa ilmoittamassasi paikassa sovittuna ajankohtana."
 	}
-	return fmt.Sprintf("Thank you for your request. The mechanic visit costs €%d. Please wait for our message confirming when the mechanic can leave for your location.", visitPriceEUR)
+	return "Thank you for your request. We will contact you to confirm the visit time. Once agreed, please wait for the mechanic at the location specified in your request."
 }
 
 func saveErrorMessageByLanguage(lang string) string {
