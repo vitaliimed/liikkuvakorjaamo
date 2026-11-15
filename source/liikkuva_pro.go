@@ -82,9 +82,29 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	}
 	return s
 }
+// Replace only whole legacy price tokens, not substrings of other amounts
+// (e.g. a genuine 175 € service must never become 195 € when the visit fee
+// changes). Expand editable price placeholders *after* legacy replacements so
+// the new values cannot be mistaken for old default amounts.
+var liikkuvaLegacyPriceToken = regexp.MustCompile(`\b(?:70|75|50) €|€(?:70|75|50)\b`)
+
 func liikkuvaPriceText(s string, c SiteSettings) string {
 	c = liikkuvaProDefaults(c)
-	return strings.NewReplacer("75 €", fmt.Sprintf("%d €", c.ProVisitEUR), "€75", fmt.Sprintf("€%d", c.ProVisitEUR), "70 €", fmt.Sprintf("%d €", c.ProVisitEUR), "€70", fmt.Sprintf("€%d", c.ProVisitEUR), "50 €", fmt.Sprintf("%d €", c.ProDiagnosticEUR), "€50", fmt.Sprintf("€%d", c.ProDiagnosticEUR), "{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR), "{visit}", strconv.Itoa(c.ProVisitEUR), "{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR)).Replace(s)
+	s = liikkuvaLegacyPriceToken.ReplaceAllStringFunc(s, func(token string) string {
+		price := c.ProVisitEUR
+		if token == "50 €" || token == "€50" {
+			price = c.ProDiagnosticEUR
+		}
+		if strings.HasPrefix(token, "€") {
+			return fmt.Sprintf("€%d", price)
+		}
+		return fmt.Sprintf("%d €", price)
+	})
+	return strings.NewReplacer(
+		"{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR),
+		"{visit}", strconv.Itoa(c.ProVisitEUR),
+		"{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR),
+	).Replace(s)
 }
 func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
