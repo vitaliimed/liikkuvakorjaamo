@@ -5,7 +5,6 @@ Does not read or display secret VALUES, alter traffic, send messages,
 change Firebase rewrites, or create data. Call before any rollout.
 """
 import json
-from email.utils import parseaddr
 import subprocess
 import sys
 from urllib.parse import urlparse
@@ -50,8 +49,18 @@ def getval(env, name):
 
 
 def authorized_mail_from(value):
-    """Require exactly the sender whose domain is authenticated in Brevo."""
-    return parseaddr(value or "")[1].lower() == "service@liikkuvakorjaamo.fi"
+    """Require the entire sender header to match the authenticated Liikkuva address.
+
+    email.utils.parseaddr() is intentionally lenient: it silently repairs invalid
+    text such as an embedded space in a domain. Do not use it as a security gate.
+    """
+    if not isinstance(value, str) or "\\r" in value or "\\n" in value:
+        return False
+    sender = value.strip().casefold()
+    return sender in (
+        "service@liikkuvakorjaamo.fi",
+        "liikkuva auto korjaamo <service@liikkuvakorjaamo.fi>",
+    )
 
 
 def main():
