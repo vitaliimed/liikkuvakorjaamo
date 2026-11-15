@@ -292,6 +292,12 @@ func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
 	if strings.TrimSpace(lead.Email) == "" {
 		return fmt.Errorf("client email is empty")
 	}
+	// Prices are snapshotted when the form is submitted. Never substitute
+	// compiled-in defaults for a missing snapshot: those may be stale after
+	// the owner edits the price in the admin panel.
+	if lead.VisitPriceEUR < 1 || lead.DiagnosticFromEUR < 1 {
+		return fmt.Errorf("confirmation email not sent: saved visit/diagnostic price is missing; check the lead and pricing settings")
+	}
 
 	return sendSMTPMail(
 		cfg,
