@@ -415,10 +415,18 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Обновите страницу кабинета перед сохранением.", http.StatusBadRequest)
 		return
 	}
+	// Prices must be explicit. An empty or malformed field must not silently
+	// revert to a compiled-in price when other admin settings are saved.
+	visitFee, visitErr := strconv.Atoi(strings.TrimSpace(r.FormValue("ProVisitEUR")))
+	diagnosticFee, diagnosticErr := strconv.Atoi(strings.TrimSpace(r.FormValue("ProDiagnosticEUR")))
+	if visitErr != nil || diagnosticErr != nil || visitFee < 1 || visitFee > 2000 || diagnosticFee < 1 || diagnosticFee > 2000 {
+		http.Error(w, "Укажите корректную цену выезда и диагностики (1–2000 €). Настройки не сохранены.", http.StatusBadRequest)
+		return
+	}
 	settings := SiteSettings{
 		Revision:                  revision,
-		ProVisitEUR:               liikkuvaInt(r.FormValue("ProVisitEUR"), 70, 1, 2000),
-		ProDiagnosticEUR:          liikkuvaInt(r.FormValue("ProDiagnosticEUR"), 60, 1, 2000),
+		ProVisitEUR:               visitFee,
+		ProDiagnosticEUR:          diagnosticFee,
 		ProFontSize:               liikkuvaInt(r.FormValue("ProFontSize"), 18, 16, 22),
 		ProAccent:                 strings.TrimSpace(r.FormValue("ProAccent")),
 		ProTheme:                  strings.TrimSpace(r.FormValue("ProTheme")),
