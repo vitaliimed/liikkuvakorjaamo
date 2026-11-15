@@ -141,7 +141,7 @@ def check(url, revision, bootstrap):
             if phrase not in html:
                 raise RuntimeError("Agreed location/time notice missing at "+path+": "+phrase)
         if path == "/":
-            for phrase in ("Mekaanikon käynti", "Vianmääritys ja pienet korjaukset", "käyntimaksun lisäksi"):
+            for phrase in ("Mekaanikon käynti", "Vianmääritys ja pienet korjaukset", "Käyntimaksu kattaa"):
                 if phrase not in html:
                     raise RuntimeError("Finnish pricing explanation missing at "+path+": "+phrase)
         else:
