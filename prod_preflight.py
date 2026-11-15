@@ -5,6 +5,7 @@ Does not read or display secret VALUES, alter traffic, send messages,
 change Firebase rewrites, or create data. Call before any rollout.
 """
 import json
+from email.utils import parseaddr
 import subprocess
 import sys
 from urllib.parse import urlparse
@@ -48,6 +49,11 @@ def getval(env, name):
     return env.get(name, {}).get("value", "")
 
 
+def authorized_mail_from(value):
+    """Require exactly the sender whose domain is authenticated in Brevo."""
+    return parseaddr(value or "")[1].lower() == "service@liikkuvakorjaamo.fi"
+
+
 def main():
     errors = []
     warnings = []
@@ -77,14 +83,12 @@ def main():
     # A typo in MAIL_FROM caused Brevo to accept SMTP data, then reject each
     # transaction as "sender not valid" on 2026-11-15. Validate exact domain.
     # CRM falls back to MAIL_FROM unless CRM_MAIL_FROM is explicitly set.
-    from email.utils import parseaddr
     authorized_mail = "service@liikkuvakorjaamo.fi"
     for name in ("MAIL_FROM", "CRM_MAIL_FROM"):
         raw = getval(env, name)
         if not raw and name == "CRM_MAIL_FROM":
             continue
-        address = parseaddr(raw)[1].lower()
-        if address != authorized_mail:
+        if not authorized_mail_from(raw):
             errors.append(name + " must use the authenticated " +
                           authorized_mail + " sender (avoid misspelled domains)")
         else:
