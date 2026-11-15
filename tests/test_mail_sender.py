@@ -19,6 +19,8 @@ class TestLiikkuvaBrevoSender(unittest.TestCase):
             "service@liikkuvakorjamo.fi",
             "Liikkuva Auto Korjaamo <service@liikkuvakorjamo.fi>",
             "service@liikkuvako rjaamo.fi",
+            "service@liikkuvakorjaamo.fi\\r\\nBcc: hostile@example.com",
+            "service@liikkuvakorjaamo.fi (unexpected comment)",
             "service@autohelp.fi",
             "service@liikkuvakorjaamo.fi.evil.invalid",
             "",
