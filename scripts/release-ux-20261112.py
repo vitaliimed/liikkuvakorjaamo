@@ -23,6 +23,8 @@ BRANCH = "fix/post-launch-ux-crm-20261114"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
 TAG = "postlaunch-ux-preview"
+# Fixed, authenticated Brevo sender. Do not inherit stale typo from production.
+EXPECTED_MAIL_FROM = "Liikkuva Auto Korjaamo <service@liikkuvakorjaamo.fi>"
 STATE_DIR = Path.home() / ".liikkuva-releases"
 STATE_FILE = STATE_DIR / "postlaunch-ux-release.json"
 
@@ -351,7 +353,7 @@ def stage():
           "--region=" + REGION, "--source=" + str(ROOT / "source"),
           "--no-traffic", "--tag=" + TAG,
           "--update-secrets=" + ",".join(k+"="+v+":latest" for k,v in secret_names.items()),
-          "--update-env-vars=SMTP_HOST=smtp-relay.brevo.com,SMTP_PORT=587",
+          "--update-env-vars=SMTP_HOST=smtp-relay.brevo.com,SMTP_PORT=587,MAIL_FROM=" + EXPECTED_MAIL_FROM,
           "--quiet")
     after_service = service()
     if allocation(after_service) != before:
@@ -369,6 +371,14 @@ def stage():
     for name in ("SMTP_USERNAME","SMTP_PASSWORD"):
         if not staged_env.get(name,{}).get("valueFrom",{}).get("secretKeyRef"):
             raise RuntimeError("Staged combined revision lost Brevo secret: "+name)
+    actual_from = staged_env.get("MAIL_FROM", {}).get("value", "")
+    if actual_from != EXPECTED_MAIL_FROM:
+        raise RuntimeError("SMTP sender mismatch on staged revision: expected authenticated "
+                           "service@liikkuvakorjaamo.fi, got unexpected MAIL_FROM")
+    crm_from = staged_env.get("CRM_MAIL_FROM", {}).get("value", "")
+    if crm_from and crm_from != EXPECTED_MAIL_FROM:
+        raise RuntimeError("CRM_MAIL_FROM overrides MAIL_FROM with an unexpected sender")
+    print("PASS: staged MAIL_FROM is exact authenticated Liikkuva sender")
     print("PASS: staged UX/CRM revision retains Brevo secrets")
     state["phase"] = "validated"
     save_json(STATE_FILE, state)
