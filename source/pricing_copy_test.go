@@ -57,6 +57,9 @@ func TestStartingPriceChangeUpdatesWebsiteWithoutOldFee(t *testing.T) {
             }
         }
     }
+    if got := liikkuvaPriceText("175 € / €750 / 150 € / €500 / 75 € / €75 / 50 € / €50", configured); got != "175 € / €750 / 150 € / €500 / 95 € / €95 / 83 € / €83" {
+        t.Fatalf("partial price substitution corrupts unrelated amounts: %s", got)
+    }
     if got := liikkuvaPriceText("75 € / €75 / 50 € / €50 / {diagnostic}", configured); got != "95 € / €95 / 83 € / €83 / 83" {
         t.Fatalf("dynamic pricing mismatch: %s", got)
     }
