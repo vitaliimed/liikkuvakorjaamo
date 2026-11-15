@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html"
 
@@ -285,6 +286,8 @@ func buildCustomEmailHTMLBody(cfg Config, lead Lead, subject, message string) st
 	return buildBrandedActionEmailHTML(cfg, lead, subject, "<p>"+nl2br(html.EscapeString(message))+"</p>", "", "")
 }
 
+var errLeadPriceSnapshotMissing = errors.New("saved visit/diagnostic price is missing")
+
 func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
 	if !mailNotificationsEnabled(cfg) {
 		return fmt.Errorf("mail config is incomplete")
@@ -296,7 +299,7 @@ func sendLeadConfirmationEmail(cfg Config, lead Lead) error {
 	// compiled-in defaults for a missing snapshot: those may be stale after
 	// the owner edits the price in the admin panel.
 	if lead.VisitPriceEUR < 1 || lead.DiagnosticFromEUR < 1 {
-		return fmt.Errorf("confirmation email not sent: saved visit/diagnostic price is missing; check the lead and pricing settings")
+		return fmt.Errorf("confirmation email not sent: %w; check the lead and pricing settings", errLeadPriceSnapshotMissing)
 	}
 
 	return sendSMTPMail(
