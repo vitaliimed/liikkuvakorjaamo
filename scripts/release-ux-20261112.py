@@ -298,6 +298,8 @@ def stage():
     sha = github_state()
     print("SOURCE:", BRANCH, sha)
     print("RUNNING TESTS (no Cloud Run traffic changes)")
+    command(["python3", "-m", "unittest", "discover", "-s", "tests", "-p", "test_mail_sender.py"], cwd=ROOT)
+    print("PASS authenticated sender tests")
     command(["go", "test", "./..."], cwd=ROOT / "source")
     print("PASS Go tests")
     command(["go", "vet", "./..."], cwd=ROOT / "source")
