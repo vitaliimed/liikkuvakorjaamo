@@ -82,6 +82,9 @@ func TestSiteDisplaysMeetAtLocationOnlyAfterTimeConfirmed(t *testing.T) {
             t.Fatal(err)
         }
         body := string(data)
+        if strings.Contains(body, "</li><p class=\"footer-arrival-reminder\">") {
+            t.Errorf("%s: footer arrival notice must be outside the unordered list", path)
+        }
         for _, want := range []string{
             "visit-arrival-note", "footer-arrival-reminder",
             "Once we confirm your appointment", "Kun olemme vahvistaneet käyntiajan",
