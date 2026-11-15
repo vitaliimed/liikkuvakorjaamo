@@ -122,7 +122,7 @@ func landingContentFI() LandingContent {
 		FAQ: FAQContent{
 			Heading: SectionHeading{Kicker: "UKK", Title: "Usein kysytyt kysymykset"},
 			Items: []FAQItem{
-				{Question: fmt.Sprintf("Mitä alkaen %d € mekaanikon käynti sisältää?", visitPriceEUR), Answer: "Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Vianmääritys ja pienet korjaukset maksavat erikseen alkaen {diagnostic} €. Varaosat, lisätyöt ja vaativammat korjaukset sovitaan ja hinnoitellaan ennen työn aloittamista."},
+				{Question: fmt.Sprintf("Mitä mekaanikon käyntimaksuun (alkaen %d €) sisältyy?", visitPriceEUR), Answer: "Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Vianmääritys ja pienet korjaukset maksavat erikseen alkaen {diagnostic} €. Varaosat, lisätyöt ja vaativammat korjaukset sovitaan ja hinnoitellaan ennen työn aloittamista."},
 				{Question: "Missä ja milloin odotan mekaanikkoa?", Answer: "Kun olemme vahvistaneet käyntiajan, odota mekaanikkoa hakemuksessa ilmoittamassasi paikassa sovittuna ajankohtana. Varmista, että autolle on esteetön pääsy."},
 				{Question: "Kuinka nopeasti voitte vastata?", Answer: "Se riippuu työtilanteesta, sijainnista ja viasta. Lähetä pyyntö ja vahvistamme saatavuuden nopeasti."},
 				{Question: "Tuotteko työkalut ja osat?", Answer: "Työkalut kuuluvat palveluun. Sopivat osat riippuvat viasta ja vahvistetaan yhteydenoton aikana."},
@@ -340,7 +340,7 @@ func landingContentEN() LandingContent {
 		FAQ: FAQContent{
 			Heading: SectionHeading{Kicker: "FAQ", Title: "Frequently asked questions"},
 			Items: []FAQItem{
-				{Question: fmt.Sprintf("What does the mechanic visit from €%d include?", visitPriceEUR), Answer: "The visit fee covers the mechanic’s arrival at the agreed location only. Diagnostics and suitable minor repairs start from €{diagnostic}, charged separately. Parts, additional work and complex repairs are quoted before work begins."},
+				{Question: fmt.Sprintf("What does the mechanic visit fee (from €%d) include?", visitPriceEUR), Answer: "The visit fee covers the mechanic’s arrival at the agreed location only. Diagnostics and suitable minor repairs start from €{diagnostic}, charged separately. Parts, additional work and complex repairs are quoted before work begins."},
 				{Question: "Where and when should I wait for the mechanic?", Answer: "Once the appointment is confirmed, please wait at the location specified in your request at the agreed time. Make sure the vehicle is accessible."},
 				{Question: "How fast can you respond?", Answer: "It depends on workload, location and issue type. Send a request and we will confirm availability quickly."},
 				{Question: "Do you bring tools and parts?", Answer: "Tools are included. Suitable parts depend on the issue and are discussed during request review."},
