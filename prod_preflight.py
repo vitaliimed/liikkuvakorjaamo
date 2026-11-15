@@ -54,7 +54,7 @@ def authorized_mail_from(value):
     email.utils.parseaddr() is intentionally lenient: it silently repairs invalid
     text such as an embedded space in a domain. Do not use it as a security gate.
     """
-    if not isinstance(value, str) or "\\r" in value or "\\n" in value:
+    if not isinstance(value, str) or "\r" in value or "\n" in value:
         return False
     sender = value.strip().casefold()
     return sender in (
