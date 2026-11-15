@@ -66,11 +66,39 @@ func TestStartingPriceChangeUpdatesWebsiteWithoutOldFee(t *testing.T) {
 }
 
 func TestPriceCopyDoesNotPromiseRepairAsPartOfVisit(t *testing.T) {
+    // getLandingContent loads the embedded liikkuva-content.json and overwrites
+    // some Go default strings. Test the actual customer-facing content.
     for _, lang := range []string{"fi", "en"} {
         content := getLandingContent(lang)
-        footnote := strings.ToLower(content.Form.VisitPriceFootnote)
-        if !strings.Contains(footnote, "erikseen") && !strings.Contains(footnote, "in addition") {
-            t.Errorf("%s: diagnostic must be explicitly charged separately: %s", lang, footnote)
+        if len(content.Services.Items) < 2 || len(content.FAQ.Items) == 0 || len(content.TrustPanel.Items) < 2 {
+            t.Fatalf("%s: missing price-related content sections", lang)
+        }
+        for _, raw := range []string{
+            content.Form.VisitPriceText,
+            content.Form.VisitPriceFootnote,
+            content.FAQ.Items[0].Answer,
+        } {
+            copy := strings.ToLower(raw)
+            if !strings.Contains(copy, "erikseen") && !strings.Contains(copy, "in addition") && !strings.Contains(copy, "separately") {
+                t.Errorf("%s: diagnostic fee not explicitly separate from visit: %s", lang, raw)
+            }
+        }
+        if !strings.Contains(content.Services.Items[1].Price, "{diagnostic}") ||
+            !strings.Contains(content.TrustPanel.Items[1], "{diagnostic}") {
+            t.Errorf("%s: embedded JSON has hard-coded diagnostic price", lang)
+        }
+        if !strings.Contains(content.FAQ.Items[0].Question, "{visit}") {
+            t.Errorf("%s: embedded FAQ has hard-coded mechanic visit price", lang)
+        }
+        if len(content.Process.Items) < 2 || !strings.Contains(strings.ToLower(content.Process.Items[1].Text), "sovittuna") &&
+            !strings.Contains(strings.ToLower(content.Process.Items[1].Text), "agreed time") {
+            t.Errorf("%s: missing confirmed-time appointment instructions", lang)
+        }
+        for _, raw := range []string{content.Form.VisitPriceText, content.Form.VisitPriceFootnote, content.FAQ.Items[0].Answer} {
+            rendered := liikkuvaPriceText(raw, SiteSettings{ProVisitEUR: 97, ProDiagnosticEUR: 82})
+            if strings.Contains(rendered, "{visit}") || strings.Contains(rendered, "{diagnostic}") {
+                t.Errorf("%s: pricing placeholder not resolved: %s", lang, rendered)
+            }
         }
     }
 }
