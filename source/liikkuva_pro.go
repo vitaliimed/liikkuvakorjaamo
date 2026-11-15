@@ -49,10 +49,19 @@ func liikkuvaLeadFee(l Lead) int {
 	}
 	return visitPriceEUR
 }
+// The quoted starting prices are snapshotted on each lead so follow-up
+// emails keep the values presented when the client submitted the request.
+func liikkuvaLeadDiagnosticFee(l Lead) int {
+	if l.DiagnosticFromEUR > 0 {
+		return l.DiagnosticFromEUR
+	}
+	return 60
+}
+
 func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	s.ProVisitEUR = liikkuvaVisitFee(s)
 	if s.ProDiagnosticEUR < 1 || s.ProDiagnosticEUR > 2000 {
-		s.ProDiagnosticEUR = 50
+		s.ProDiagnosticEUR = 60
 	}
 	if s.ProFontSize < 16 || s.ProFontSize > 22 {
 		s.ProFontSize = 18
@@ -75,7 +84,7 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 }
 func liikkuvaPriceText(s string, c SiteSettings) string {
 	c = liikkuvaProDefaults(c)
-	return strings.NewReplacer("70 €", fmt.Sprintf("%d €", c.ProVisitEUR), "€70", fmt.Sprintf("€%d", c.ProVisitEUR), "50 €", fmt.Sprintf("%d €", c.ProDiagnosticEUR), "€50", fmt.Sprintf("€%d", c.ProDiagnosticEUR), "{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR), "{visit}", strconv.Itoa(c.ProVisitEUR), "{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR)).Replace(s)
+	return strings.NewReplacer("75 €", fmt.Sprintf("%d €", c.ProVisitEUR), "€75", fmt.Sprintf("€%d", c.ProVisitEUR), "70 €", fmt.Sprintf("%d €", c.ProVisitEUR), "€70", fmt.Sprintf("€%d", c.ProVisitEUR), "50 €", fmt.Sprintf("%d €", c.ProDiagnosticEUR), "€50", fmt.Sprintf("€%d", c.ProDiagnosticEUR), "{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR), "{visit}", strconv.Itoa(c.ProVisitEUR), "{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR)).Replace(s)
 }
 func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
