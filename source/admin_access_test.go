@@ -399,7 +399,7 @@ func TestSettingsTwoWindowsCannotOverwriteEachOther(t *testing.T) {
 	renderer, _ := newTemplateRenderer()
 	f.handler = newServer(f.cfg, renderer).Handler
 	cookie := f.login(t, fixtureAdminPassword)
-	values := url.Values{"access_csrf": {fixtureCSRF(cookie)}, "active_tab": {"general"}, "settings_revision": {"0"}, "phone": {"first-window"}}
+	values := url.Values{"access_csrf": {fixtureCSRF(cookie)}, "active_tab": {"general"}, "settings_revision": {"0"}, "phone": {"first-window"}, "ProVisitEUR": {"50"}, "ProDiagnosticEUR": {"50"}}
 	if w := f.request("POST", "/admin/save", values, cookie); w.Code != 303 {
 		t.Fatalf("first save: %d", w.Code)
 	}
