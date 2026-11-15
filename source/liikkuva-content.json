@@ -35,7 +35,7 @@
       "Subtitle": "Kotipiha, työpaikka tai sovittu pysäköintipaikka. Selvitämme vian ja sovimme korjauksesta ennen työn aloittamista — ilman turhaa matkaa korjaamolle.",
       "Badge": "DIAGNOSTIIKKA JA KORJAUS · UUSIMAA",
       "Points": [
-        "Käynti 75 €",
+        "Mekaanikon käynti alk. {visit} € · vain saapuminen",
         "Työt sovitaan etukäteen",
         "Palvelu paikan päällä"
       ],
@@ -74,9 +74,9 @@
         },
         {
           "Title": "Vikakoodit ja vianmääritys",
-          "Text": "Luemme vikakoodit ja vertaamme niitä oireisiin. Saat arvion seuraavasta tarkistuksesta tai korjausvaiheesta.",
+          "Text": "Luemme vikakoodit ja vertaamme niitä oireisiin. Vianmääritys ja tilanteeseen sopiva pieni korjaus veloitetaan erikseen käyntimaksun lisäksi. Vaativammat työt sovitaan etukäteen.",
           "Badge": "DIAGNOSTIIKKA",
-          "Price": "Diagnostiikka alk. 50 € + käynti"
+          "Price": "Vianmääritys ja pienet korjaukset alk. {diagnostic} € + käyntimaksu"
         },
         {
           "Title": "Startti ja lataus",
@@ -118,12 +118,12 @@
         },
         {
           "Title": "Varmistetaan käynnin ehdot",
-          "Text": "Käymme läpi ajan, työskentelypaikan ja hinnan ennen lähtöä.",
+          "Text": "Sovimme käyntiajan ja työn hinnan etukäteen. Odota mekaanikkoa ilmoittamassasi paikassa sovittuna aikana ja varmista pääsy autolle.",
           "Number": "02"
         },
         {
           "Title": "Selvitetään vian syy",
-          "Text": "Asentaja arvioi tarvittavat tarkistukset auton luona. Diagnoosin jälkeen päätetään jatkosta.",
+          "Text": "Mekaanikko selvittää vian syyn auton luona. Vianmääritys ja soveltuva pieni korjaus veloitetaan erikseen käyntimaksun lisäksi.",
           "Number": "03"
         },
         {
@@ -208,8 +208,12 @@
       },
       "Items": [
         {
-          "Question": "Mitä 75 € käyntimaksu sisältää?",
-          "Answer": "75 € käyntimaksu kattaa asentajan saapumisen auton luokse. Diagnostiikka maksaa tarvittaessa lisäksi alkaen 50 €. Varaosat, korjaukset ja muut lisätyöt sovitaan ja veloitetaan erikseen ennen niiden aloittamista."
+          "Question": "Mitä mekaanikon käyntimaksu (alkaen {visit} €) sisältää?",
+          "Answer": "Käyntimaksu kattaa vain mekaanikon saapumisen ilmoitettuun paikkaan. Vianmääritys ja soveltuvat pienet korjaukset maksavat erikseen alkaen {diagnostic} € käyntimaksun lisäksi. Varaosien, vaativampien korjausten ja lisätöiden hinta sovitaan etukäteen."
+        },
+        {
+          "Question": "Missä ja milloin odotan mekaanikkoa?",
+          "Answer": "Lomakkeen lähettäminen ei vielä vahvista käyntiaikaa. Otamme yhteyttä ja sovimme ajan erikseen. Kun aika on vahvistettu, odota mekaanikkoa ilmoittamassasi paikassa sovittuna ajankohtana. Varmista esteetön pääsy autolle."
         },
         {
           "Question": "Kuinka nopeasti voitte vastata?",
@@ -241,8 +245,8 @@
       "Title": "Auto paikallaan. Sinä jatkat päivääsi.",
       "Text": "Kerro ongelma ja sijainti. Tarkistamme saatavuuden, käymme hinnan läpi ja sovimme sopivan ajan.",
       "Items": [
-        "Asentajan käynti 75 €",
-        "Diagnostiikka tarvittaessa alk. 50 €",
+        "Mekaanikon käynti alk. {visit} € · vain saapuminen",
+        "Vianmääritys ja pienet korjaukset alk. {diagnostic} € · maksetaan erikseen",
         "Varaosat ja lisätyöt sovitaan erikseen",
         "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"
       ]
@@ -315,8 +319,8 @@
       "SubmitButton": "Lähetä avunpyyntö",
       "Title": "Miten voimme auttaa?",
       "Intro": "Kerro lyhyesti, mitä autolle tapahtui ja missä se on. Otamme yhteyttä ja sovimme käynnistä.",
-      "VisitPriceText": "Asentajan saapuminen 75 €. Diagnostiikka tarvittaessa alk. 50 €. Muut työt ja varaosat sovitaan erikseen.",
-      "VisitPriceFootnote": "Lomakkeen lähettäminen on maksutonta. Vahvistamme ajan ja sovitun työn ennen käyntiä.",
+      "VisitPriceText": "Mekaanikon käynti alkaen {visit} € kattaa vain saapumisen. Vianmääritys ja pienet korjaukset alkaen {diagnostic} € veloitetaan käyntimaksun lisäksi. Varaosat ja laajemmat työt sovitaan erikseen.",
+      "VisitPriceFootnote": "Lomakkeen lähettäminen on maksutonta. Käyntimaksu kattaa vain saapumisen, ja vianmääritys sekä pienet korjaukset veloitetaan erikseen käyntimaksun lisäksi. Vahvistamme ajan ennen käyntiä. Odota mekaanikkoa ilmoittamassasi paikassa vasta sovittuna ajankohtana.",
       "UseLocationButton": "Käytä sijaintiani",
       "PickMapButton": "Valitse piste kartalta",
       "UploadButtonText": "Lisää kuvat",
@@ -328,12 +332,12 @@
     },
     "Stats": [
       {
-        "Title": "Käynti 75 €",
-        "Text": "Asentajan saapuminen auton luokse"
+        "Title": "Mekaanikon käynti alk. {visit} €",
+        "Text": "Vain mekaanikon saapuminen auton luokse"
       },
       {
-        "Title": "Diagnostiikka alk. 50 €",
-        "Text": "Vain tarvittaessa"
+        "Title": "Vianmääritys ja pienet korjaukset alk. {diagnostic} €",
+        "Text": "Veloitetaan erikseen käyntimaksun lisäksi"
       },
       {
         "Title": "Työ sovitaan",
@@ -381,7 +385,7 @@
       "Subtitle": "Your driveway, workplace or an agreed parking spot. We investigate the fault and agree the repair before work starts — saving a trip to the workshop.",
       "Badge": "MOBILE DIAGNOSTICS & REPAIR · UUSIMAA",
       "Points": [
-        "Visit €75",
+        "Mechanic visit from €{visit} · arrival only",
         "Work agreed in advance",
         "Service at your location"
       ],
@@ -420,9 +424,9 @@
         },
         {
           "Title": "Fault codes and diagnostics",
-          "Text": "We read fault codes alongside the symptoms. You receive an assessment of the next check or repair step.",
+          "Text": "We read fault codes alongside symptoms. Diagnostics and a suitable minor repair are charged separately in addition to the visit fee. More complex work is agreed in advance.",
           "Badge": "DIAGNOSTICS",
-          "Price": "Diagnostics from €50 + visit"
+          "Price": "Diagnostics and minor repairs from €{diagnostic} + visit"
         },
         {
           "Title": "Starter and charging",
@@ -464,12 +468,12 @@
         },
         {
           "Title": "Confirm the visit",
-          "Text": "We agree the appointment, working space and price before travelling.",
+          "Text": "We agree the appointment and price before travelling. Wait for the mechanic at the location you provided at the agreed time, and ensure access to the vehicle.",
           "Number": "02"
         },
         {
           "Title": "Investigate the cause",
-          "Text": "The mechanic assesses the checks needed at the vehicle. The findings guide the next step.",
+          "Text": "The mechanic assesses the fault at the vehicle. Diagnostics and suitable minor repairs are charged separately in addition to the visit fee.",
           "Number": "03"
         },
         {
@@ -554,8 +558,12 @@
       },
       "Items": [
         {
-          "Question": "What does the €75 visit fee include?",
-          "Answer": "The €75 visit fee covers the mechanic's travel to your car. Diagnostics, if needed, cost from an additional €50. Parts, repairs and other work are agreed and charged separately before they begin."
+          "Question": "What does the mechanic visit fee (from €{visit}) include?",
+          "Answer": "The visit fee only covers the mechanic's arrival at the location you provided. Diagnostics and suitable minor repairs start from €{diagnostic} and are charged separately in addition to the visit fee. Parts, complex repairs and additional work are agreed and priced before work begins."
+        },
+        {
+          "Question": "Where and when should I wait for the mechanic?",
+          "Answer": "Sending a request does not confirm an appointment. We will contact you to agree on a time. Once the appointment is confirmed, please wait for the mechanic at the location you provided at the agreed time and make sure the vehicle is accessible."
         },
         {
           "Question": "How fast can you respond?",
@@ -587,8 +595,8 @@
       "Title": "Your car stays put. Your day moves on.",
       "Text": "Tell us the problem and location. We check availability, explain the pricing and arrange a suitable time.",
       "Items": [
-        "Mechanic visit €75",
-        "Diagnostics, if needed, from €50",
+        "Mechanic visit from €{visit} · arrival only",
+        "Diagnostics and minor repairs from €{diagnostic} · charged separately",
         "Parts and additional work agreed separately",
         "Finnish, English, Russian and Ukrainian service"
       ]
@@ -661,8 +669,8 @@
       "SubmitButton": "Send help request",
       "Title": "How can we help?",
       "Intro": "Tell us briefly what happened and where your car is. We will contact you to arrange a visit.",
-      "VisitPriceText": "Mechanic visit €75. Diagnostics, if needed, from €50. Other work and spare parts are agreed separately.",
-      "VisitPriceFootnote": "Sending a request is free. We confirm the time and agreed work before the visit.",
+      "VisitPriceText": "Mechanic visit from €{visit} covers arrival only. Diagnostics and minor repairs from €{diagnostic} are charged separately in addition to the visit fee. Parts and complex work are agreed in advance.",
+      "VisitPriceFootnote": "Sending a request is free. The visit fee covers arrival only; diagnostics and minor repairs are charged separately in addition to the visit fee. We will confirm the appointment time before the visit. Wait for the mechanic at your specified location only at the agreed time.",
       "UseLocationButton": "Use my location",
       "PickMapButton": "Pick point on map",
       "UploadButtonText": "Upload photos",
@@ -674,12 +682,12 @@
     },
     "Stats": [
       {
-        "Title": "Visit €75",
-        "Text": "Mechanic travel to your car"
+        "Title": "Mechanic visit from €{visit}",
+        "Text": "Arrival at your vehicle only"
       },
       {
-        "Title": "Diagnostics from €50",
-        "Text": "Only if needed"
+        "Title": "Diagnostics and minor repairs from €{diagnostic}",
+        "Text": "Charged separately in addition to the visit fee"
       },
       {
         "Title": "Work agreed",
