@@ -74,6 +74,21 @@ def main():
         print(name + ":", state)
         if state == "MISSING":
             errors.append("SMTP: " + name)
+    # A typo in MAIL_FROM caused Brevo to accept SMTP data, then reject each
+    # transaction as "sender not valid" on 2026-11-15. Validate exact domain.
+    # CRM falls back to MAIL_FROM unless CRM_MAIL_FROM is explicitly set.
+    from email.utils import parseaddr
+    authorized_mail = "service@liikkuvakorjaamo.fi"
+    for name in ("MAIL_FROM", "CRM_MAIL_FROM"):
+        raw = getval(env, name)
+        if not raw and name == "CRM_MAIL_FROM":
+            continue
+        address = parseaddr(raw)[1].lower()
+        if address != authorized_mail:
+            errors.append(name + " must use the authenticated " +
+                          authorized_mail + " sender (avoid misspelled domains)")
+        else:
+            print(name + ": verified sender domain")
     if getval(env, "LIIKKUVA_BOOTSTRAP") == "1":
         errors.append("bootstrap currently blocks POST /lead on this template")
     if getval(env, "SITE_URL") != "https://liikkuvakorjaamo.fi":
