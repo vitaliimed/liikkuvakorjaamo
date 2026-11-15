@@ -27,6 +27,7 @@ SERVICE="liikkuva-preview"
 REGION="europe-north1"
 TAG="brevo-smtp-preview"
 DOMAIN="https://liikkuvakorjaamo.fi"
+EXPECTED_MAIL_FROM="Liikkuva Auto Korjaamo <service@liikkuvakorjaamo.fi>"
 DIR=Path.home()/".liikkuva-releases"
 STATE=DIR/"brevo-no-build.json"
 SECRETS={"SMTP_USERNAME":"liikkuva-brevo-smtp-login",
@@ -160,7 +161,7 @@ def stage():
     cloud("run","deploy",SERVICE,"--region="+REGION,"--image="+image,
           "--no-traffic","--tag="+TAG,
           "--update-secrets="+",".join(k+"="+v+":latest" for k,v in SECRETS.items()),
-          "--update-env-vars=SMTP_HOST=smtp-relay.brevo.com,SMTP_PORT=587",
+          "--update-env-vars=SMTP_HOST=smtp-relay.brevo.com,SMTP_PORT=587,MAIL_FROM="+EXPECTED_MAIL_FROM,
           "--quiet")
     updated=service()
     if shares(updated)!=prev:raise RuntimeError("Production traffic changed unexpectedly")
@@ -175,7 +176,8 @@ def stage():
         raise RuntimeError("Runtime service account changed")
     expected={**vars(rev),
               "SMTP_HOST":{"value":"smtp-relay.brevo.com"},
-              "SMTP_PORT":{"value":"587"}}
+              "SMTP_PORT":{"value":"587"},
+               "MAIL_FROM":{"value":EXPECTED_MAIL_FROM}}
     actual=vars(new)
     for key,value in expected.items():
         if key not in SECRETS and actual.get(key)!=value:
