@@ -298,6 +298,13 @@ func (h *PageHandler) serveThankYou(w http.ResponseWriter, r *http.Request, lang
 		ThankYouText:                 liikkuvaPriceText(texts["THANKYOU_TEXT"], settings),
 		ThankYouButton:               texts["THANKYOU_BUTTON"],
 		ThankYouButtonURL:            texts["THANKYOU_BUTTON_URL"],
+		InstagramURL:                 thankYouInstagramURL(settings.InstagramURL),
+		InstagramTitle:               texts["INSTAGRAM_TITLE"],
+		InstagramText:                texts["INSTAGRAM_TEXT"],
+		InstagramButton:              texts["INSTAGRAM_BUTTON"],
+		EmailTitle:                   texts["EMAIL_TITLE"],
+		EmailText:                    texts["EMAIL_TEXT"],
+		ContactEmail:                 thankYouContactEmail(settings.ServiceEmail),
 		VisitPriceEUR:                liikkuvaVisitFee(settings),
 	}
 

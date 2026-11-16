@@ -1,0 +1,71 @@
+/* Thank-you page: native Liikkuva green/orange, no external tracking or icons. */
+.thankyou-connect-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:30px;
+  padding-top:25px;
+  border-top:1px solid #e3e9e2;
+}
+.thankyou-connect-card {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  padding:20px;
+  background:#f5f7f4;
+  border:1px solid #e1e7de;
+  border-radius:13px;
+  color:#23372b;
+}
+.thankyou-connect-card:only-child{grid-column:1/-1}
+.thankyou-connect-icon {
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border-radius:11px;
+  background:#fff2e8;
+  color:#cc5408;
+  margin-bottom:14px;
+}
+.thankyou-connect-icon svg{width:23px;height:23px}
+.thankyou-connect-card h2{
+  font-size:19px;
+  line-height:1.25;
+  letter-spacing:-.025em;
+  color:#23372b;
+  margin:0 0 9px;
+}
+.thankyou-connect-card p{
+  font-size:13px;
+  line-height:1.6;
+  color:#5b6b60;
+  margin:0 0 15px;
+}
+.thankyou-connect-action {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:auto;
+  max-width:100%;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.5;
+  color:#b74703;
+  text-decoration:underline;
+  text-decoration-thickness:1px;
+  text-underline-offset:4px;
+  overflow-wrap:anywhere;
+}
+.thankyou-connect-action:hover{color:#23372b}
+.thankyou-connect-action:focus-visible{
+  outline:3px solid #f97315;
+  outline-offset:4px;
+  border-radius:3px;
+}
+@media(max-width:640px){
+  .thankyou-connect-grid{grid-template-columns:1fr;gap:12px;margin-top:24px;padding-top:20px}
+  .thankyou-connect-card{padding:18px}
+  .thankyou-connect-card h2{font-size:18px}
+}

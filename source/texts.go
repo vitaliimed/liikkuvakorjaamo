@@ -1048,6 +1048,11 @@ func applyThankYouSettingsToTexts(texts map[string]string, settings SiteSettings
 		applyMapOverride(out, "THANKYOU_TEXT", settings.ThankYouTextFI)
 		applyMapOverride(out, "THANKYOU_BUTTON", settings.ThankYouButtonFI)
 		applyMapOverride(out, "THANKYOU_BUTTON_URL", settings.ThankYouButtonURLFI)
+		applyMapOverride(out, "INSTAGRAM_TITLE", settings.ThankYouInstagramTitleFI)
+		applyMapOverride(out, "INSTAGRAM_TEXT", settings.ThankYouInstagramTextFI)
+		applyMapOverride(out, "INSTAGRAM_BUTTON", settings.ThankYouInstagramButtonFI)
+		applyMapOverride(out, "EMAIL_TITLE", settings.ThankYouEmailTitleFI)
+		applyMapOverride(out, "EMAIL_TEXT", settings.ThankYouEmailTextFI)
 	} else {
 		applyMapOverride(out, "PAGE_TITLE", settings.ThankYouSEOTitleEN)
 		applyMapOverride(out, "META_DESCRIPTION", settings.ThankYouSEODescriptionEN)
@@ -1055,6 +1060,11 @@ func applyThankYouSettingsToTexts(texts map[string]string, settings SiteSettings
 		applyMapOverride(out, "THANKYOU_TEXT", settings.ThankYouTextEN)
 		applyMapOverride(out, "THANKYOU_BUTTON", settings.ThankYouButtonEN)
 		applyMapOverride(out, "THANKYOU_BUTTON_URL", settings.ThankYouButtonURLEN)
+		applyMapOverride(out, "INSTAGRAM_TITLE", settings.ThankYouInstagramTitleEN)
+		applyMapOverride(out, "INSTAGRAM_TEXT", settings.ThankYouInstagramTextEN)
+		applyMapOverride(out, "INSTAGRAM_BUTTON", settings.ThankYouInstagramButtonEN)
+		applyMapOverride(out, "EMAIL_TITLE", settings.ThankYouEmailTitleEN)
+		applyMapOverride(out, "EMAIL_TEXT", settings.ThankYouEmailTextEN)
 	}
 
 	applyMapOverride(out, "ROBOTS_META", settings.ThankYouRobotsMeta)
@@ -1127,6 +1137,11 @@ func getThankYouTexts(lang string) map[string]string {
 			"THANKYOU_TEXT":       "Olemme vastaanottaneet pyyntösi. Mekaanikon käynti alkaen {visit} € sisältää vain saapumisen. Vianmääritys ja pienet korjaukset alkaen {diagnostic} € veloitetaan erikseen. Vahvistamme ajan ennen käyntiä. Odota mekaanikkoa ilmoittamassasi paikassa sovittuna aikana.",
 			"THANKYOU_BUTTON":     "Takaisin etusivulle",
 			"THANKYOU_BUTTON_URL": "/",
+			"INSTAGRAM_TITLE": "Seuraa meitä Instagramissa",
+			"INSTAGRAM_TEXT": "Jaamme hyödyllisiä autovinkkejä, esimerkkejä korjauksista ja ajankohtaisia kuulumisia.",
+			"INSTAGRAM_BUTTON": "Avaa Instagram",
+			"EMAIL_TITLE": "Ota yhteyttä sähköpostitse",
+			"EMAIL_TEXT": "Kysyttävää? Voit kirjoittaa meille suoraan palveluosoitteeseemme.",
 		}
 	}
 
@@ -1139,6 +1154,11 @@ func getThankYouTexts(lang string) map[string]string {
 		"THANKYOU_TEXT":       "We have received your request. The mechanic visit from €{visit} covers arrival only. Diagnostics and minor repairs from €{diagnostic} are charged separately. We will confirm the appointment time. Please wait for the mechanic at your specified location at the agreed time.",
 		"THANKYOU_BUTTON":     "Back to homepage",
 		"THANKYOU_BUTTON_URL": "/en",
+		"INSTAGRAM_TITLE": "Follow us on Instagram",
+		"INSTAGRAM_TEXT": "We share helpful car care tips, examples of repairs and updates from our team.",
+		"INSTAGRAM_BUTTON": "Open Instagram",
+		"EMAIL_TITLE": "Contact us by email",
+		"EMAIL_TEXT": "Have a question? You can write directly to our service team.",
 	}
 }
 

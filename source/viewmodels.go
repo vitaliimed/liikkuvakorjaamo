@@ -371,6 +371,13 @@ type ThankYouPageData struct {
 	ThankYouText      string
 	ThankYouButton    string
 	ThankYouButtonURL string
+	InstagramURL      string
+	InstagramTitle    string
+	InstagramText     string
+	InstagramButton   string
+	EmailTitle        string
+	EmailText         string
+	ContactEmail      string
 	VisitPriceEUR     int
 }
 
@@ -741,6 +748,16 @@ type SiteSettings struct {
 	ThankYouButtonEN         string
 	ThankYouButtonURLFI      string
 	ThankYouButtonURLEN      string
+	ThankYouInstagramTitleFI string
+	ThankYouInstagramTitleEN string
+	ThankYouInstagramTextFI string
+	ThankYouInstagramTextEN string
+	ThankYouInstagramButtonFI string
+	ThankYouInstagramButtonEN string
+	ThankYouEmailTitleFI string
+	ThankYouEmailTitleEN string
+	ThankYouEmailTextFI string
+	ThankYouEmailTextEN string
 
 	PrivacySEOTitleFI       string
 	PrivacySEOTitleEN       string
