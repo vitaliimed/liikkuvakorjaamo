@@ -22,20 +22,82 @@ type PriceBook struct {
 	Revision int64    `json:"revision"`
 }
 
+// Liikkuva visit and diagnostic fees are owned by the landing admin panel.
+// Other CRM tariffs (including AutoHelp) remain separately editable.
+const defaultLiikkuvaVisitCents int64 = 7500
+const defaultLiikkuvaDiagnosticCents int64 = 6000
+
 func DefaultPriceBook() PriceBook {
-	return PriceBook{Items: []Tariff{{"liikkuva", "visit", "Выезд", 7000, "EUR", true, false}, {"liikkuva", "diagnostics", "Диагностика", 5000, "EUR", true, true}, {"autohelp", "visit", "Выезд", 5000, "EUR", true, false}, {"autohelp", "diagnostics", "Диагностика", 0, "EUR", false, false}}}
+	return PriceBook{Items: []Tariff{{"liikkuva", "visit", "Выезд", defaultLiikkuvaVisitCents, "EUR", true, false}, {"liikkuva", "diagnostics", "Диагностика", defaultLiikkuvaDiagnosticCents, "EUR", true, true}, {"autohelp", "visit", "Выезд", 5000, "EUR", true, false}, {"autohelp", "diagnostics", "Диагностика", 0, "EUR", false, false}}}
 }
+
+// The same Firestore document is read by the public site and the landing admin.
+// Missing settings retain the same safe defaults as the Go landing app.
+func loadSitePriceCents(ctx context.Context, db *firestore.Client) (int64, int64, error) {
+	visit, diagnostics := defaultLiikkuvaVisitCents, defaultLiikkuvaDiagnosticCents
+	d, err := db.Collection("site_settings").Doc("landing").Get(ctx)
+	if status.Code(err) == codes.NotFound {
+		return visit, diagnostics, nil
+	}
+	if err != nil {
+		return 0, 0, err
+	}
+	var settings struct {
+		ProVisitEUR int
+		ProDiagnosticEUR int
+	}
+	if err := d.DataTo(&settings); err != nil {
+		return 0, 0, err
+	}
+	if settings.ProVisitEUR >= 1 && settings.ProVisitEUR <= 2000 {
+		visit = int64(settings.ProVisitEUR) * 100
+	}
+	if settings.ProDiagnosticEUR >= 1 && settings.ProDiagnosticEUR <= 2000 {
+		diagnostics = int64(settings.ProDiagnosticEUR) * 100
+	}
+	return visit, diagnostics, nil
+}
+
+func applySiteTariffs(b PriceBook, visit, diagnostic int64) PriceBook {
+	foundVisit, foundDiagnostic := false, false
+	for i := range b.Items {
+		p := &b.Items[i]
+		if p.Brand != "liikkuva" {
+			continue
+		}
+		switch p.Service {
+		case "visit":
+			p.Cents, p.Currency, p.Active, p.Minimum = visit, "EUR", true, false
+			foundVisit = true
+		case "diagnostics":
+			p.Cents, p.Currency, p.Active, p.Minimum = diagnostic, "EUR", true, true
+			foundDiagnostic = true
+		}
+	}
+	if !foundVisit {
+		b.Items = append(b.Items, Tariff{Brand:"liikkuva", Service:"visit", Title:"Выезд", Cents:visit, Currency:"EUR", Active:true})
+	}
+	if !foundDiagnostic {
+		b.Items = append(b.Items, Tariff{Brand:"liikkuva", Service:"diagnostics", Title:"Диагностика", Cents:diagnostic, Currency:"EUR", Active:true, Minimum:true})
+	}
+	return b
+}
+
 func loadPriceBook(ctx context.Context, db *firestore.Client) (PriceBook, error) {
-	d, e := db.Collection("crm_settings").Doc("tariffs").Get(ctx)
-	if status.Code(e) == codes.NotFound {
-		return DefaultPriceBook(), nil
-	}
-	if e != nil {
-		return PriceBook{}, e
-	}
+	d, err := db.Collection("crm_settings").Doc("tariffs").Get(ctx)
 	var b PriceBook
-	e = d.DataTo(&b)
-	return b, e
+	if status.Code(err) == codes.NotFound {
+		b = DefaultPriceBook()
+	} else if err != nil {
+		return PriceBook{}, err
+	} else if err := d.DataTo(&b); err != nil {
+		return PriceBook{}, err
+	}
+	visit, diagnostic, err := loadSitePriceCents(ctx, db)
+	if err != nil {
+		return PriceBook{}, err
+	}
+	return applySiteTariffs(b, visit, diagnostic), nil
 }
 func applyPrices(j *Job, b PriceBook) {
 	j.PricingSnapshot = nil
@@ -79,6 +141,18 @@ func (s *Server) tariffs(w http.ResponseWriter, r *http.Request, u User) {
 	if e := decode(w, r, &b); e != nil {
 		fail(w, 400, e.Error())
 		return
+	}
+	// Reject attempts to override the two landing-controlled fees from CRM.
+	visitFee, diagnosticFee, err := loadSitePriceCents(r.Context(), s.DB)
+	if err != nil {
+		fail(w, 503, "Не удалось прочитать цены сайта")
+		return
+	}
+	for _, p := range b.Items {
+		if p.Brand == "liikkuva" && ((p.Service == "visit" && p.Cents != visitFee) || (p.Service == "diagnostics" && p.Cents != diagnosticFee)) {
+			fail(w, 409, "Цена выезда и диагностики Liikkuva изменяется только через /admin?tab=general. Обновите тарифы CRM.")
+			return
+		}
 	}
 	seen := map[string]bool{}
 	if len(b.Items) > 100 {
