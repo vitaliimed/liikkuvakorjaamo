@@ -144,7 +144,7 @@ func NewJob(id, plate, name, phone, address, description, brand, language string
 		language = "fi"
 	}
 	now := time.Now().UTC()
-	j := Job{Area: InferArea(address), ID: id, Vehicle: "FI-" + p, Plate: p, Name: name, Phone: phone, Address: address, Description: description, Brand: brand, Language: language, Status: "new", Revision: 1, Created: now, Updated: now, Photos: []Photo{}, Proposal: Proposal{VisitCents: 5000, WorkCents: 7000, Payment: "cash"}}
+	j := Job{Area: InferArea(address), ID: id, Vehicle: "FI-" + p, Plate: p, Name: name, Phone: phone, Address: address, Description: description, Brand: brand, Language: language, Status: "new", Revision: 1, Created: now, Updated: now, Photos: []Photo{}, Proposal: Proposal{Payment: "cash"}}
 	applyPrices(&j, DefaultPriceBook())
 	return j, nil
 }
