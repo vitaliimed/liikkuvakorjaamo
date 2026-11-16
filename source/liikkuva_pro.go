@@ -88,6 +88,18 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 // the new values cannot be mistaken for old default amounts.
 var liikkuvaLegacyPriceToken = regexp.MustCompile(`\b(?:70|75|50) €|€(?:70|75|50)\b`)
 
+// Render explicit price placeholders in admin-authored emails and copy.
+// Free-form quoted monetary amounts are left untouched: €90 in a customer
+// estimate could be an agreed parts price, not a generic visit fee.
+func liikkuvaPricePlaceholders(s string, c SiteSettings) string {
+	c = liikkuvaProDefaults(c)
+	return strings.NewReplacer(
+		"{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR),
+		"{visit}", strconv.Itoa(c.ProVisitEUR),
+		"{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR),
+	).Replace(s)
+}
+
 func liikkuvaPriceText(s string, c SiteSettings) string {
 	c = liikkuvaProDefaults(c)
 	s = liikkuvaLegacyPriceToken.ReplaceAllStringFunc(s, func(token string) string {
@@ -100,11 +112,7 @@ func liikkuvaPriceText(s string, c SiteSettings) string {
 		}
 		return fmt.Sprintf("%d €", price)
 	})
-	return strings.NewReplacer(
-		"{total}", strconv.Itoa(c.ProVisitEUR+c.ProDiagnosticEUR),
-		"{visit}", strconv.Itoa(c.ProVisitEUR),
-		"{diagnostic}", strconv.Itoa(c.ProDiagnosticEUR),
-	).Replace(s)
+	return liikkuvaPricePlaceholders(s, c)
 }
 func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
