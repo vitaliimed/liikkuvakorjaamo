@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"strings"
-)
+import "strings"
 
 func getLandingTexts(lang string) map[string]string {
 	content := getLandingContent(lang)
