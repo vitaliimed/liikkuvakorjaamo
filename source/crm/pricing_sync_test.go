@@ -33,6 +33,12 @@ func TestSiteAdminOverridesLiikkuvaPriceBookOnly(t *testing.T) {
 	}
 }
 
+func TestCRMEmailTokensUseCurrentLandingPrices(t *testing.T) {
+	got := crmPricePlaceholders("Käynti {visit} €, diagnostiikka {diagnostic} €, yhteensä {total} €. Osat 75 €.", 5000, 6500)
+	want := "Käynti 50 €, diagnostiikka 65 €, yhteensä 115 €. Osat 75 €."
+	if got != want { t.Fatalf("unexpected email price template: %q", got) }
+}
+
 func TestSiteTariffsRecreateMissingStandardServices(t *testing.T) {
 	book := applySiteTariffs(PriceBook{}, 5000, 5000)
 	if len(book.Items) != 2 { t.Fatalf("need both site-owned tariffs: %+v", book.Items) }
