@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"net/url"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -97,5 +99,48 @@ func TestThankYouHidesInvalidInstagramAndStillShowsEmail(t *testing.T) {
 	}
 	if !strings.Contains(body, "mailto:service@liikkuvakorjaamo.fi") {
 		t.Fatal("canonical fallback contact email not rendered")
+	}
+}
+
+func TestAdminUpdatesThankYouCopyUsingSingleContactSettings(t *testing.T) {
+	f := newAccessFixture(t, fixtureAdminPassword)
+	store := &memorySettingsStore{}
+	f.cfg.SettingsStore = store
+	renderer, err := newTemplateRenderer()
+	if err != nil { t.Fatal(err) }
+	f.handler = newServer(f.cfg, renderer).Handler
+	cookie := f.login(t, fixtureAdminPassword)
+	values := url.Values{
+		"access_csrf": {fixtureCSRF(cookie)},
+		"settings_revision": {"0"},
+		"active_tab": {"thankyou"},
+		"ProVisitEUR": {"50"},
+		"ProDiagnosticEUR": {"65"},
+		"service_email": {"service@liikkuvakorjaamo.fi"},
+		"instagram_url": {"https://www.instagram.com/liikkuva.example/"},
+		"thankyou_instagram_title_fi": {"Seuraa huoltotöitämme"},
+		"thankyou_instagram_text_fi": {"Uusia korjausvinkkejä"},
+		"thankyou_instagram_button_fi": {"Katso Instagram"},
+		"thankyou_email_title_fi": {"Sähköpostipalvelu"},
+		"thankyou_email_text_fi": {"Lähetä viesti meille"},
+	}
+	if w := f.request(http.MethodPost, "/admin/save", values, cookie); w.Code != http.StatusSeeOther {
+		t.Fatalf("admin thank-you save failed: HTTP %d (%s)", w.Code, w.Body.String())
+	}
+	saved, err := store.Load(context.Background())
+	if err != nil { t.Fatal(err) }
+	if saved.InstagramURL != "https://www.instagram.com/liikkuva.example/" ||
+		saved.ServiceEmail != "service@liikkuvakorjaamo.fi" ||
+		saved.ThankYouInstagramTitleFI != "Seuraa huoltotöitämme" ||
+		saved.ThankYouInstagramTextFI != "Uusia korjausvinkkejä" ||
+		saved.ThankYouInstagramButtonFI != "Katso Instagram" ||
+		saved.ThankYouEmailTitleFI != "Sähköpostipalvelu" ||
+		saved.ThankYouEmailTextFI != "Lähetä viesti meille" {
+		t.Fatalf("thank-you settings did not persist: %+v", saved)
+	}
+	w := f.request(http.MethodGet, "/thank-you-fi", nil, nil)
+	if w.Code != http.StatusOK { t.Fatalf("thank-you response: %d", w.Code) }
+	for _, marker := range []string{"Seuraa huoltotöitämme", "Uusia korjausvinkkejä", "Katso Instagram", "Sähköpostipalvelu", "Lähetä viesti meille", "mailto:service@liikkuvakorjaamo.fi"} {
+		if !strings.Contains(w.Body.String(), marker) { t.Errorf("missing saved content %q", marker) }
 	}
 }
