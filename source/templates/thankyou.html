@@ -105,5 +105,35 @@
   {{end}}
   {{end}}
 
-  <meta http-equiv="refresh" content="60;url={{if eq .Lang "fi"}}/{{else}}/en{{end}}">
-<script src="/static/js/surface.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/pro.css?v=20261112"><script src="/static/js/events.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/brand.css?v=20261112"></head>{{if eq .Lang "en"}}<body><header class="subpage-header"><div class="container"><a href="/en" class="brand"><img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288"></a><a href="/en" class="text-link">Homepage ↗</a></div></header><main class="subpage-main"><div class="container"><div class="subpage-card"><div class="success-mark">✓</div><h1>{{.ThankYouTitle}}</h1><p>{{.ThankYouText}}</p><a class="btn btn-orange" href="{{.ThankYouButtonURL}}">{{.ThankYouButton}}</a><div class="thankyou-contacts"></div><p class="return-countdown">Returning to the homepage in <span id="thankyouCountdown">60</span> s.</p></div></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=en">Privacy</a></footer><script src="/static/js/thankyou.js?v=20261112" defer></script>{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{else}}<body><header class="subpage-header"><div class="container"><a href="/" class="brand"><img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288"></a><a href="/" class="text-link">Etusivu ↗</a></div></header><main class="subpage-main"><div class="container"><div class="subpage-card"><div class="success-mark">✓</div><h1>{{.ThankYouTitle}}</h1><p>{{.ThankYouText}}</p><a class="btn btn-orange" href="{{.ThankYouButtonURL}}">{{.ThankYouButton}}</a><div class="thankyou-contacts"></div><p class="return-countdown">Palaat etusivulle <span id="thankyouCountdown">60</span> s.</p></div></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=fi">Tietosuoja</a></footer><script src="/static/js/thankyou.js?v=20261112" defer></script>{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{end}}</html>
+
+<script src="/static/js/surface.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/pro.css?v=20261112"><script src="/static/js/events.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/brand.css?v=20261112"><link rel="stylesheet" href="/static/css/thankyou-contacts.css?v=20261116-1"></head>{{if eq .Lang "en"}}<body><header class="subpage-header"><div class="container"><a href="/en" class="brand"><img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288"></a><a href="/en" class="text-link">Homepage ↗</a></div></header><main class="subpage-main"><div class="container"><div class="subpage-card"><div class="success-mark">✓</div><h1>{{.ThankYouTitle}}</h1><p>{{.ThankYouText}}</p><a class="btn btn-orange" href="{{.ThankYouButtonURL}}">{{.ThankYouButton}}</a>{{template "thankscontacts" .}}</div></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=en">Privacy</a></footer><script src="/static/js/thankyou.js?v=20261112" defer></script>{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{else}}<body><header class="subpage-header"><div class="container"><a href="/" class="brand"><img class="brand-logo brand-logo-light" src="/static/img/logo-white.svg?v=20261111-brand2" alt="Liikkuva auto korjaamo" width="800" height="288"><img class="brand-logo brand-logo-dark" src="/static/img/logo-transparent-dark.svg?v=20261111-brand2" alt="" width="800" height="288"></a><a href="/" class="text-link">Etusivu ↗</a></div></header><main class="subpage-main"><div class="container"><div class="subpage-card"><div class="success-mark">✓</div><h1>{{.ThankYouTitle}}</h1><p>{{.ThankYouText}}</p><a class="btn btn-orange" href="{{.ThankYouButtonURL}}">{{.ThankYouButton}}</a>{{template "thankscontacts" .}}</div></div></main><footer class="subpage-footer">liikkuvakorjaamo.fi · <a href="/privacy?lang=fi">Tietosuoja</a></footer><script src="/static/js/thankyou.js?v=20261112" defer></script>{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{end}}</html>
+
+{{define "thankscontacts"}}
+<section class="thankyou-connect-grid" aria-label="{{if eq .Lang "fi"}}Yhteystiedot ja sosiaalinen media{{else}}Contact and social media{{end}}">
+  {{if .InstagramURL}}
+  <article class="thankyou-connect-card">
+    <span class="thankyou-connect-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2.5" y="2.5" width="19" height="19" rx="5"></rect>
+        <circle cx="12" cy="12" r="4.2"></circle>
+        <circle cx="17.6" cy="6.6" r="1"></circle>
+      </svg>
+    </span>
+    <h2>{{.InstagramTitle}}</h2>
+    <p>{{.InstagramText}}</p>
+    <a class="thankyou-connect-action" href="{{.InstagramURL}}" target="_blank" rel="noopener noreferrer">{{.InstagramButton}} <span aria-hidden="true">↗</span></a>
+  </article>
+  {{end}}
+  <article class="thankyou-connect-card">
+    <span class="thankyou-connect-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2.5" y="5" width="19" height="14" rx="3"></rect>
+        <path d="m3.5 7 8.5 6 8.5-6"></path>
+      </svg>
+    </span>
+    <h2>{{.EmailTitle}}</h2>
+    <p>{{.EmailText}}</p>
+    <a class="thankyou-connect-action" href="mailto:{{.ContactEmail}}">{{.ContactEmail}} <span aria-hidden="true">↗</span></a>
+  </article>
+</section>
+{{end}}
