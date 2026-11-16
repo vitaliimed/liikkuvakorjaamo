@@ -74,7 +74,7 @@ func landingContentFI() LandingContent {
 			ConfirmButton: "Käytä tätä pistettä",
 		},
 		Hero: HeroContent{
-			Badge:        fmt.Sprintf("Liikkuva autokorjaamo • Mekaanikon käynti alk. %d €", visitPriceEUR),
+			Badge:        "Liikkuva autokorjaamo • Mekaanikon käynti alk. {visit} €",
 			Title:        "Liikkuva autokorjaamo Uudellamaalla",
 			Subtitle:     "Diagnostiikka, pienet korjaukset ja selkeä ensiarvio kotiin, työpaikalle tai tien varteen.",
 			PrimaryCTA:   "Pyydä apua nyt",
@@ -91,7 +91,7 @@ func landingContentFI() LandingContent {
 			},
 		},
 		Stats: []SimpleCard{
-			{Title: fmt.Sprintf("Mekaanikon käynti alk. %d €", visitPriceEUR), Text: "Vain mekaanikon saapuminen; vianmääritys ja korjaukset erikseen"},
+			{Title: "Mekaanikon käynti alk. {visit} €", Text: "Vain mekaanikon saapuminen; vianmääritys ja korjaukset erikseen"},
 			{Title: "Paikan päällä korjaukset", Text: "Moni yleinen vika ilman hinausta"},
 			{Title: "Selkeä prosessi", Text: "Diagnoosi, arvio ja vasta sen jälkeen työ"},
 			{Title: "8 pääaluetta", Text: "Helsinki, Espoo, Vantaa, Porvoo, Hyvinkää, Järvenpää, Lohja ja Kerava"},
@@ -111,7 +111,7 @@ func landingContentFI() LandingContent {
 			Kicker: "Luottamus",
 			Title:  "Tiedät etukäteen kuka tulee ja miten työ etenee",
 			Text:   "Tämä on se vahva luottamusblokki formiin viereen: selkeä vastausaika, kielituki, maksutapa ja kuitti ennen kuin asiakas lähettää pyynnön.",
-			Items:  []string{fmt.Sprintf("Mekaanikon käynti alk. %d € — vain saapuminen", visitPriceEUR), "Vianmääritys ja pienet korjaukset alk. {diagnostic} € erikseen", "Lisätyöt ja varaosat sovitaan ennen työn alkua", "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"},
+			Items:  []string{"Mekaanikon käynti alk. {visit} € — vain saapuminen", "Vianmääritys ja pienet korjaukset alk. {diagnostic} € erikseen", "Lisätyöt ja varaosat sovitaan ennen työn alkua", "Palvelu suomeksi, englanniksi, venäjäksi ja ukrainaksi"},
 		},
 		Capability: CapabilityContent{
 			Heading:       SectionHeading{Kicker: "Paikan päällä / korjaamo", Title: "Mikä onnistuu paikan päällä — ja mikä vaatii korjaamon", Text: "Tämä blokki vähentää turhia odotuksia jo ennen yhteydenottoa."},
@@ -122,7 +122,7 @@ func landingContentFI() LandingContent {
 		FAQ: FAQContent{
 			Heading: SectionHeading{Kicker: "UKK", Title: "Usein kysytyt kysymykset"},
 			Items: []FAQItem{
-				{Question: fmt.Sprintf("Mitä mekaanikon käyntimaksuun (alkaen %d €) sisältyy?", visitPriceEUR), Answer: "Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Vianmääritys ja pienet korjaukset maksavat erikseen alkaen {diagnostic} €. Varaosat, lisätyöt ja vaativammat korjaukset sovitaan ja hinnoitellaan ennen työn aloittamista."},
+				{Question: "Mitä mekaanikon käyntimaksuun (alkaen {visit} €) sisältyy?", Answer: "Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Vianmääritys ja pienet korjaukset maksavat erikseen alkaen {diagnostic} €. Varaosat, lisätyöt ja vaativammat korjaukset sovitaan ja hinnoitellaan ennen työn aloittamista."},
 				{Question: "Missä ja milloin odotan mekaanikkoa?", Answer: "Kun olemme vahvistaneet käyntiajan, odota mekaanikkoa hakemuksessa ilmoittamassasi paikassa sovittuna ajankohtana. Varmista, että autolle on esteetön pääsy."},
 				{Question: "Kuinka nopeasti voitte vastata?", Answer: "Se riippuu työtilanteesta, sijainnista ja viasta. Lähetä pyyntö ja vahvistamme saatavuuden nopeasti."},
 				{Question: "Tuotteko työkalut ja osat?", Answer: "Työkalut kuuluvat palveluun. Sopivat osat riippuvat viasta ja vahvistetaan yhteydenoton aikana."},
@@ -162,12 +162,12 @@ func landingContentFI() LandingContent {
 			AddressHelp:               "Voit kirjoittaa osoitteen itse tai täyttää sen sijainnista.",
 			CarHelp:                   "Syötä rekisterinumero muodossa ABC-123",
 			VisitPriceKicker:          "Selkeä hinta ennen lähetystä",
-			VisitPriceTitle:           fmt.Sprintf("Mekaanikon käynti alkaen %d €", visitPriceEUR),
+			VisitPriceTitle:           "Mekaanikon käynti alkaen {visit} €",
 			VisitPriceText:            "Sisältää vain mekaanikon saapumisen. Vianmääritys ja korjaus eivät kuulu käyntimaksuun.",
 			VisitPriceItems:           []string{"Mekaanikon saapuminen ilmoitettuun paikkaan", "Vianmääritys ja pienet korjaukset alk. {diagnostic} € erikseen", "Varaosat ja laajemmat työt sovitaan etukäteen"},
 			VisitPriceFootnote:        "Käyntimaksu koskee vain saapumista. Vianmääritys ja pienet korjaukset alk. {diagnostic} € veloitetaan erikseen käyntimaksun lisäksi. Vaativammat työt ja osat sovitaan etukäteen.",
-			VisitPriceConsentLabel:    fmt.Sprintf("Ymmärrän, että mekaanikon käynti maksaa alkaen %d € eikä sisällä vianmääritystä tai korjausta.", visitPriceEUR),
-			VisitPriceRequiredMessage: fmt.Sprintf("Vahvista, että ymmärrät %d € käyntimaksun.", visitPriceEUR),
+			VisitPriceConsentLabel:    "Ymmärrän, että mekaanikon käynti maksaa alkaen {visit} € eikä sisällä vianmääritystä tai korjausta.",
+			VisitPriceRequiredMessage: "Vahvista, että ymmärrät {visit} € käyntimaksun.",
 			SubmitButton:              "Lähetä pyyntö",
 			SubmitLoadingText:         "Lähetetään...",
 			SuccessMessage:            "Pyyntö lähetettiin onnistuneesti.",
@@ -223,7 +223,7 @@ func landingContentFI() LandingContent {
 	content.Process.Items = []StepCard{
 		{Number: "01", Title: "Lähetä pyyntö", Text: "Kerro mitä tapahtui, missä auto on ja yhteystietosi."},
 		{Number: "02", Title: "Nopea yhteydenotto", Text: "Käymme ongelman läpi, kysymme tarkennukset ja kerromme seuraavat vaiheet."},
-		{Number: "03", Title: fmt.Sprintf("Mekaanikon käynti alk. %d €", visitPriceEUR), Text: "Vahvistamme käyntiajan. Odota mekaanikkoa ilmoittamassasi paikassa sovittuun aikaan. Käyntimaksu kattaa vain saapumisen."},
+		{Number: "03", Title: "Mekaanikon käynti alk. {visit} €", Text: "Vahvistamme käyntiajan. Odota mekaanikkoa ilmoittamassasi paikassa sovittuun aikaan. Käyntimaksu kattaa vain saapumisen."},
 		{Number: "04", Title: "Korjaus paikan päällä", Text: "Diagnoosi ja soveltuva korjaus tehdään suoraan kohteessa."},
 	}
 
@@ -293,7 +293,7 @@ func landingContentEN() LandingContent {
 			ConfirmButton: "Use this point",
 		},
 		Hero: HeroContent{
-			Badge:        fmt.Sprintf("Mobile car repair • mechanic visit from €%d", visitPriceEUR),
+			Badge:        "Mobile car repair • mechanic visit from €{visit}",
 			Title:        "Premium mobile car repair in Uusimaa",
 			Subtitle:     "Diagnostics, light repairs and a clear first estimate at home, work or roadside.",
 			PrimaryCTA:   "Get help now",
@@ -310,7 +310,7 @@ func landingContentEN() LandingContent {
 			},
 		},
 		Stats: []SimpleCard{
-			{Title: fmt.Sprintf("Visit from €%d", visitPriceEUR), Text: "Covers the mechanic’s arrival only; diagnostics and repairs are extra"},
+			{Title: "Visit from €{visit}", Text: "Covers the mechanic’s arrival only; diagnostics and repairs are extra"},
 			{Title: "On-site repairs", Text: "Many common issues can be checked without towing"},
 			{Title: "Clear process", Text: "Diagnosis, estimate, then work"},
 			{Title: "8 main cities", Text: "Helsinki, Espoo, Vantaa, Porvoo, Hyvinkää, Järvenpää, Lohja and Kerava"},
@@ -330,7 +330,7 @@ func landingContentEN() LandingContent {
 			Kicker: "Trust",
 			Title:  "The client sees who comes and how the work is handled",
 			Text:   "This is the strong trust block next to the form: response speed, language support, payment clarity and service area before the lead is sent.",
-			Items:  []string{fmt.Sprintf("Mechanic visit from €%d — arrival only", visitPriceEUR), "Diagnostics and minor repairs from €{diagnostic}, charged separately", "Additional work and parts agreed before starting", "Service in Finnish, English, Russian and Ukrainian"},
+			Items:  []string{"Mechanic visit from €{visit} — arrival only", "Diagnostics and minor repairs from €{diagnostic}, charged separately", "Additional work and parts agreed before starting", "Service in Finnish, English, Russian and Ukrainian"},
 		},
 		Capability: CapabilityContent{
 			Heading:       SectionHeading{Kicker: "On-site / workshop", Title: "What can often be done on-site — and what usually needs a workshop", Text: "This block reduces wrong expectations before the request is sent."},
@@ -340,7 +340,7 @@ func landingContentEN() LandingContent {
 		FAQ: FAQContent{
 			Heading: SectionHeading{Kicker: "FAQ", Title: "Frequently asked questions"},
 			Items: []FAQItem{
-				{Question: fmt.Sprintf("What does the mechanic visit fee (from €%d) include?", visitPriceEUR), Answer: "The visit fee covers the mechanic’s arrival at the agreed location only. Diagnostics and suitable minor repairs start from €{diagnostic}, charged separately. Parts, additional work and complex repairs are quoted before work begins."},
+				{Question: "What does the mechanic visit fee (from €{visit}) include?", Answer: "The visit fee covers the mechanic’s arrival at the agreed location only. Diagnostics and suitable minor repairs start from €{diagnostic}, charged separately. Parts, additional work and complex repairs are quoted before work begins."},
 				{Question: "Where and when should I wait for the mechanic?", Answer: "Once the appointment is confirmed, please wait at the location specified in your request at the agreed time. Make sure the vehicle is accessible."},
 				{Question: "How fast can you respond?", Answer: "It depends on workload, location and issue type. Send a request and we will confirm availability quickly."},
 				{Question: "Do you bring tools and parts?", Answer: "Tools are included. Suitable parts depend on the issue and are discussed during request review."},
@@ -380,12 +380,12 @@ func landingContentEN() LandingContent {
 			AddressHelp:               "You can type the address manually or fill it from location.",
 			CarHelp:                   "Use registration number format ABC-123",
 			VisitPriceKicker:          "Clear price before submitting",
-			VisitPriceTitle:           fmt.Sprintf("Mechanic visit from €%d", visitPriceEUR),
+			VisitPriceTitle:           "Mechanic visit from €{visit}",
 			VisitPriceText:            "Covers the mechanic’s arrival only. Diagnostics and repairs are not included in the visit fee.",
 			VisitPriceItems:           []string{"Mechanic arrives at the location you provided", "Diagnostics and minor repairs from €{diagnostic} separately", "Additional work and parts quoted before starting"},
 			VisitPriceFootnote:        "Visit fee covers arrival only. Diagnostics and minor repairs from €{diagnostic} are charged in addition to the visit fee. Complex work and spare parts are agreed in advance.",
-			VisitPriceConsentLabel:    fmt.Sprintf("I understand the mechanic visit starts from €%d and does not include diagnostics or repairs.", visitPriceEUR),
-			VisitPriceRequiredMessage: fmt.Sprintf("Please confirm that you understand the €%d visit fee.", visitPriceEUR),
+			VisitPriceConsentLabel:    "I understand the mechanic visit starts from €{visit} and does not include diagnostics or repairs.",
+			VisitPriceRequiredMessage: "Please confirm that you understand the €{visit} visit fee.",
 			SubmitButton:              "Send request",
 			SubmitLoadingText:         "Sending...",
 			SuccessMessage:            "Your request has been sent successfully.",
@@ -441,7 +441,7 @@ func landingContentEN() LandingContent {
 	content.Process.Items = []StepCard{
 		{Number: "01", Title: "Send request", Text: "Tell us what happened, where the car is, and your contact details."},
 		{Number: "02", Title: "Quick contact", Text: "We review the issue, ask clarifying questions, and discuss possible next steps."},
-		{Number: "03", Title: fmt.Sprintf("Mechanic visit from €%d", visitPriceEUR), Text: "We confirm the time. Wait for the mechanic where you requested, at the agreed time. The visit fee covers arrival only."},
+		{Number: "03", Title: "Mechanic visit from €{visit}", Text: "We confirm the time. Wait for the mechanic where you requested, at the agreed time. The visit fee covers arrival only."},
 		{Number: "04", Title: "Repair on-site", Text: "We diagnose and complete suitable repair work directly on location."},
 	}
 
@@ -1127,7 +1127,7 @@ func getThankYouTexts(lang string) map[string]string {
 			"META_DESCRIPTION":    "Kiitos yhteydenotostasi. Olemme vastaanottaneet pyyntösi ja palaamme sinulle pian.",
 			"ROBOTS_META":         "noindex, follow",
 			"THANKYOU_TITLE":      "Kiitos pyynnöstäsi",
-			"THANKYOU_TEXT":       fmt.Sprintf("Olemme vastaanottaneet pyyntösi. Mekaanikon käynti alkaen %d € sisältää vain saapumisen. Vianmääritys ja pienet korjaukset alkaen {diagnostic} € veloitetaan erikseen. Vahvistamme ajan ennen käyntiä. Odota mekaanikkoa ilmoittamassasi paikassa sovittuna aikana.", visitPriceEUR),
+			"THANKYOU_TEXT":       "Olemme vastaanottaneet pyyntösi. Mekaanikon käynti alkaen {visit} € sisältää vain saapumisen. Vianmääritys ja pienet korjaukset alkaen {diagnostic} € veloitetaan erikseen. Vahvistamme ajan ennen käyntiä. Odota mekaanikkoa ilmoittamassasi paikassa sovittuna aikana.",
 			"THANKYOU_BUTTON":     "Takaisin etusivulle",
 			"THANKYOU_BUTTON_URL": "/",
 		}
@@ -1139,7 +1139,7 @@ func getThankYouTexts(lang string) map[string]string {
 		"META_DESCRIPTION":    "Thank you for contacting us. We have received your request and will get back to you soon.",
 		"ROBOTS_META":         "noindex, follow",
 		"THANKYOU_TITLE":      "Thank you for your request",
-		"THANKYOU_TEXT":       fmt.Sprintf("We have received your request. The mechanic visit from €%d covers arrival only. Diagnostics and minor repairs from €{diagnostic} are charged separately. We will confirm the appointment time. Please wait for the mechanic at your specified location at the agreed time.", visitPriceEUR),
+		"THANKYOU_TEXT":       "We have received your request. The mechanic visit from €{visit} covers arrival only. Diagnostics and minor repairs from €{diagnostic} are charged separately. We will confirm the appointment time. Please wait for the mechanic at your specified location at the agreed time.",
 		"THANKYOU_BUTTON":     "Back to homepage",
 		"THANKYOU_BUTTON_URL": "/en",
 	}
