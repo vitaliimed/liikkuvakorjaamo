@@ -116,13 +116,13 @@ func TestEmulatorVehicleAliasesAndAdapter(t *testing.T) {
 }
 func TestPricesScheduleAndOriginal(t *testing.T) {
 	j := fixture(t)
-	if j.Proposal.VisitCents != 7000 || j.Proposal.WorkCents != 5000 {
+	if j.Proposal.VisitCents != defaultLiikkuvaVisitCents || j.Proposal.WorkCents != defaultLiikkuvaDiagnosticCents {
 		t.Fatal(j.Proposal)
 	}
 	book := DefaultPriceBook()
 	applyPrices(&j, book)
 	book.Items[0].Cents = 1
-	if j.PricingSnapshot[0].Cents != 7000 {
+	if j.PricingSnapshot[0].Cents != defaultLiikkuvaVisitCents {
 		t.Fatal("snapshot changed")
 	}
 	u := testMechanic
