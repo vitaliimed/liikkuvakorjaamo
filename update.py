@@ -27,7 +27,7 @@ DOMAIN = 'https://liikkuvakorjaamo.fi'
 # K_REVISION to match the candidate before any production traffic changes.
 def expected_release_version():
     source = (ROOT / 'source' / 'liikkuva_brand.go').read_text(encoding='utf-8')
-    match = re.search(r'^const\\s+releaseVersion\\s*=\\s*"([^"]+)"', source, re.MULTILINE)
+    match = re.search(r'^const\s+releaseVersion\s*=\s*"([^"]+)"', source, re.MULTILINE)
     if not match:
         raise RuntimeError('Cannot identify the Go application release version; deployment blocked')
     return match.group(1)
