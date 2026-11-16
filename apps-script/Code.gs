@@ -77,6 +77,12 @@ function doPost(event){
     if(!/^20\d{2}-(0[1-9]|1[0-2])-\d{2} \d{2}:\d{2}:\d{2}$/.test(l.created_at||'')){
       return json_({ok:false,error:'Invalid Helsinki timestamp'});
     }
+    // Never invent an outdated rate in the spreadsheet if a legacy
+    // integration omits the server-side quotation snapshot.
+    const visitEUR=Number(l.visit_price_eur), diagnosticEUR=Number(l.diagnostic_from_eur);
+    if(!Number.isInteger(visitEUR)||!Number.isInteger(diagnosticEUR)||visitEUR<1||diagnosticEUR<1){
+      return json_({ok:false,error:'Missing visit/diagnostic price snapshot'});
+    }
     lock=LockService.getScriptLock();
     if(!lock.tryLock(20000))return json_({ok:false,error:'Busy; retry'});
     const month=l.created_at.slice(0,7);
@@ -95,8 +101,8 @@ function doPost(event){
       safe_(l.email),safe_(l.car),safe_(l.address),safe_(l.message),safe_(l.language),
       safe_((l.photo_urls||[]).join('\n')),safe_(l.maps_url),safe_(l.source),
       safe_(l.utm_source),safe_(l.utm_medium),safe_(l.utm_campaign),
-      safe_(l.page_url),SITE,l.submission_id,Number(l.visit_price_eur)||75,
-      Number(l.diagnostic_from_eur)||50,channel_(l.utm_medium,l.source),maskIP_(l.ip)
+      safe_(l.page_url),SITE,l.submission_id,visitEUR,
+      diagnosticEUR,channel_(l.utm_medium,l.source),maskIP_(l.ip)
     ]);
     SpreadsheetApp.flush();
     const current=Utilities.formatDate(new Date(),ZONE,'yyyy-MM');
