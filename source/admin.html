@@ -1631,7 +1631,7 @@
 </section>
 <section class="card panel {{if eq .ActiveTab "thankyou"}}active{{end}}" data-panel="thankyou">
               <h2>Thank-you страница</h2>
-              <p class="panel-intro">Тексты страницы после успешной отправки заявки и её SEO-настройки.</p>
+              <p class="panel-intro">Тексты страницы после успешной отправки заявки и её SEO-настройки. Instagram и сервисная почта автоматически берутся из «Основные настройки → Реквизиты компании / Социальные сети». Если Instagram не настроен, кнопка не показывается; почта по умолчанию — service@liikkuvakorjaamo.fi. Автоматический переход на главную отключён.</p>
               <div class="lang-grid">
                 <div class="lang-card">
                   <h3>финский</h3>
@@ -1659,6 +1659,26 @@
                     <label>Кнопка URL FI</label>
                     <input type="text" name="thankyou_button_url_fi" value="{{.Settings.ThankYouButtonURLFI}}">
                   </div>
+                  <div class="field">
+                    <label>Instagram — заголовок FI</label>
+                    <input type="text" name="thankyou_instagram_title_fi" value="{{.Settings.ThankYouInstagramTitleFI}}" placeholder="Seuraa meitä Instagramissa">
+                  </div>
+                  <div class="field">
+                    <label>Instagram — текст FI</label>
+                    <textarea name="thankyou_instagram_text_fi" placeholder="Jaamme hyödyllisiä autovinkkejä ja esimerkkejä korjauksista.">{{.Settings.ThankYouInstagramTextFI}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Instagram — кнопка FI</label>
+                    <input type="text" name="thankyou_instagram_button_fi" value="{{.Settings.ThankYouInstagramButtonFI}}" placeholder="Avaa Instagram">
+                  </div>
+                  <div class="field">
+                    <label>Почта — заголовок FI</label>
+                    <input type="text" name="thankyou_email_title_fi" value="{{.Settings.ThankYouEmailTitleFI}}" placeholder="Ota yhteyttä sähköpostitse">
+                  </div>
+                  <div class="field">
+                    <label>Почта — текст FI</label>
+                    <textarea name="thankyou_email_text_fi" placeholder="Kysyttävää? Voit kirjoittaa meille suoraan.">{{.Settings.ThankYouEmailTextFI}}</textarea>
+                  </div>
                 </div>
                 <div class="lang-card">
                   <h3>английский</h3>
@@ -1685,6 +1705,26 @@
                   <div class="field">
                     <label>Кнопка URL EN</label>
                     <input type="text" name="thankyou_button_url_en" value="{{.Settings.ThankYouButtonURLEN}}">
+                  </div>
+                  <div class="field">
+                    <label>Instagram — заголовок EN</label>
+                    <input type="text" name="thankyou_instagram_title_en" value="{{.Settings.ThankYouInstagramTitleEN}}" placeholder="Follow us on Instagram">
+                  </div>
+                  <div class="field">
+                    <label>Instagram — текст EN</label>
+                    <textarea name="thankyou_instagram_text_en" placeholder="We share car care tips and examples of repairs.">{{.Settings.ThankYouInstagramTextEN}}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Instagram — кнопка EN</label>
+                    <input type="text" name="thankyou_instagram_button_en" value="{{.Settings.ThankYouInstagramButtonEN}}" placeholder="Open Instagram">
+                  </div>
+                  <div class="field">
+                    <label>Почта — заголовок EN</label>
+                    <input type="text" name="thankyou_email_title_en" value="{{.Settings.ThankYouEmailTitleEN}}" placeholder="Contact us by email">
+                  </div>
+                  <div class="field">
+                    <label>Почта — текст EN</label>
+                    <textarea name="thankyou_email_text_en" placeholder="Have a question? Write directly to us.">{{.Settings.ThankYouEmailTextEN}}</textarea>
                   </div>
                 </div>
               </div>
