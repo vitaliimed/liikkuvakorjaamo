@@ -82,15 +82,9 @@ func liikkuvaProDefaults(s SiteSettings) SiteSettings {
 	}
 	return s
 }
-// Replace only whole legacy price tokens, not substrings of other amounts
-// (e.g. a genuine 175 € service must never become 195 € when the visit fee
-// changes). Expand editable price placeholders *after* legacy replacements so
-// the new values cannot be mistaken for old default amounts.
-var liikkuvaLegacyPriceToken = regexp.MustCompile(`\b(?:70|75|50) €|€(?:70|75|50)\b`)
-
-// Render explicit price placeholders in admin-authored emails and copy.
-// Free-form quoted monetary amounts are left untouched: €90 in a customer
-// estimate could be an agreed parts price, not a generic visit fee.
+// Explicit price tokens are the only values expanded in user-authored copy.
+// Automatic replacement of literal euro amounts could corrupt an independent
+// price, such as a 50-euro battery service or a previously agreed parts quote.
 func liikkuvaPricePlaceholders(s string, c SiteSettings) string {
 	c = liikkuvaProDefaults(c)
 	return strings.NewReplacer(
@@ -101,19 +95,9 @@ func liikkuvaPricePlaceholders(s string, c SiteSettings) string {
 }
 
 func liikkuvaPriceText(s string, c SiteSettings) string {
-	c = liikkuvaProDefaults(c)
-	s = liikkuvaLegacyPriceToken.ReplaceAllStringFunc(s, func(token string) string {
-		price := c.ProVisitEUR
-		if token == "50 €" || token == "€50" {
-			price = c.ProDiagnosticEUR
-		}
-		if strings.HasPrefix(token, "€") {
-			return fmt.Sprintf("€%d", price)
-		}
-		return fmt.Sprintf("%d €", price)
-	})
 	return liikkuvaPricePlaceholders(s, c)
 }
+
 func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/tracking-config.js" {
