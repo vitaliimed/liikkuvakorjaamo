@@ -36,6 +36,10 @@ func TestThankYouContactEmailFallback(t *testing.T) {
 		{"service@liikkuvakorjaamo.fi", "service@liikkuvakorjaamo.fi"},
 		{" support@example.fi ", "support@example.fi"},
 		{"attacker@example.fi?subject=spam", "service@liikkuvakorjaamo.fi"},
+		{"attacker@example.fi#fragment", "service@liikkuvakorjaamo.fi"},
+		{"attacker@example.fi%3Fsubject=spam", "service@liikkuvakorjaamo.fi"},
+		{"attacker@example.fi\nBcc:someone@example.fi", "service@liikkuvakorjaamo.fi"},
+		{"support+leads@example.fi", "support+leads@example.fi"},
 		{"Name <support@example.fi>", "service@liikkuvakorjaamo.fi"},
 	} {
 		if got := thankYouContactEmail(tc.input); got != tc.want {
