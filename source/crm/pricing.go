@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"os"
+	"strings"
 )
 
 type Tariff struct {
@@ -35,7 +37,11 @@ func DefaultPriceBook() PriceBook {
 // Missing settings retain the same safe defaults as the Go landing app.
 func loadSitePriceCents(ctx context.Context, db *firestore.Client) (int64, int64, error) {
 	visit, diagnostics := defaultLiikkuvaVisitCents, defaultLiikkuvaDiagnosticCents
-	d, err := db.Collection("site_settings").Doc("landing").Get(ctx)
+	collection := strings.TrimSpace(os.Getenv("SITE_SETTINGS_COLLECTION"))
+	if collection == "" {
+		collection = "site_settings"
+	}
+	d, err := db.Collection(collection).Doc("landing").Get(ctx)
 	if status.Code(err) == codes.NotFound {
 		return visit, diagnostics, nil
 	}
