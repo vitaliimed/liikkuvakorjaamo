@@ -19,14 +19,14 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "fix/post-launch-ux-crm-20261114"
+BRANCH = "fix/price-copy-arrival-20261115"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "postlaunch-ux-preview"
+TAG = "pricing-copy-preview"
 # Fixed, authenticated Brevo sender. Do not inherit stale typo from production.
 EXPECTED_MAIL_FROM = "Liikkuva Auto Korjaamo <service@liikkuvakorjaamo.fi>"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "postlaunch-ux-release.json"
+STATE_FILE = STATE_DIR / "pricing-copy-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -125,7 +125,7 @@ def check(url, revision, bootstrap):
         required = ('class="hero-form" id="lead-form"', 'id="leadForm"',
                     'name="phone" required', 'name="car" required',
                     'name="email" required', 'name="address" required',
-                    '75 €', 'data-theme-toggle', 'hero-form-ux.css',
+                    'data-theme-toggle', 'hero-form-ux.css',
                     'og:image', 'logo-white.png')
         if not all(s in html for s in required):
             raise RuntimeError("Missing hero-form/required-fields/OG markers at " + path)
@@ -137,6 +137,17 @@ def check(url, revision, bootstrap):
             raise RuntimeError("Second/footer form missing at "+path)
         if "15 vuoden" not in html and "15 years" not in html:
             raise RuntimeError("Experience trust text missing at "+path)
+        for phrase in ("visit-arrival-note", "footer-arrival-reminder"):
+            if phrase not in html:
+                raise RuntimeError("Agreed location/time notice missing at "+path+": "+phrase)
+        if path == "/":
+            for phrase in ("Mekaanikon käynti", "Vianmääritys ja pienet korjaukset", "Käyntimaksu kattaa"):
+                if phrase not in html:
+                    raise RuntimeError("Finnish pricing explanation missing at "+path+": "+phrase)
+        else:
+            for phrase in ("Mechanic visit", "Diagnostics and minor repairs", "visit fee"):
+                if phrase not in html:
+                    raise RuntimeError("English pricing explanation missing at "+path+": "+phrase)
         print("PASS", path, "compact form, footer form and required fields")
     # This previously failed on tagged Cloud Run revisions: the browser's
     # Origin was the preview URL, while CRM_PUBLIC_URL was the production URL.

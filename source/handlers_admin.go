@@ -418,7 +418,7 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 	settings := SiteSettings{
 		Revision:                  revision,
 		ProVisitEUR:               liikkuvaInt(r.FormValue("ProVisitEUR"), 70, 1, 2000),
-		ProDiagnosticEUR:          liikkuvaInt(r.FormValue("ProDiagnosticEUR"), 50, 1, 2000),
+		ProDiagnosticEUR:          liikkuvaInt(r.FormValue("ProDiagnosticEUR"), 60, 1, 2000),
 		ProFontSize:               liikkuvaInt(r.FormValue("ProFontSize"), 18, 16, 22),
 		ProAccent:                 strings.TrimSpace(r.FormValue("ProAccent")),
 		ProTheme:                  strings.TrimSpace(r.FormValue("ProTheme")),

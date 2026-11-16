@@ -59,3 +59,9 @@ html[data-theme="dark"] .footer-lead-copy p{color:#baccbe}
 html[data-theme="dark"] .footer-lead-mount .request-card{background:#23372b}
 @media(max-width:900px){.footer-lead-layout{grid-template-columns:1fr}.footer-lead-copy{max-width:630px}.footer-lead-mount{margin:auto}.footer .footer-top{grid-template-columns:1fr}}
 @media(max-width:560px){.footer-lead-section{padding:35px 0}.footer-lead-mount{max-width:100%;min-height:auto}.footer-lead-mount .request-card{padding:16px}.footer-lead-mount .form-grid{grid-template-columns:1fr;gap:10px}.footer-lead-mount .form-grid>.field,.footer-lead-mount .form-grid>.submit-row{grid-column:1/-1!important;grid-row:auto!important}}
+
+/* Pricing clarity and appointment-location guidance in FI and EN. */
+.visit-arrival-note{display:block;margin:12px 0 20px;padding:13px 16px;border-left:3px solid #f97315;background:rgba(249,115,21,.08);color:inherit;border-radius:0 9px 9px 0;font-size:14px;line-height:1.65}
+.footer-arrival-reminder{margin:18px 0 8px;padding:13px 15px;border:1px solid rgba(35,55,43,.18);border-radius:12px;background:#fff;color:#23372b;font-weight:650;line-height:1.65}
+html[data-theme="dark"] .visit-arrival-note{background:rgba(249,115,21,.12);color:#f2f6f3}
+html[data-theme="dark"] .footer-arrival-reminder{background:#263b2e;border-color:#738376;color:#f2f6f3}

@@ -318,11 +318,12 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 			"",
 			"Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.",
 			"",
-			fmt.Sprintf("Asentajan käynti maksaa %d €.", liikkuvaLeadFee(lead)),
-			"Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.",
-			"Varaosat ja laajemmat työt eivät sisälly käyntimaksuun. Niistä sovitaan kanssasi ennen työn aloittamista.",
+			fmt.Sprintf("Automekaanikon käynti alkaen %d €.", liikkuvaLeadFee(lead)),
+			"Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Se ei sisällä diagnostiikkaa eikä korjausta.",
+			fmt.Sprintf("Vianmääritys ja pienet korjaustyöt alkaen %d €, veloitetaan erikseen käyntimaksun lisäksi. Hinta sisältää vianmäärityksen ja tilanteeseen sopivan pienen korjauksen.", liikkuvaLeadDiagnosticFee(lead)),
+			"Varaosat, vaativammat korjaukset ja lisätyöt hinnoitellaan ja sovitaan erikseen ennen työn aloittamista.",
 			"",
-			"Odota viestiämme. Ilmoitamme, kun asentajamme on valmis lähtemään luoksesi, ja vahvistamme ajan.",
+			"Otamme sinuun yhteyttä sopiaksemme käyntiajan. Kun aika on vahvistettu, odota mekaanikkoa ilmoittamassasi paikassa sovittuna ajankohtana. Varmista, että autolle on esteetön pääsy.",
 		}
 		if lead.Car != "" {
 			lines = append(lines, "", "Rekisterinumero: "+lead.Car)
@@ -338,11 +339,12 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 		"",
 		"Thank you for your request. We have received it successfully.",
 		"",
-		fmt.Sprintf("The mechanic visit costs €%d.", liikkuvaLeadFee(lead)),
-		"The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.",
-		"Parts and more extensive work are not included in the visit fee. We agree them with you before starting the work.",
+		fmt.Sprintf("Mechanic visit from €%d.", liikkuvaLeadFee(lead)),
+		"The visit fee only covers the mechanic arriving at your agreed location. Diagnostics and repairs are not included.",
+		fmt.Sprintf("Diagnostics and minor repairs from €%d are charged separately in addition to the visit fee. This covers diagnostics and a suitable minor repair where possible.", liikkuvaLeadDiagnosticFee(lead)),
+		"Spare parts, more complex repairs and additional work are quoted and agreed separately before work begins.",
 		"",
-		"Please wait for our message. We will let you know when our mechanic is ready to leave for your location and confirm the time.",
+		"We will contact you to agree on an appointment time. Once confirmed, please wait for the mechanic at the location you provided in your request at the agreed time. Make sure the vehicle is accessible.",
 	}
 	if lead.Car != "" {
 		lines = append(lines, "", "Vehicle registration: "+lead.Car)
@@ -357,21 +359,21 @@ func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
 		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.</p>
 		<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
-			<div style="font-size:24px;font-weight:800;color:#0f172a;">Asentajan käynti ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
-			<p style="margin:10px 0 0;">Käyntimaksu kattaa saapumisen. Diagnostiikka, korjaukset ja varaosat sovitaan ja veloitetaan erikseen.</p>
+			<div style="font-size:24px;font-weight:800;color:#0f172a;">Automekaanikon käynti alkaen ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
+			<p style="margin:10px 0 0;">Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Diagnostiikka ja korjaustyöt eivät sisälly käyntimaksuun.</p>
 		</div>
-		<p style="margin:0 0 16px;">Varaosat ja laajemmat työt sovitaan ja veloitetaan erikseen ennen työn aloittamista.</p>
-		<p style="margin:0;font-weight:700;">Odota viestiämme. Ilmoitamme, kun asentajamme on valmis lähtemään luoksesi, ja vahvistamme ajan.</p>`
+		<p style="margin:0 0 14px;"><strong>Vianmääritys ja pienet korjaustyöt alkaen ` + fmt.Sprintf("%d €", liikkuvaLeadDiagnosticFee(lead)) + `.</strong> Hinta veloitetaan käyntimaksun lisäksi ja sisältää vianmäärityksen sekä soveltuvan pienen korjauksen, jos se on mahdollista. Varaosat ja vaativammat työt sovitaan ja hinnoitellaan erikseen ennen työn aloittamista.</p>
+		<p style="margin:0;font-weight:700;">Otamme sinuun yhteyttä sopiaksemme ajan. Kun aika on vahvistettu, odota mekaanikkoa ilmoittamassasi paikassa sovittuna ajankohtana ja varmista pääsy autolle.</p>`
 		return buildBrandedActionEmailHTML(cfg, lead, "Pyyntö vastaanotettu", content, "", "")
 	}
 
 	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully.</p>
 	<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
-		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
-		<p style="margin:10px 0 0;">The visit fee covers travel. Diagnostics, repairs and spare parts are agreed and charged separately.</p>
+		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit from €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
+		<p style="margin:10px 0 0;">The visit fee only covers the mechanic arriving at your agreed location. Diagnostics and repairs are not included.</p>
 	</div>
-	<p style="margin:0 0 16px;">Parts and more extensive work are agreed and charged separately before work begins.</p>
-	<p style="margin:0;font-weight:700;">Please wait for our message. We will confirm when our mechanic is ready to leave for your location.</p>`
+	<p style="margin:0 0 14px;"><strong>Diagnostics and minor repairs from €` + fmt.Sprintf("%d", liikkuvaLeadDiagnosticFee(lead)) + `.</strong> Charged in addition to the visit fee; includes diagnostics and a suitable minor repair where possible. Parts and more complex repairs are agreed and priced separately before work begins.</p>
+	<p style="margin:0;font-weight:700;">We will contact you to agree on a time. Once confirmed, please wait for the mechanic at the location in your request at the agreed time and ensure access to the vehicle.</p>`
 	return buildBrandedActionEmailHTML(cfg, lead, "Request received", content, "", "")
 }
 
