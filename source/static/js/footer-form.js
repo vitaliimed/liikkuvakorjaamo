@@ -1,3 +1,17 @@
+function normalizeRegistrationNumber(value) {
+    const raw = String(value || "").toUpperCase().trim();
+    const compact = raw.replace(/[ \t]/g, "");
+    if (/^(?:[A-Z]{3}[0-9]{1,3}|[0-9]{3}[A-Z]{1,3})$/.test(compact)) {
+      return compact.slice(0, 3) + "-" + compact.slice(3);
+    }
+    if (/^(?:[A-Z]{3}-[0-9]{0,3}|[0-9]{3}-[A-Z]{0,3})$/.test(compact)) return compact;
+    return raw;
+  }
+
+  function isValidRegistrationNumber(value) {
+    return /^(?:[A-Z]{3}-[0-9]{3}|[0-9]{3}-[A-Z]{3})$/.test(normalizeRegistrationNumber(value));
+  }
+
 /* Liikkuva: a second, fully usable request form at the bottom of each landing page.
  * The server keeps /lead as the only intake route. A different form ID and field
  * IDs prevent accidental collisions with the already working hero-form controller.
@@ -128,9 +142,7 @@
     const phone = form.elements.namedItem("phone");
     const plate = form.elements.namedItem("car");
     if (plate) plate.addEventListener("input", function () {
-      const raw = this.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-      const match = raw.match(/^([A-Z]{0,3})([0-9]{0,3})$/);
-      if (match) this.value = match[1] + (match[2] ? "-" + match[2] : "");
+      this.value = normalizeRegistrationNumber(this.value);
     });
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
@@ -141,7 +153,7 @@
         say(form.dataset.photosTooMany || "Please use up to three images under 10 MB.", "error");
         return;
       }
-      if (plate && !/^[A-Z]{3}-[0-9]{1,3}$/.test(plate.value.toUpperCase())) {
+      if (plate && !isValidRegistrationNumber(plate.value)) {
         say(form.dataset.registrationInvalid || "Invalid registration number", "error");
         plate.focus();
         return;

@@ -64,3 +64,5 @@ button.primary:hover{background:#ff8b32;border-color:#ff8b32}
 .password-strength{font-size:11px;line-height:1.6;flex-basis:100%;color:#59665f}
 .login .muted{font-size:13px;line-height:1.7}
 @media(max-width:600px){.login{margin:14px auto;padding:24px 20px}.password-tools{flex-direction:column;align-items:stretch}.password-tools button{width:100%}}
+
+#search{display:flex;gap:8px;align-items:center;flex:1}#search input{min-width:130px}#search button{white-space:nowrap}@media(max-width:720px){.topbar{height:auto;flex-wrap:wrap}#search{flex-wrap:wrap}#search input{flex:1}}

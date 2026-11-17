@@ -60,7 +60,8 @@ class UpdateTests(unittest.TestCase):
             events.append(('check', url, identity_token))
             if '/api/health' in url:
                 return json.dumps({'ok': True, 'site': 'liikkuvakorjaamo.fi', 'version': update.VERSION if health_ok else 'old-version', 'revision': revision})
-            return 'Войти в кабинет' if '/admin' in url else '.hero .hero-layout'
+            return ('Войти в кабинет' if '/admin' in url else
+                    '__liikkuvaThemeInitialized' if '/static/js/theme.js' in url else '.hero .hero-layout')
         updater.endpoint = endpoint
         return updater, events
 
@@ -163,7 +164,7 @@ class UpdateTests(unittest.TestCase):
         updater.endpoint = endpoint
         updater.deploy()
         marker_calls = [e for e in events if e[0] == 'check' and ('/admin' in e[1] or '/static/' in e[1])]
-        self.assertEqual(len(marker_calls), 2)
+        self.assertEqual(len(marker_calls), 3)
         self.assertTrue(all(e[2] == 'synthetic.jwt.token' for e in marker_calls))
         self.assertFalse(any('--allow-unauthenticated' in e[1] for e in events if e[0] == 'gcloud'))
 
@@ -297,6 +298,8 @@ class UpdateTests(unittest.TestCase):
                     code, body = (404, 'not ready') if len(health_reads) <= 2 else (200, health)
                 elif self.path == '/admin':
                     code, body = 200, 'Войти в кабинет'
+                elif self.path.startswith('/static/js/theme.js'):
+                    code, body = 200, '__liikkuvaThemeInitialized'
                 else:
                     code, body = 200, '.hero .hero-layout'
                 self.send_response(code)
@@ -393,6 +396,8 @@ class UpdateTests(unittest.TestCase):
                     code, body = 200, health
                 elif self.path == '/admin':
                     code, body = 200, 'Войти в кабинет'
+                elif self.path.startswith('/static/js/theme.js'):
+                    code, body = 200, '__liikkuvaThemeInitialized'
                 else:
                     code, body = 200, '.hero .hero-layout'
                 self.send_response(code)
@@ -417,7 +422,7 @@ class UpdateTests(unittest.TestCase):
             with self.assertRaises(update.EndpointError):
                 transport(base + '/healthz')
             updater.deploy()
-            self.assertEqual(hits, ['/healthz', '/api/health', '/admin', '/static/css/responsive.css?v=20261029'])
+            self.assertEqual(hits, ['/healthz', '/api/health', '/admin', '/static/css/hero-form-ux.css?v=20261112-fix1', '/static/js/theme.js?v=20261114-toggle1'])
             self.assertTrue(public_checks and all('/api/health?' in u for u in public_checks))
             self.assertTrue(any(e[0] == 'gcloud' and any(a.startswith('--to-revisions=') for a in e[1]) for e in events))
         finally:

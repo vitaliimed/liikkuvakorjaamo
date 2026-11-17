@@ -228,7 +228,7 @@ func (s *Server) bot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// A stable outbox ID deduplicates Telegram retries. Mechanic opens the authenticated mobile form.
-	text := "Введите номер автомобиля, например ABC-123. Я покажу доступные вам обращения. Отчёт, сумма оплаты и до 10 фото сохраняются в форме CRM."
+	text := "Введите номер автомобиля, например ABC-123 или 123-ABC. Я покажу доступные вам обращения. Отчёт, сумма оплаты и до 10 фото сохраняются в форме CRM."
 	p, err := Plate(update.Message.Text)
 	if err == nil {
 		q := s.Collection("jobs").Where("Plate", "==", p)

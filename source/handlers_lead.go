@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"liikkuvakorjaamo.fi/landing/internal/registration"
 	"log"
 	"mime"
 	"net/http"
@@ -318,9 +319,9 @@ func validateLead(lead Lead) map[string]string {
 		}
 	} else if !isValidRegistrationNumber(lead.Car) {
 		if lead.Language == "fi" {
-			errors["car"] = "anna kelvollinen rekisterinumero muodossa ABC-123"
+			errors["car"] = "anna kelvollinen rekisterinumero muodossa ABC-123 tai 123-ABC"
 		} else {
-			errors["car"] = "enter a valid registration number like ABC-123"
+			errors["car"] = "enter a valid registration number like ABC-123 or 123-ABC"
 		}
 	}
 
@@ -399,38 +400,9 @@ func isValidPhone(phone string) bool {
 	return len(digitsOnly) >= 7 && len(digitsOnly) <= 15
 }
 
-func normalizeRegistrationNumber(input string) string {
-	input = strings.ToUpper(strings.TrimSpace(input))
-	if input == "" {
-		return ""
-	}
+func normalizeRegistrationNumber(input string) string { return registration.Normalize(input) }
 
-	clean := regexp.MustCompile(`[^A-Z0-9]`).ReplaceAllString(input, "")
-	letters := regexp.MustCompile(`[^A-Z]`).ReplaceAllString(clean, "")
-	digits := regexp.MustCompile(`[^0-9]`).ReplaceAllString(clean, "")
-
-	if len(letters) > 3 {
-		letters = letters[:3]
-	}
-	if len(digits) > 3 {
-		digits = digits[:3]
-	}
-	if letters == "" {
-		return digits
-	}
-	if digits == "" {
-		return letters
-	}
-	return letters + "-" + digits
-}
-
-func isValidRegistrationNumber(value string) bool {
-	value = strings.TrimSpace(strings.ToUpper(value))
-	if value == "" {
-		return true
-	}
-	return regexp.MustCompile(`^[A-Z]{3}-[0-9]{1,3}$`).MatchString(value)
-}
+func isValidRegistrationNumber(value string) bool { return registration.Valid(value) }
 
 func minInt(a, b int) int {
 	if a < b {
