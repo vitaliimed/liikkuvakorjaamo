@@ -234,46 +234,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function normalizeRegistrationNumber(value) {
-    const raw = String(value || "").toUpperCase();
-    let letters = "";
-    let digits = "";
-    let mode = "letters";
-
-    for (const ch of raw) {
-      if (mode === "letters") {
-        if (/[A-Z]/.test(ch)) {
-          if (letters.length < 3) letters += ch;
-          continue;
-        }
-
-        if (/[0-9]/.test(ch)) {
-          if (letters.length === 3) {
-            mode = "digits";
-            if (digits.length < 3) digits += ch;
-          }
-          continue;
-        }
-
-        if (ch === "-" && letters.length === 3) {
-          mode = "digits";
-        }
-        continue;
-      }
-
-      if (/[0-9]/.test(ch) && digits.length < 3) {
-        digits += ch;
-      }
+    const raw = String(value || "").toUpperCase().trim();
+    const compact = raw.replace(/[ \t]/g, "");
+    if (/^(?:[A-Z]{3}[0-9]{1,3}|[0-9]{3}[A-Z]{1,3})$/.test(compact)) {
+      return compact.slice(0, 3) + "-" + compact.slice(3);
     }
-
-    if (!letters) return "";
-    if (letters.length < 3) return letters;
-    if (digits.length === 0) return letters + "-";
-    return letters + "-" + digits;
+    if (/^(?:[A-Z]{3}-[0-9]{0,3}|[0-9]{3}-[A-Z]{0,3})$/.test(compact)) return compact;
+    return raw;
   }
 
   function isValidRegistrationNumber(value) {
-    if (!value) return true;
-    return /^[A-Z]{3}-[0-9]{1,3}$/.test(value);
+    return /^(?:[A-Z]{3}-[0-9]{3}|[0-9]{3}-[A-Z]{3})$/.test(normalizeRegistrationNumber(value));
   }
 
   function isValidEmail(value) {

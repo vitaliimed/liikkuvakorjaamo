@@ -3,14 +3,13 @@ package crm
 import (
 	"errors"
 	"fmt"
-	"regexp"
+	"liikkuvakorjaamo.fi/landing/internal/registration"
 	"strings"
 	"time"
 	_ "time/tzdata"
 )
 
 var Helsinki, _ = time.LoadLocation("Europe/Helsinki")
-var platePattern = regexp.MustCompile(`^[A-Z0-9]{2,10}$`)
 var ErrConflict = errors.New("Запись изменена. Обновите страницу и повторите действие")
 var ErrForbidden = errors.New("Нет доступа")
 
@@ -122,13 +121,12 @@ type Action struct {
 }
 
 func Plate(s string) (string, error) {
-	s = strings.ToUpper(strings.TrimSpace(s))
-	s = strings.NewReplacer("-", "", " ", "", "\t", "").Replace(s)
-	if !platePattern.MatchString(s) {
-		return "", errors.New("Номер: 2–10 латинских букв или цифр")
+	if !registration.Valid(s) {
+		return "", errors.New("Номер: ABC-123 или 123-ABC (3 латинские буквы и 3 цифры)")
 	}
-	return s, nil
+	return registration.Key(s), nil
 }
+
 func NewJob(id, plate, name, phone, address, description, brand, language string) (Job, error) {
 	p, e := Plate(plate)
 	if e != nil {

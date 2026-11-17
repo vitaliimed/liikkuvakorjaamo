@@ -149,7 +149,7 @@ func landingContentFI() LandingContent {
 			PlaceholderEmail:       "email@example.com",
 			PlaceholderAddress:     "Katu ja numero / piha / pysäköinti",
 			PlaceholderAddressHint: "Jos osoite toistuu, lisää kaupunki, rappu tai maamerkki",
-			PlaceholderCar:         "Esim. ABC-123",
+			PlaceholderCar:         "Esim. ABC-123 tai 123-ABC",
 			PlaceholderMessage:     "Kuvaile ongelma",
 			UseLocationButton:      "Käytä sijaintiani",
 			PickMapButton:          "Valitse piste kartalta",
@@ -157,7 +157,7 @@ func landingContentFI() LandingContent {
 			PhotosHint:             "Voit lisätä enintään 3 kuvaa. JPG, PNG tai WEBP, max 10 MB / kuva.",
 			//PhoneHelp:              "Syötä numero muodossa +358 40 123 45 67",
 			AddressHelp:               "Voit kirjoittaa osoitteen itse tai täyttää sen sijainnista.",
-			CarHelp:                   "Syötä rekisterinumero muodossa ABC-123",
+			CarHelp:                   "Syötä rekisterinumero muodossa ABC-123 tai 123-ABC",
 			VisitPriceKicker:          "Selkeä hinta ennen lähetystä",
 			VisitPriceTitle:           "Mekaanikon käynti alkaen {visit} €",
 			VisitPriceText:            "Sisältää vain mekaanikon saapumisen. Vianmääritys ja korjaus eivät kuulu käyntimaksuun.",
@@ -174,7 +174,7 @@ func landingContentFI() LandingContent {
 			ContactRequiredMessage:      "Anna puhelin tai sähköposti.",
 			PhoneInvalidMessage:         "Anna kelvollinen puhelinnumero.",
 			EmailInvalidMessage:         "Anna kelvollinen sähköpostiosoite.",
-			RegistrationInvalidMessage:  "Anna rekisterinumero muodossa ABC-123.",
+			RegistrationInvalidMessage:  "Anna rekisterinumero muodossa ABC-123 tai 123-ABC.",
 			PhotosTooManyMessage:        "Voit lähettää enintään 3 kuvaa.",
 			PhotosTypeMessage:           "Vain kuvatiedostot ovat sallittuja.",
 			PhotosSizeMessage:           "Yhden kuvan maksimikoko on 10 MB.",
@@ -367,7 +367,7 @@ func landingContentEN() LandingContent {
 			PlaceholderEmail:       "email@example.com",
 			PlaceholderAddress:     "Street and number / yard / parking area",
 			PlaceholderAddressHint: "If the address repeats, add city, entrance or landmark",
-			PlaceholderCar:         "For example ABC-123",
+			PlaceholderCar:         "For example ABC-123 or 123-ABC",
 			PlaceholderMessage:     "Describe the issue",
 			UseLocationButton:      "Use my location",
 			PickMapButton:          "Pick point on map",
@@ -375,7 +375,7 @@ func landingContentEN() LandingContent {
 			PhotosHint:             "You can add up to 3 photos. JPG, PNG or WEBP, max 10 MB each.",
 			//PhoneHelp:              "Use format +358 40 123 45 67",
 			AddressHelp:               "You can type the address manually or fill it from location.",
-			CarHelp:                   "Use registration number format ABC-123",
+			CarHelp:                   "Use registration number format ABC-123 or 123-ABC",
 			VisitPriceKicker:          "Clear price before submitting",
 			VisitPriceTitle:           "Mechanic visit from €{visit}",
 			VisitPriceText:            "Covers the mechanic’s arrival only. Diagnostics and repairs are not included in the visit fee.",
@@ -392,7 +392,7 @@ func landingContentEN() LandingContent {
 			ContactRequiredMessage:      "Please enter phone or email.",
 			PhoneInvalidMessage:         "Please enter a valid phone number.",
 			EmailInvalidMessage:         "Please enter a valid email address.",
-			RegistrationInvalidMessage:  "Please enter a valid registration number in format ABC-123.",
+			RegistrationInvalidMessage:  "Please enter a valid registration number in format ABC-123 or 123-ABC.",
 			PhotosTooManyMessage:        "Please upload up to 3 photos only.",
 			PhotosTypeMessage:           "Only image files are allowed.",
 			PhotosSizeMessage:           "Each photo must be smaller than 10 MB.",
@@ -627,7 +627,7 @@ func applySiteSettingsToContent(content LandingContent, settings SiteSettings, l
 		applyStringOverride(&content.Promo.Title, settings.PromoTitleFI)
 		applyStringOverride(&content.Promo.Text, settings.PromoTextFI)
 		applyStringOverride(&content.Promo.Button, settings.PromoButtonFI)
-		return content
+		return registrationFormCopy(content, lang)
 	}
 
 	applyStringOverride(&content.Hero.PersonAlt, settings.HeroPersonAltEN)
@@ -715,7 +715,7 @@ func applySiteSettingsToContent(content LandingContent, settings SiteSettings, l
 	applyStringOverride(&content.Promo.Text, settings.PromoTextEN)
 	applyStringOverride(&content.Promo.Button, settings.PromoButtonEN)
 
-	return content
+	return registrationFormCopy(content, lang)
 }
 
 func firstNonEmpty(values ...string) string {
@@ -1201,4 +1201,16 @@ func getPrivacyTexts(lang string) map[string]string {
 		"SECTION_5_TITLE":  "5. Contact",
 		"SECTION_5_TEXT":   "If you have questions about your data, you can contact us through the same request form.",
 	}
+}
+
+// Update persisted single-format hints without overwriting custom admin copy.
+func registrationFormCopy(content LandingContent, lang string) LandingContent {
+ separator := " or "
+ if lang == "fi" { separator = " tai " }
+ for _, text := range []*string{&content.Form.PlaceholderCar, &content.Form.CarHelp, &content.Form.RegistrationInvalidMessage} {
+  if strings.Contains(*text, "ABC-123") && !strings.Contains(*text, "123-ABC") {
+   *text = strings.ReplaceAll(*text, "ABC-123", "ABC-123" + separator + "123-ABC")
+  }
+ }
+ return content
 }

@@ -56,3 +56,12 @@ test('whatsapp inbox shows real messages separately from status-only records',as
  assert.match(a.html(),/id="waRefresh"/);
  assert.doesNotMatch(a.html(),/Ожидание сообщения/);
 });
+
+test('registration display keeps stored vehicle keys intact',()=>{
+ const a=app();
+ a.run('jobs[0].plate="123ABC";view="jobs";render()');
+ assert.match(a.html(),/123-ABC/);
+ assert.equal(a.run('jobs[0].plate'),'123ABC');
+ a.run('selected={job:jobs[0],events:[],draft:"TEST"};detail()');
+ assert.match(a.html(),/123-ABC/);
+});
