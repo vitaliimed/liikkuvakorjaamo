@@ -66,6 +66,8 @@ type Agreement struct {
 }
 
 type Job struct {
+	Outcome string `json:"outcome,omitempty"`
+
 	Agreed          *Agreement `json:"agreed,omitempty"`
 	VehicleID       string     `json:"vehicle_id"`
 	PricingSnapshot []Tariff   `json:"pricing_snapshot"`
@@ -105,6 +107,8 @@ type Event struct {
 	Snapshot  *Job      `json:"snapshot,omitempty"`
 }
 type Action struct {
+	Outcome string `json:"outcome,omitempty"`
+
 	Area      string   `json:"area"`
 	Email     string   `json:"email"`
 	Kind      string   `json:"kind"`
@@ -273,6 +277,26 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		j.Report = x
 		j.Status = "review"
+	case "complete":
+		if !u.Manager() {
+			return j, ErrForbidden
+		}
+		switch a.Outcome {
+		case "success", "client_cancelled", "failed", "spam", "other":
+		default:
+			return bad("Выберите результат заявки")
+		}
+		if strings.TrimSpace(a.Text) == "" || len(a.Text) > 4000 {
+			return bad("Опишите выполненные работы или причину завершения")
+		}
+		j.Outcome = a.Outcome
+		if a.Outcome == "success" {
+			j.Status = "closed"
+			j.Report.Work = a.Text
+			j.Report.Result = "repaired"
+		} else {
+			j.Status = "cancelled"
+		}
 	case "close":
 		if !u.Manager() {
 			return j, ErrForbidden
@@ -285,13 +309,14 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		if !u.Manager() {
 			return j, ErrForbidden
 		}
-		if j.Status != "review" && j.Status != "closed" {
+		if j.Status != "review" && j.Status != "closed" && j.Status != "cancelled" {
 			return bad("Возврат недоступен")
 		}
 		if strings.TrimSpace(a.Text) == "" {
 			return bad("Укажите причину возврата")
 		}
 		j.Status = "in_progress"
+		j.Outcome = ""
 	case "cancel":
 		if !u.Manager() {
 			return j, ErrForbidden

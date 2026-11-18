@@ -110,11 +110,11 @@ const crmSessionCookieName = "__session" // Firebase Hosting forwards this cooki
 // Allow existing direct-Cloud-Run sessions while migrating clients to Firebase's
 // only forwarded session-cookie name. No session token or hash is exposed.
 func crmSessionCookie(r *http.Request) (*http.Cookie, error) {
-    cookie, err := r.Cookie(crmSessionCookieName)
-    if err == nil {
-        return cookie, nil
-    }
-    return r.Cookie("crm_session")
+	cookie, err := r.Cookie(crmSessionCookieName)
+	if err == nil {
+		return cookie, nil
+	}
+	return r.Cookie("crm_session")
 }
 
 func (s *Server) auth(r *http.Request) (User, error) {
@@ -140,6 +140,7 @@ func (s *Server) auth(r *http.Request) (User, error) {
 	}
 	return u, nil
 }
+
 // crmAllowedOrigin permits requests from the exact host serving this CRM,
 // including tagged Cloud Run previews. Cross-origin requests remain blocked:
 // callers cannot substitute a different Origin than the request Host. The
@@ -162,46 +163,46 @@ func crmAllowedOrigin(origin, host, canonical string) bool {
 // checks for tagged previews, and allow the fixed production origin only for
 // the exact Liikkuva Cloud Run service / a matching Hosting forwarding header.
 func crmTrustedCloudRunHost(host string) bool {
-    host = strings.ToLower(strings.TrimSpace(host))
-    return host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
-        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" ||
-        strings.HasSuffix(host, "---liikkuva-preview-knrjxcx2bq-lz.a.run.app")
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+		host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" ||
+		strings.HasSuffix(host, "---liikkuva-preview-knrjxcx2bq-lz.a.run.app")
 }
 
 func crmRequestedHostEquals(candidate, expected string) bool {
-    candidate = strings.ToLower(strings.TrimSpace(candidate))
-    return candidate == expected || candidate == "https://"+expected
+	candidate = strings.ToLower(strings.TrimSpace(candidate))
+	return candidate == expected || candidate == "https://"+expected
 }
 
 func crmAllowedOriginForRequest(r *http.Request, canonical string) bool {
-    origin := r.Header.Get("Origin")
-    if crmAllowedOrigin(origin, r.Host, canonical) {
-        return true
-    }
-    if canonical != "https://liikkuvakorjaamo.fi" || !crmTrustedCloudRunHost(r.Host) {
-        return false
-    }
-    // www is also an allowed frontend hostname; only the actual requested
-    // hostname (not a suffix match) can satisfy this same-origin proxy case.
-    requestedHost := ""
-    switch origin {
-    case "https://liikkuvakorjaamo.fi":
-        requestedHost = "liikkuvakorjaamo.fi"
-    case "https://www.liikkuvakorjaamo.fi":
-        requestedHost = "www.liikkuvakorjaamo.fi"
-    default:
-        return false
-    }
-    // Exact Cloud Run service host is the rewrite target; Firebase may
-    // preserve the requested public host separately. Never trust arbitrary
-    // X-Forwarded-Host values to grant access to another Origin.
-    host := strings.ToLower(strings.TrimSpace(r.Host))
-    if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
-        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
-        return true
-    }
-    return crmRequestedHostEquals(r.Header.Get("X-Fh-Requested-Host"), requestedHost) ||
-        crmRequestedHostEquals(r.Header.Get("X-Forwarded-Host"), requestedHost)
+	origin := r.Header.Get("Origin")
+	if crmAllowedOrigin(origin, r.Host, canonical) {
+		return true
+	}
+	if canonical != "https://liikkuvakorjaamo.fi" || !crmTrustedCloudRunHost(r.Host) {
+		return false
+	}
+	// www is also an allowed frontend hostname; only the actual requested
+	// hostname (not a suffix match) can satisfy this same-origin proxy case.
+	requestedHost := ""
+	switch origin {
+	case "https://liikkuvakorjaamo.fi":
+		requestedHost = "liikkuvakorjaamo.fi"
+	case "https://www.liikkuvakorjaamo.fi":
+		requestedHost = "www.liikkuvakorjaamo.fi"
+	default:
+		return false
+	}
+	// Exact Cloud Run service host is the rewrite target; Firebase may
+	// preserve the requested public host separately. Never trust arbitrary
+	// X-Forwarded-Host values to grant access to another Origin.
+	host := strings.ToLower(strings.TrimSpace(r.Host))
+	if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+		host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
+		return true
+	}
+	return crmRequestedHostEquals(r.Header.Get("X-Fh-Requested-Host"), requestedHost) ||
+		crmRequestedHostEquals(r.Header.Get("X-Forwarded-Host"), requestedHost)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -692,6 +693,14 @@ func (s *Server) job(w http.ResponseWriter, r *http.Request, u User, path string
 		s.messages(w, r, u, j)
 		return
 	}
+	if len(parts) == 2 && parts[1] == "mechanic-reports" {
+		s.mechanicReports(w, r, u, j)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "complete" {
+		s.complete(w, r, u, j)
+		return
+	}
 	if len(parts) == 2 && parts[1] == "ledger" {
 		s.ledger(w, r, u, j)
 		return
@@ -829,7 +838,7 @@ func (s *Server) mutate(ctx context.Context, id string, a Action, u User) (Job, 
 		}
 		var sched schedule
 		var sr *firestore.DocumentRef
-		touch := a.Kind == "reassign" || a.Kind == "confirm" || a.Kind == "reschedule" || a.Kind == "cancel"
+		touch := a.Kind == "complete" || a.Kind == "close" || a.Kind == "reassign" || a.Kind == "confirm" || a.Kind == "reschedule" || a.Kind == "cancel"
 		if touch && j.Mechanic != "" {
 			sr = s.Collection("schedules").Doc(j.Mechanic)
 			d, e := tx.Get(sr)

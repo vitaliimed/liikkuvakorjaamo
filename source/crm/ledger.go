@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,18 @@ type Share struct {
 	Fixed       int64  `json:"fixed_cents"`
 	BasisPoints int64  `json:"basis_points"`
 }
+type OwnerShare struct {
+	Mode  string `json:"mode"`
+	Value int64  `json:"value"`
+	Basis string `json:"basis"`
+}
+type PaymentItem struct {
+	Title string `json:"title"`
+	Cents int64  `json:"cents"`
+}
 type LedgerTerms struct {
+	OwnerShare *OwnerShare `json:"owner_share,omitempty"`
+
 	Final     int64   `json:"final_cents"`
 	Completed string  `json:"completed_date"`
 	Invoiced  string  `json:"invoice_date"`
@@ -27,6 +39,10 @@ type LedgerTerms struct {
 	Shares    []Share `json:"shares"`
 }
 type LedgerEntry struct {
+	Items           []PaymentItem `json:"items,omitempty"`
+	ParticipantName string        `json:"participant_name,omitempty"`
+	Document        string        `json:"document,omitempty"`
+
 	ID          string       `json:"id"`
 	Kind        string       `json:"kind"`
 	Cents       int64        `json:"cents"`
@@ -53,6 +69,9 @@ type LedgerRequest struct {
 	Entry    LedgerEntry `json:"entry"`
 }
 type LedgerTotals struct {
+	PaymentStatus string           `json:"payment_status"`
+	Settlement    map[string]int64 `json:"settlement"`
+
 	Received    int64            `json:"received_cents"`
 	Refunded    int64            `json:"refunded_cents"`
 	Outstanding int64            `json:"outstanding_cents"`
@@ -76,6 +95,11 @@ func validDate(s string) bool {
 	return e == nil && t.Year() >= 2000 && t.Year() <= 2100
 }
 func validTerms(t LedgerTerms) bool {
+	if x := t.OwnerShare; x != nil {
+		if len(t.Shares) != 0 || x.Value < 0 || (x.Mode != "fixed" && x.Mode != "percent") || (x.Basis != "revenue" && x.Basis != "margin") || (x.Mode == "percent" && x.Value > 10000) || x.Value > 100000000 {
+			return false
+		}
+	}
 	if t.Final < 0 || t.Final > 100000000 || len(t.Shares) > 30 {
 		return false
 	}
@@ -139,6 +163,16 @@ func ledgerTotals(l Ledger, today string) LedgerTotals {
 		entries[original.ID] = original
 	}
 	net := t.Received - t.Refunded
+	t.PaymentStatus = "unpaid"
+	if net > 0 {
+		t.PaymentStatus = "partial"
+		if l.Terms.Final == 0 {
+			t.PaymentStatus = "amount_unknown"
+		} else if net >= l.Terms.Final {
+			t.PaymentStatus = "paid"
+		}
+	}
+
 	t.Outstanding = max(0, l.Terms.Final-net)
 	t.Credit = max(0, net-l.Terms.Final)
 	if l.Terms.Due != "" && l.Terms.Due < today {
@@ -157,13 +191,39 @@ func ledgerTotals(l Ledger, today string) LedgerTotals {
 		t.Earned[s.Participant] += remainder * s.BasisPoints / 10000
 		allocated += t.Earned[s.Participant]
 	}
-	t.Unallocated = t.Gross - allocated
+	if x := l.Terms.OwnerShare; x != nil {
+		base := max(int64(0), net)
+		if x.Basis == "margin" {
+			base = max(int64(0), t.CashGross)
+		}
+		owner := x.Value
+		if x.Mode == "percent" {
+			owner = base * x.Value / 10000
+		}
+		t.Earned["owner"] = owner
+		allocated = owner
+		if l.Mechanic != "" {
+			t.Earned[l.Mechanic] = max(int64(0), t.CashGross-owner)
+			allocated += t.Earned[l.Mechanic]
+		}
+		t.Unallocated = t.CashGross - allocated
+	} else {
+		t.Unallocated = t.Gross - allocated
+	}
 	for p, v := range t.Earned {
 		t.Payable[p] = v - t.Paid[p]
 	}
 	for p, v := range t.Paid {
 		if _, ok := t.Earned[p]; !ok {
 			t.Payable[p] = -v
+		}
+	}
+	t.Settlement = map[string]int64{}
+	for _, m := range []map[string]int64{t.Earned, t.Held, t.Reimburse, t.Paid} {
+		for p := range m {
+			if p != "owner" {
+				t.Settlement[p] = t.Earned[p] + t.Reimburse[p] - t.Paid[p] - t.Held[p]
+			}
 		}
 	}
 	return t
@@ -188,6 +248,26 @@ func applyLedger(l Ledger, req LedgerRequest, u User, j Job) (Ledger, error) {
 		return l, ErrForbidden
 	}
 	e := req.Entry
+	e.ParticipantName = strings.TrimSpace(e.ParticipantName)
+	if e.ParticipantName != "" {
+		e.Participant = "other-" + digest(strings.ToLower(e.ParticipantName))[:24]
+	}
+	if e.Kind == "payment" && strings.TrimSpace(e.Note) == "" {
+		e.Note = "Получение денег"
+	}
+	if len(e.Document) > 200 || len(e.ParticipantName) > 100 {
+		return l, errors.New("Слишком длинное имя или номер документа")
+	}
+	var distributed int64
+	for _, item := range e.Items {
+		if e.Kind != "payment" || strings.TrimSpace(item.Title) == "" || len(item.Title) > 200 || item.Cents <= 0 || item.Cents > 100000000 {
+			return l, errors.New("Проверьте название и сумму позиции")
+		}
+		distributed += item.Cents
+		if distributed > e.Cents {
+			return l, errors.New("Детализация превышает полученную сумму")
+		}
+	}
 	if !ledgerKey.MatchString(e.ID) || len(e.Note) > 500 || e.Note == "" || len(e.Participant) > 100 || len(e.Method) > 30 || len(e.Reverses) > 100 {
 		return l, errors.New("Укажите ключ операции и основание (до 500 символов)")
 	}

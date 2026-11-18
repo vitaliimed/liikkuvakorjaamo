@@ -19,6 +19,13 @@ def service(name):
 
 
 class UpdateTests(unittest.TestCase):
+    def test_preview_only_checks_without_promoting(self):
+        updater, events = self.make_updater()
+        updater.args.preview_only = True
+        updater.check_and_promote('check-20261030-100000', 'liikkuva-preview-00042-test')
+        self.assertFalse(any('update-traffic' in args for kind, args, *rest in events if kind == 'gcloud'))
+
+
     def test_live_hosting_selects_actual_service_and_rejects_wrong_override(self):
         services = [service('liikkuva-preview'), service('liikkuva-landing'), service('autohelp-landing')]
         self.assertEqual(update.select_service(services, {'serviceId': 'liikkuva-preview', 'region': 'europe-north1'}), 'liikkuva-preview')

@@ -65,3 +65,21 @@ test('registration display keeps stored vehicle keys intact',()=>{
  a.run('selected={job:jobs[0],events:[],draft:"TEST"};detail()');
  assert.match(a.html(),/123-ABC/);
 });
+
+test('quick completion is owner only and available on old assigned jobs',()=>{
+ const a=app();a.run('jobs[0].status="assigned";selected={job:jobs[0],events:[],draft:""};detail()');assert.match(a.html(),/data-action="complete"/);
+ a.run('me={id:"m1",role:"mechanic",active:true};detail()');assert.doesNotMatch(a.html(),/data-action="complete"|id="mechanicReports"/);
+});
+test('payment details permit partial allocation and reject over-allocation',()=>{
+ const a=app();a.run(`function paymentData(over=false){const values={amount:'150',recipient:'owner',method:'cash',payment_date:'2026-11-17',itemize:'on'};return {get:k=>values[k]||'',getAll:k=>k==='item_title'?['Запчасти','Колёса']:['30',over?'121':'20']}}`);
+ assert.equal(a.run('readPayment(paymentData(),"test-key-123").cents'),15000);
+ assert.equal(a.run('readPayment(paymentData(),"test-key-123").items.reduce((s,x)=>s+x.cents,0)'),5000);
+ assert.throws(()=>a.run('readPayment(paymentData(true),"test-key-123")'),/превышает/);
+});
+test('simple payment has optional note/document and internal recipient IDs',()=>{
+ const a=app();const html=a.run('paymentForm()');
+ assert.doesNotMatch(html,/постоянный ID|name="document"[^>]*required|name="payment_note"[^>]*required/);
+ assert.match(html,/Распределить сумму по работам/);
+ a.run(`const plain={get:k=>({amount:'150',recipient:'owner',method:'cash',payment_date:'2026-11-17'})[k]||'',getAll:()=>[]}`);
+ assert.equal(a.run('readPayment(plain,"test-key-123").items.length'),0);
+});

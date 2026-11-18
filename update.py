@@ -614,6 +614,10 @@ class Updater:
     def check_and_promote(self, tag, revision):
         print('Проверяю готовую ревизию ' + revision + '…', flush=True)
         self.probe_revision(tag, revision)
+        if getattr(self.args, 'preview_only', False):
+            print('Preview проверен: ' + revision + '. Основной трафик не переключён.', flush=True)
+            self.print_probe_diagnostics(self.describe(), tag, revision)
+            return
         print('Проверки ревизии пройдены. Переключаю 100% трафика…', flush=True)
         self.gc('run', 'services', 'update-traffic', self.service, '--region=' + self.region, '--to-revisions=' + revision + '=100')
         if self.hosting_run and self.hosting_run.get('tag'):
@@ -647,6 +651,7 @@ def parse_args(argv=None):
     p.add_argument('--region', default='europe-north1')
     p.add_argument('--site', default=SITE)
     p.add_argument('--service', help='Normally detected from live Firebase Hosting configuration')
+    p.add_argument('--preview-only', action='store_true', help='Build and verify a preview without promoting production traffic')
     p.add_argument('--resume', action='store_true', help='Check and promote the latest existing check-tagged revision without rebuilding')
     p.add_argument('--check-timeout', type=int, default=150, help='Maximum seconds to wait for revision routing (30–600)')
     p.add_argument('--set-password', action='store_true', help='Set an owner password after deployment')
@@ -672,6 +677,8 @@ def main(argv=None):
         raise UpdateError('Откройте Google Cloud Shell: https://shell.cloud.google.com/')
     if not (ROOT / 'source' / 'admin_access.go').is_file():
         raise UpdateError('Не найдены исходники этого обновления. Выполните git pull в папке репозитория.')
+    if args.preview_only and (args.set_password or args.password_only or args.configure_email or args.configure_telegram or args.enable_leads):
+        raise UpdateError('--preview-only не совмещается с изменением конфигурации или пароля.')
     needs_password = args.set_password or args.password_only
     updater = Updater(args)
     updater.discover()

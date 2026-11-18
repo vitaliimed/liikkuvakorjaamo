@@ -1,0 +1,23 @@
+const {JSDOM}=require(process.env.CRM_JSDOM_PATH||'jsdom');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const dom=new JSDOM('<div id="app"></div><dialog id="modal"></dialog>',{url:'https://crm.example/crm/?demo',runScripts:'outside-only'});
+const vm=require('node:vm');const run=s=>vm.runInContext(s,dom.getInternalVMContext());
+const w=dom.window;w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
+run(fs.readFileSync('source/crm/web/app.js','utf8').split('\n').filter(x=>!x.startsWith('(async()=>')).join('\n'));
+(async()=>{
+ run('seed();receiveMoney("job1",{revision:0})');
+ let form=w.document.querySelector('form');form.elements.amount.value='150';assert.equal(form.checkValidity(),true,'plain payment without optional fields');
+ const toggle=form.querySelector('#itemize');toggle.checked=true;toggle.dispatchEvent(new w.Event('change'));
+ form.elements.item_title.value='Запчасти';form.elements.item_amount.value='30';form.querySelector('#addItem').click();
+ const titles=form.querySelectorAll('[name=item_title]'),amounts=form.querySelectorAll('[name=item_amount]');titles[1].value='Колёса';amounts[1].value='20';amounts[1].dispatchEvent(new w.Event('input',{bubbles:true}));
+ assert.match(form.querySelector('#itemRemainder').textContent,/100/);
+ const payment=run('readPayment(new FormData(document.querySelector("form")),"payment-key")');assert.equal(payment.cents,15000);assert.equal(payment.items.length,2);
+ form.elements.recipient.value='other';form.elements.recipient.dispatchEvent(new w.Event('change'));assert.equal(form.checkValidity(),false);form.elements.recipient_name.value='Алексей';assert.equal(form.checkValidity(),true);
+ w.document.querySelector('dialog').close();
+ run('selected={job:jobs[0]};api=async()=>({ledger:{revision:0,terms:{final_cents:0,shares:[]}},totals:{received_cents:0}})');
+ await run('quickComplete()');form=w.document.querySelector('form');form.elements.work.value='Выполнено';assert.equal(form.checkValidity(),true,'unpaid completion');
+ form.elements.outcome.value='failed';form.elements.outcome.dispatchEvent(new w.Event('change'));assert.equal(form.checkValidity(),true,'non-success does not require finance');
+ assert.equal(new w.FormData(form).has('amount'),false);
+ console.log('PASS DOM: simple payment, add/remove details, remaining amount, other recipient, unpaid/failed completion');
+ w.close();
+})().catch(e=>{console.error(e);process.exit(1)});

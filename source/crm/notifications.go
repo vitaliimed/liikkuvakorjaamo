@@ -19,6 +19,8 @@ import (
 )
 
 type Notice struct {
+	Keyboard string `json:"keyboard,omitempty"`
+
 	Fingerprint string    `json:"-"`
 	Job         string    `json:"job"`
 	Target      string    `json:"target"`
@@ -47,6 +49,9 @@ func (s *Server) notifications(w http.ResponseWriter, r *http.Request) {
 	write(w, 200, out)
 }
 func telegram(ctx context.Context, chat, text string) error {
+	return telegramKeyboard(ctx, chat, text, nil)
+}
+func telegramKeyboard(ctx context.Context, chat, text string, keyboard [][]string) error {
 	token := os.Getenv("CRM_TELEGRAM_BOT_TOKEN")
 	if token == "" || chat == "" {
 		return errors.New("Не настроен бот или личный Telegram ID")
@@ -54,7 +59,11 @@ func telegram(ctx context.Context, chat, text string) error {
 	if len([]rune(text)) > 4000 {
 		text = string([]rune(text)[:3950]) + "\nПолный текст в CRM"
 	}
-	b, _ := json.Marshal(map[string]any{"chat_id": chat, "text": text, "disable_web_page_preview": true})
+	payload := map[string]any{"chat_id": chat, "text": text, "disable_web_page_preview": true}
+	if len(keyboard) > 0 {
+		payload["reply_markup"] = map[string]any{"keyboard": keyboard, "resize_keyboard": true}
+	}
+	b, _ := json.Marshal(payload)
 	req, e := http.NewRequestWithContext(ctx, "POST", "https://api.telegram.org/bot"+token+"/sendMessage", bytes.NewReader(b))
 	if e != nil {
 		return errors.New("Ошибка настройки Telegram")
@@ -136,7 +145,13 @@ func (s *Server) sendPending(ctx context.Context) (int, int, error) {
 				chat = u.TelegramID
 			}
 		}
-		e = telegram(ctx, chat, n.Text)
+		var keyboard [][]string
+		if n.Keyboard != "" {
+			if json.Unmarshal([]byte(n.Keyboard), &keyboard) != nil {
+				return sent, failed, errors.New("Некорректная клавиатура уведомления")
+			}
+		}
+		e = telegramKeyboard(ctx, chat, n.Text, keyboard)
 		if e == nil {
 			n.Status = "sent"
 			n.Sent = time.Now()
@@ -208,7 +223,7 @@ func (s *Server) bot(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Invalid update")
 		return
 	}
-	if update.Message.Chat.Type != "private" {
+	if update.Message.Chat.Type != "private" || update.Message.From.ID != update.Message.Chat.ID || update.ID < 0 {
 		write(w, 200, map[string]bool{"ok": true})
 		return
 	}
@@ -227,44 +242,12 @@ func (s *Server) bot(w http.ResponseWriter, r *http.Request) {
 		write(w, 200, map[string]bool{"ok": true})
 		return
 	}
-	// A stable outbox ID deduplicates Telegram retries. Mechanic opens the authenticated mobile form.
-	text := "Введите номер автомобиля, например ABC-123 или 123-ABC. Я покажу доступные вам обращения. Отчёт, сумма оплаты и до 10 фото сохраняются в форме CRM."
-	p, err := Plate(update.Message.Text)
-	if err == nil {
-		q := s.Collection("jobs").Where("Plate", "==", p)
-		alias, lookupErr := s.Collection("vehicle_aliases").Doc(p).Get(r.Context())
-		if lookupErr == nil {
-			var a VehicleAlias
-			if alias.DataTo(&a) != nil {
-				fail(w, 503, "Ошибка номера автомобиля")
-				return
-			}
-			q = s.Collection("jobs").Where("Vehicle", "==", a.VehicleID)
-		} else if status.Code(lookupErr) != codes.NotFound {
-			fail(w, 503, "Ошибка поиска автомобиля")
-			return
-		}
-		if !u.Manager() {
-			q = q.Where("Mechanic", "==", u.ID)
-		}
-		jobs, err := q.Limit(20).Documents(r.Context()).GetAll()
-		if err != nil {
-			fail(w, 503, "Не удалось найти заявки")
-			return
-		}
-		text = "По номеру " + p + " доступно обращений: " + strconv.Itoa(len(jobs))
-		for _, d := range jobs {
-			var j Job
-			if d.DataTo(&j) == nil {
-				text += "\n\n" + j.Created.In(Helsinki).Format("02.01.2006") + " · " + j.Status + "\n" + j.Address + "\n" + s.URL + "/crm/?job=" + j.ID
-			}
-		}
-	}
-	_, e = s.Collection("outbox").Doc("tg-"+strconv.FormatInt(update.ID, 10)).Create(r.Context(), Notice{Target: u.ID, Text: strings.TrimSpace(text), Status: "pending", Created: time.Now().UTC()})
-	if e != nil && status.Code(e) != codes.AlreadyExists {
-		fail(w, 503, "Ошибка сохранения ответа")
+	if e = s.handleBotReport(r.Context(), u, update.ID, strings.TrimSpace(update.Message.Text)); e != nil {
+		fail(w, 503, "Не удалось сохранить ответ; повторите позже")
 		return
 	}
+
+	s.deliverBotReply(r.Context(), u, update.ID)
 	write(w, 200, map[string]bool{"ok": true})
 }
 
