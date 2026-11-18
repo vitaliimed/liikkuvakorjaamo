@@ -20,7 +20,7 @@ func TestProPriceSettings(t *testing.T) {
 	}
 	custom := SiteSettings{ProVisitEUR: 90, ProDiagnosticEUR: 60}
 	got := liikkuvaPriceText("70 €; €70; 50 €; €50; {visit}; {diagnostic}; {total}", custom)
-	if got != "90 €; €90; 60 €; €60; 90; 60; 150" {
+	if got != "70 €; €70; 50 €; €50; 90; 60; 150" {
 		t.Fatal(got)
 	}
 	if liikkuvaProDefaults(SiteSettings{ProAccent: "</style><script>"}).ProAccent != "#f97315" {

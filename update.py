@@ -22,7 +22,18 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parent
 DOMAIN = 'https://liikkuvakorjaamo.fi'
-VERSION = '2026.10.31-integrations-theme'
+# Use the version compiled into the Go binary, not a stale independent
+# release label. The health gate still requires both exact version and
+# K_REVISION to match the candidate before any production traffic changes.
+def expected_release_version():
+    source = (ROOT / 'source' / 'liikkuva_brand.go').read_text(encoding='utf-8')
+    match = re.search(r'^const\s+releaseVersion\s*=\s*"([^"]+)"', source, re.MULTILINE)
+    if not match:
+        raise RuntimeError('Cannot identify the Go application release version; deployment blocked')
+    return match.group(1)
+
+
+VERSION = expected_release_version()
 HEALTH_PATH = '/api/health'
 DATABASE = 'liikkuvakorjaamo'
 SITE = 'liikkuva-liikkuva-korjaamo'
@@ -543,7 +554,8 @@ class Updater:
                                                  timeout=min(12, max(0.1, deadline - time.monotonic())))
                         if self.health_matches(body, revision):
                             for path, marker in [('/admin', 'Войти в кабинет'),
-                                                 ('/static/css/responsive.css?v=20261029', '.hero .hero-layout')]:
+                                                 ('/static/css/hero-form-ux.css?v=20261112-fix1', '.hero .hero-layout'),
+                                                 ('/static/js/theme.js?v=20261114-toggle1', '__liikkuvaThemeInitialized')]:
                                 page = self.endpoint(url + path, identity_token=token)
                                 if marker not in page:
                                     raise UpdateError(f'Ревизия отвечает, но не прошла проверка {path}. Трафик не переключён.')

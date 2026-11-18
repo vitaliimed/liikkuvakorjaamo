@@ -144,7 +144,15 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 		render(http.StatusServiceUnavailable)
 		return
 	}
-	if err := send(h.cfg, data.To, data.Subject, data.Message, standaloneEmailHTMLLanguage(data.Message, data.Language), attachments...); err != nil {
+	settings, priceErr := loadSiteSettings(r.Context(), h.cfg)
+	if priceErr != nil {
+		data.Error = "Не удалось прочитать актуальные цены из настроек сайта. Письмо не отправлено."
+		render(http.StatusServiceUnavailable)
+		return
+	}
+	resolvedSubject := liikkuvaPricePlaceholders(data.Subject, settings)
+	resolvedMessage := liikkuvaPricePlaceholders(data.Message, settings)
+	if err := send(h.cfg, data.To, resolvedSubject, resolvedMessage, standaloneEmailHTMLLanguage(resolvedMessage, data.Language), attachments...); err != nil {
 		// Do not log recipient addresses, message bodies, credentials or attachments.
 		log.Printf("Liikkuva standalone SMTP failure (no recipient logged): %T: %v", err, err)
 		// A lost SMTP response can be ambiguous: never auto-retry and risk duplicate mail.
@@ -158,7 +166,7 @@ func (h *AdminHandler) standaloneEmailWithSender(w http.ResponseWriter, r *http.
 var standaloneEmailTemplate = template.Must(template.New("standalone-email").Parse(`<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Новое письмо — Liikkuva Auto Korjaamo</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#23372b;font:16px/1.5 Arial,sans-serif}main{max-width:820px;margin:32px auto;padding:28px;background:white;border-radius:18px}a{color:#f97315}h1{margin:12px 0}label{display:block;margin-top:18px;font-weight:bold}input,textarea,select{width:100%;padding:12px;border:1px solid #b8c6d6;border-radius:8px;font:inherit}textarea{min-height:260px}button{margin-top:22px;padding:14px 24px;border:0;border-radius:8px;background:#23372b;color:white;font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.note{color:#536779;font-size:14px}.ok,.err{padding:14px;border-radius:8px}.ok{background:#f4f5f2}.err{background:#f4f5f2}small{display:block}@media(max-width:600px){main{margin:0;padding:20px;border-radius:0}}</style></head>
-<body><main><a href="/admin">← Админка</a><h1>Новое письмо</h1><p>Любой получатель, своя тема и текст. Заявка не требуется.</p><p class="note">Отправитель: {{.From}}</p>
+<body><main><a href="/admin">← Админка</a><h1>Новое письмо</h1><p>Любой получатель, своя тема и текст. Заявка не требуется.</p><p class="note">Отправитель: {{.From}}. Для актуальных цен из админки вставьте в текст или тему {visit} (выезд), {diagnostic} (диагностика), {total} (оба). Остальные суммы в произвольном тексте не меняются.</p>
 {{if .Sent}}<p class="ok" role="status">Почтовый сервер принял письмо. Доставка во входящие зависит от почтового сервиса получателя.</p>{{end}}
 {{if .Error}}<p class="err" role="alert">{{.Error}}</p>{{end}}{{if not .Enabled}}<p class="err">Отправка отключена: настройки почты не заполнены.</p>{{end}}
 <form method="post" action="/admin/email" enctype="multipart/form-data" id="compose">

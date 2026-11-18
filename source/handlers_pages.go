@@ -295,10 +295,10 @@ func (h *PageHandler) serveThankYou(w http.ResponseWriter, r *http.Request, lang
 		LinkedInLeadConversionID:     strings.TrimSpace(settings.LinkedInLeadConversionID),
 		TikTokPixelID:                strings.TrimSpace(settings.TikTokPixelID),
 		ThankYouTitle:                texts["THANKYOU_TITLE"],
-		ThankYouText:                 texts["THANKYOU_TEXT"],
+		ThankYouText:                 liikkuvaPriceText(texts["THANKYOU_TEXT"], settings),
 		ThankYouButton:               texts["THANKYOU_BUTTON"],
 		ThankYouButtonURL:            texts["THANKYOU_BUTTON_URL"],
-		VisitPriceEUR:                visitPriceEUR,
+		VisitPriceEUR:                liikkuvaVisitFee(settings),
 	}
 
 	if err := h.renderer.renderThankYou(w, data); err != nil {

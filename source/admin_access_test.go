@@ -413,6 +413,45 @@ func TestSettingsTwoWindowsCannotOverwriteEachOther(t *testing.T) {
 		t.Fatal("committed settings were replaced")
 	}
 }
+func TestAdminSaveRejectsMissingOrInvalidPricesWithoutWriting(t *testing.T) {
+	f := newAccessFixture(t, fixtureAdminPassword)
+	store := &memorySettingsStore{state: SiteSettings{Revision: 4, ProVisitEUR: 90, ProDiagnosticEUR: 65, Phone: "original"}}
+	f.cfg.SettingsStore = store
+	renderer, err := newTemplateRenderer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.handler = newServer(f.cfg, renderer).Handler
+	cookie := f.login(t, fixtureAdminPassword)
+	for _, tc := range []struct {
+		name, visit, diagnostic string
+	}{
+		{"missing visit", "", "65"},
+		{"missing diagnostics", "90", ""},
+		{"invalid visit", "abc", "65"},
+		{"zero diagnostics", "90", "0"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := url.Values{
+				"access_csrf": {fixtureCSRF(cookie)},
+				"settings_revision": {"4"},
+				"active_tab": {"general"},
+				"phone": {"should-not-save"},
+				"ProVisitEUR": {tc.visit},
+				"ProDiagnosticEUR": {tc.diagnostic},
+			}
+			w := f.request("POST", "/admin/save", values, cookie)
+			if w.Code != http.StatusBadRequest {
+				t.Fatalf("expected HTTP 400, got %d", w.Code)
+			}
+			current, err := store.Load(context.Background())
+			if err != nil || current.Revision != 4 || current.ProVisitEUR != 90 || current.ProDiagnosticEUR != 65 || current.Phone != "original" {
+				t.Fatalf("invalid save mutated settings: %+v; err=%v", current, err)
+			}
+		})
+	}
+}
+
 func TestSettingsTransactionRetryStillRejectsStaleForm(t *testing.T) {
 	store := &memorySettingsStore{retryWithConcurrentWrite: true}
 	err := saveSiteSettings(context.Background(), Config{SettingsStore: store}, SiteSettings{Phone: "stale", Revision: 0})

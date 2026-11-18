@@ -28,6 +28,9 @@ assert.ok(source.includes('function setupExistingLiikkuva'));
 assert.ok(source.includes('SpreadsheetApp.openById(SHEET_ID)'),'Web Apps must use openById, not getActiveSpreadsheet');
 assert.ok(source.includes('script_token'),'webhook must require a private token');
 assert.ok(source.includes("l.submission_id"),'lead retries must be deduplicated');
+assert.ok(!source.includes('Number(l.visit_price_eur)||75'),'visit price must never silently revert to old amount');
+assert.ok(!source.includes('Number(l.diagnostic_from_eur)||50'),'diagnostic price must never silently revert to old amount');
+assert.ok(source.includes('Missing visit/diagnostic price snapshot'),'missing saved quote must be flagged');
 assert.ok(source.includes('tryLock(20000)'),'parallel webhook writes must be serialized');
 
 for(const formula of [

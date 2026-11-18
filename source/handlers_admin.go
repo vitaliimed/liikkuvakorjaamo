@@ -1203,6 +1203,15 @@ func (h *AdminHandler) SendCustomEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Explicit {visit}/{diagnostic}/{total} placeholders in owner-authored
+	// messages always come from the current landing admin settings.
+	priceSettings, priceErr := loadSiteSettings(r.Context(), h.cfg)
+	if priceErr != nil {
+		http.Redirect(w, r, "/admin?tab=leads&lead_id="+url.QueryEscape(leadID)+"&error="+url.QueryEscape("loading current prices failed: "+priceErr.Error()), http.StatusSeeOther)
+		return
+	}
+	subject = liikkuvaPricePlaceholders(subject, priceSettings)
+	message = liikkuvaPricePlaceholders(message, priceSettings)
 	if err := sendCustomClientEmail(h.cfg, record.Lead, subject, message, attachments...); err != nil {
 		http.Redirect(w, r, "/admin?tab=leads&lead_id="+url.QueryEscape(leadID)+"&error="+url.QueryEscape("custom email send failed: "+err.Error()), http.StatusSeeOther)
 		return

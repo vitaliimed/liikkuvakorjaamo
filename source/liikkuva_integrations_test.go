@@ -82,7 +82,7 @@ func TestThemeSettingsSaveAndRenderWithoutAttributeInjection(t *testing.T) {
 	renderer, _ := newTemplateRenderer()
 	f.handler = newServer(f.cfg, renderer).Handler
 	cookie := f.login(t, fixtureAdminPassword)
-	values := url.Values{"access_csrf": {fixtureCSRF(cookie)}, "settings_revision": {"0"}, "active_tab": {"general"}, "phone": {"+358401234567"}, "ProTheme": {"night"}, "ProNightStart": {"22:30"}, "ProNightEnd": {"06:45"}}
+	values := url.Values{"access_csrf": {fixtureCSRF(cookie)}, "settings_revision": {"0"}, "active_tab": {"general"}, "phone": {"+358401234567"}, "ProVisitEUR": {"75"}, "ProDiagnosticEUR": {"60"}, "ProTheme": {"night"}, "ProNightStart": {"22:30"}, "ProNightEnd": {"06:45"}}
 	if w := f.request("POST", "/admin/save", values, cookie); w.Code != 303 {
 		t.Fatalf("theme save failed: %d", w.Code)
 	}

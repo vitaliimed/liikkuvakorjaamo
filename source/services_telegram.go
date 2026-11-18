@@ -228,6 +228,7 @@ func buildTelegramMessage(lead Lead) string {
 
 		addTelegramLine(&b, "Rekisterinumero", lead.Car)
 		addTelegramLine(&b, "Käyntimaksu", fmt.Sprintf("%d €", liikkuvaLeadFee(lead)))
+		addTelegramLine(&b, "Vianmääritys ja pienet korjaukset (erikseen)", fmt.Sprintf("alkaen %d €", liikkuvaLeadDiagnosticFee(lead)))
 
 		if len(lead.PhotoURLs) > 0 {
 			addTelegramLine(&b, "Kuvia", fmt.Sprintf("%d", len(lead.PhotoURLs)))
@@ -256,6 +257,7 @@ func buildTelegramMessage(lead Lead) string {
 
 	addTelegramLine(&b, "Registration number", lead.Car)
 	addTelegramLine(&b, "Visit fee", fmt.Sprintf("€%d", liikkuvaLeadFee(lead)))
+	addTelegramLine(&b, "Diagnostics and minor repairs (extra)", fmt.Sprintf("from €%d", liikkuvaLeadDiagnosticFee(lead)))
 
 	if len(lead.PhotoURLs) > 0 {
 		addTelegramLine(&b, "Photos", fmt.Sprintf("%d", len(lead.PhotoURLs)))

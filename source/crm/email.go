@@ -156,6 +156,16 @@ func smtpSend(e Email) (string, error) {
 	_ = c.Quit()
 	return "accepted", nil
 }
+// Replace explicit tokens only. Agreed prices written elsewhere in the
+// message are deliberately preserved.
+func crmPricePlaceholders(body string, visitCents, diagnosticCents int64) string {
+	return strings.NewReplacer(
+		"{visit}", fmt.Sprintf("%d", visitCents/100),
+		"{diagnostic}", fmt.Sprintf("%d", diagnosticCents/100),
+		"{total}", fmt.Sprintf("%d", (visitCents+diagnosticCents)/100),
+	).Replace(body)
+}
+
 func (s *Server) emails(w http.ResponseWriter, r *http.Request, u User, j Job) {
 	if !u.Manager() {
 		fail(w, 403, "Переписка доступна только владельцу")
@@ -225,6 +235,16 @@ func (s *Server) emails(w http.ResponseWriter, r *http.Request, u User, j Job) {
 	if len(key) < 16 || len(key) > 128 {
 		fail(w, 400, "Нужен Idempotency-Key")
 		return
+	}
+	// CRM manual emails use the same price settings as the landing site.
+	if j.Brand == "liikkuva" && (strings.Contains(x.Body, "{visit}") || strings.Contains(x.Body, "{diagnostic}") || strings.Contains(x.Body, "{total}") || strings.Contains(x.Subject, "{visit}") || strings.Contains(x.Subject, "{diagnostic}") || strings.Contains(x.Subject, "{total}")) {
+		visit, diagnostic, priceErr := loadSitePriceCents(r.Context(), s.DB)
+		if priceErr != nil {
+			fail(w, 503, "Не удалось загрузить актуальные цены Liikkuva")
+			return
+		}
+		x.Subject = crmPricePlaceholders(x.Subject, visit, diagnostic)
+		x.Body = crmPricePlaceholders(x.Body, visit, diagnostic)
 	}
 	id := digest(j.ID + ":" + key)
 	mr := ref.Collection("emails").Doc(id)
