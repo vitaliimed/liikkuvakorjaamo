@@ -17,7 +17,7 @@ for project, service in [('liikkuva-korjaamo','liikkuva-preview'),('seventh-chas
             r = cloud('run','revisions','describe',revision,'--project='+project,'--region=europe-north1')
             c = r.get('spec',{}).get('containers',[{}])[0]
             env = {e['name']:e for e in c.get('env',[])}
-            wanted = ['TELEGRAM_BOT_TOKEN','TELEGRAM_CHAT_ID','CRM_TELEGRAM_BOT_TOKEN','CRM_TELEGRAM_WEBHOOK_SECRET','CRM_OWNER_TELEGRAM_ID','CRM_INTERNAL_TOKEN','FIRESTORE_DATABASE','SITE_SETTINGS_COLLECTION']
-            print(json.dumps({'revision':revision,'image':c.get('image'),'configuration':{k:('secret' if env[k].get('valueFrom') else 'configured') if k in env else 'missing' for k in wanted}},ensure_ascii=False,indent=2))
+            wanted = ['TELEGRAM_BOT_TOKEN','TELEGRAM_CHAT_ID','CRM_TELEGRAM_BOT_TOKEN','CRM_TELEGRAM_WEBHOOK_SECRET','CRM_OWNER_TELEGRAM_ID','CRM_INTERNAL_TOKEN','CRM_AUTOHELP_TARIFF_TOKEN','CRM_AUTOHELP_TARIFF_URL','SITE_SETTINGS_COLLECTION']
+            print(json.dumps({'revision':revision,'image':c.get('image'),'crm_database':('liikkuvakorjaamo (selected in application code)' if project == 'liikkuva-korjaamo' else 'not applicable'),'configuration':{k:('secret' if env[k].get('valueFrom') else 'configured') if k in env else 'missing' for k in wanted}},ensure_ascii=False,indent=2))
     except RuntimeError as e:
         print(project+': '+str(e))

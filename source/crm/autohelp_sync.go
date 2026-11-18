@@ -22,14 +22,16 @@ type autoHelpLead struct {
 	CreatedAt time.Time `firestore:"created_at"`
 	Status    string    `firestore:"client_status"`
 	Lead      struct {
-		Car      string   `firestore:"car"`
-		Name     string   `firestore:"name"`
-		Phone    string   `firestore:"phone"`
-		Email    string   `firestore:"email"`
-		Address  string   `firestore:"address"`
-		Message  string   `firestore:"message"`
-		Language string   `firestore:"language"`
-		Photos   []string `firestore:"photo_urls"`
+		PricingSnapshot []Tariff `firestore:"pricing_snapshot"`
+		VisitPriceEUR   int64    `firestore:"visit_price_eur"`
+		Car             string   `firestore:"car"`
+		Name            string   `firestore:"name"`
+		Phone           string   `firestore:"phone"`
+		Email           string   `firestore:"email"`
+		Address         string   `firestore:"address"`
+		Message         string   `firestore:"message"`
+		Language        string   `firestore:"language"`
+		Photos          []string `firestore:"photo_urls"`
 	} `firestore:"lead"`
 }
 
@@ -70,10 +72,6 @@ func SyncAutoHelp(ctx context.Context) error {
 		return fmt.Errorf("get checkpoint: %w", err)
 	}
 
-	book, err := loadPriceBook(ctx, target)
-	if err != nil {
-		return fmt.Errorf("load CRM tariffs: %w", err)
-	}
 	docs := source.Collection("leads").Where("created_at", ">=", start).
 		Where("created_at", "<", end).OrderBy("created_at", firestore.Asc).Documents(ctx)
 	defer docs.Stop()
@@ -131,7 +129,7 @@ func SyncAutoHelp(ctx context.Context) error {
 				j.Description += "\nАвтомобиль (поле AutoHelp): " + value
 			}
 		}
-		applyPrices(&j, book)
+		applyAutohelpLeadPrices(&j, lead.Lead.PricingSnapshot, lead.Lead.VisitPriceEUR)
 		for _, raw := range lead.Lead.Photos {
 			photo, err := copyAutoHelpPhoto(ctx, media, id, raw, lead.CreatedAt)
 			if err != nil {

@@ -20,6 +20,7 @@ import (
 	"net/mail"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -238,6 +239,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.tickHTTP(w, r)
 		return
 	}
+	if path == "/internal/autohelp-tariffs" {
+		s.autohelpTariffs(w, r)
+		return
+	}
 	if r.Method != "GET" && r.Method != "HEAD" {
 		if r.Header.Get("X-CRM-Request") != "1" {
 			fail(w, 403, "Недопустимый запрос")
@@ -442,6 +447,14 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	x.Email = strings.ToLower(strings.TrimSpace(x.Email))
+	x.TelegramID = strings.TrimSpace(x.TelegramID)
+	if x.TelegramID != "" {
+		id, err := strconv.ParseInt(x.TelegramID, 10, 64)
+		if err != nil || id <= 0 || strconv.FormatInt(id, 10) != x.TelegramID || x.TelegramID == os.Getenv("CRM_OWNER_TELEGRAM_ID") {
+			fail(w, 400, "Укажите личный Telegram user ID механика; ID группы или владельца не подходит")
+			return
+		}
+	}
 	if !strings.Contains(x.Email, "@") || x.Name == "" || x.Role != "mechanic" {
 		fail(w, 400, "Укажите имя, email и роль")
 		return
@@ -461,6 +474,17 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 	ref := s.Collection("users").Doc(digest(x.Email))
 	e := s.DB.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		var prev User
+		if x.TelegramID != "" {
+			users, err := tx.Documents(s.Collection("users").Where("TelegramID", "==", x.TelegramID).Limit(2)).GetAll()
+			if err != nil {
+				return err
+			}
+			for _, user := range users {
+				if user.Ref.ID != ref.ID {
+					return errors.New("Этот Telegram ID уже привязан к другому сотруднику")
+				}
+			}
+		}
 		d, e := tx.Get(ref)
 		if e != nil && status.Code(e) != codes.NotFound {
 			return e

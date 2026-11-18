@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type Tariff struct {
@@ -49,7 +50,7 @@ func loadSitePriceCents(ctx context.Context, db *firestore.Client) (int64, int64
 		return 0, 0, err
 	}
 	var settings struct {
-		ProVisitEUR int
+		ProVisitEUR      int
 		ProDiagnosticEUR int
 	}
 	if err := d.DataTo(&settings); err != nil {
@@ -81,10 +82,10 @@ func applySiteTariffs(b PriceBook, visit, diagnostic int64) PriceBook {
 		}
 	}
 	if !foundVisit {
-		b.Items = append(b.Items, Tariff{Brand:"liikkuva", Service:"visit", Title:"Выезд", Cents:visit, Currency:"EUR", Active:true})
+		b.Items = append(b.Items, Tariff{Brand: "liikkuva", Service: "visit", Title: "Выезд", Cents: visit, Currency: "EUR", Active: true})
 	}
 	if !foundDiagnostic {
-		b.Items = append(b.Items, Tariff{Brand:"liikkuva", Service:"diagnostics", Title:"Диагностика", Cents:diagnostic, Currency:"EUR", Active:true, Minimum:true})
+		b.Items = append(b.Items, Tariff{Brand: "liikkuva", Service: "diagnostics", Title: "Диагностика", Cents: diagnostic, Currency: "EUR", Active: true, Minimum: true})
 	}
 	return b
 }
@@ -161,6 +162,10 @@ func (s *Server) tariffs(w http.ResponseWriter, r *http.Request, u User) {
 		}
 	}
 	seen := map[string]bool{}
+	if err := validateAutohelpBook(autohelpBook(b)); err != nil {
+		fail(w, 400, err.Error())
+		return
+	}
 	if len(b.Items) > 100 {
 		fail(w, 400, "Максимум 100 услуг")
 		return
@@ -188,8 +193,13 @@ func (s *Server) tariffs(w http.ResponseWriter, r *http.Request, u User) {
 		if old.Revision != b.Revision {
 			return ErrConflict
 		}
-		b.Revision++
-		return tx.Set(ref, b)
+		b.Revision = old.Revision + 1
+		if err := tx.Set(ref, b); err != nil {
+			return err
+		}
+		return tx.Create(ref.Collection("history").NewDoc(), map[string]any{
+			"Actor": u.ID, "At": time.Now().UTC(), "Before": old, "After": b,
+		})
 	})
 	if e != nil {
 		fail(w, 409, e.Error())
