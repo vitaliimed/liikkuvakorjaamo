@@ -41,12 +41,11 @@ gcloud run deploy autohelp-landing --source="$AUTOHELP_DIR" \
   --project=seventh-chassis-247718 --region=europe-north1 --quiet --format=json \
   > "$RELEASE_DIR/autohelp-deployed.json"
 AUTOHELP_REVISION="$(python3 - "$RELEASE_DIR/autohelp-deployed.json" <<'PY'
-import json,sys
-state=json.load(open(sys.argv[1]))['status']
-revision=state.get('latestReadyRevisionName')
-if not revision or revision != state.get('latestCreatedRevisionName'):
-    raise SystemExit('AutoHelp: новая ревизия не готова; остановлено.')
-print(revision)
+import importlib.util,json,sys
+spec=importlib.util.spec_from_file_location('setup','scripts/connect-crm-telegram.py')
+setup=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup)
+print(setup.ready_created_revision(json.load(open(sys.argv[1])), 'seventh-chassis-247718', 'europe-north1'))
 PY
 )"
 gcloud run services update-traffic autohelp-landing --to-revisions="$AUTOHELP_REVISION=100" \

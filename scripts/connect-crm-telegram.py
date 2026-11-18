@@ -70,6 +70,21 @@ def serving_revision(service):
     return live[0]['revisionName']
 
 
+def ready_created_revision(service, project, region):
+    name = service.get('status', {}).get('latestCreatedRevisionName')
+    if not name:
+        raise SetupError('Cloud Run не сообщил созданную ревизию.')
+    revision = cloud('run', 'revisions', 'describe', name, '--project='+project,
+                     '--region='+region, '--format=json')
+    ready = next((c for c in revision.get('status', {}).get('conditions', [])
+                  if c.get('type') == 'Ready'), {})
+    if ready.get('status') != 'True':
+        raise SetupError('Ревизия '+name+' пока не готова. Трафик не переключён.')
+    # A Ready revision with no traffic may be Retired. latestReadyRevisionName
+    # can still name the previous serving revision; it is not this readiness test.
+    return name
+
+
 def check_webhook(info, expected):
     if info.get('url') and info['url'] != expected:
         raise SetupError('У бота уже есть другой webhook. Его адрес сохранится только в приватном backup; '
@@ -152,7 +167,7 @@ class Connector:
             raise SetupError('Не удалось проверить привязку рабочего домена. Облачные настройки не изменены.') from None
         self.state, self.revision = self.describe(self.project, self.service)
         self.before = serving_revision(self.state)
-        if self.state['status'].get('latestReadyRevisionName') != self.before or self.state['status'].get('latestCreatedRevisionName') != self.before:
+        if self.state['status'].get('latestCreatedRevisionName') != self.before:
             raise SetupError('Сначала опубликуйте готовую CRM-ревизию: последняя сборка отличается от рабочей.')
         entries = env_map(self.revision)
         self.email = self.value(entries, 'CRM_OWNER_EMAIL', self.project).lower()
@@ -263,9 +278,7 @@ class Connector:
         deployed = cloud('run', 'services', 'update', self.service, '--project='+self.project,
                          '--region='+self.region, '--update-secrets='+','.join(k+'='+v for k,v in refs.items()),
                          '--update-env-vars=CRM_OWNER_TELEGRAM_ID='+self.owner_id, '--format=json')
-        revision = deployed['status']['latestReadyRevisionName']
-        if revision == self.before or deployed['status'].get('latestCreatedRevisionName') != revision:
-            raise SetupError('Новая конфигурация не стала готовой. Webhook не изменён.')
+        revision = ready_created_revision(deployed, self.project, self.region)
         cloud('run', 'services', 'update-traffic', self.service, '--project='+self.project,
               '--region='+self.region, '--to-revisions='+revision+'=100', '--format=json')
         # Hosting may route to a pinned tag. Use the project's existing updater logic.

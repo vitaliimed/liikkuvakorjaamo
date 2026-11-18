@@ -13,6 +13,18 @@ spec.loader.exec_module(setup)
 
 
 class TelegramSetupTests(unittest.TestCase):
+    def test_retired_ready_revision_is_publishable_despite_old_latest_ready(self):
+        state = {'status': {'latestCreatedRevisionName': 'new', 'latestReadyRevisionName': 'old'}}
+        revision = {'status': {'conditions': [{'type':'Ready','status':'True','reason':'Retired'}, {'type':'Active','status':'False','reason':'Retired'}]}}
+        with patch.object(setup, 'cloud', return_value=revision):
+            self.assertEqual(setup.ready_created_revision(state, 'project', 'region'), 'new')
+
+    def test_failed_revision_is_never_promoted(self):
+        state = {'status': {'latestCreatedRevisionName': 'new', 'latestReadyRevisionName': 'old'}}
+        with patch.object(setup, 'cloud', return_value={'status':{'conditions':[{'type':'Ready','status':'False'}]}}):
+            with self.assertRaises(setup.SetupError):
+                setup.ready_created_revision(state, 'project', 'region')
+
     def connector(self):
         return setup.Connector(argparse.Namespace(project='test-project', region='europe-north1',
             service='liikkuva-preview', scheduler_region='europe-west1', owner_telegram_id='1234', apply=True))

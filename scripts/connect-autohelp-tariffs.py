@@ -20,7 +20,7 @@ spec.loader.exec_module(setup)
 
 def require_current(state):
     revision = setup.serving_revision(state)
-    if any(state['status'].get(key) != revision for key in ['latestCreatedRevisionName', 'latestReadyRevisionName']):
+    if state['status'].get('latestCreatedRevisionName') != revision:
         raise setup.SetupError('Сначала опубликуйте готовую сборку; последняя ревизия отличается от рабочей.')
     return revision
 
@@ -84,9 +84,7 @@ def main(argv=None):
             flags.append('--update-env-vars='+env_flag)
         result = setup.cloud('run','services','update',connector.service,'--project='+connector.project,
                              '--region='+connector.region,*flags,'--format=json')
-        new = result['status'].get('latestReadyRevisionName')
-        if not new or new != result['status'].get('latestCreatedRevisionName'):
-            raise setup.SetupError('Новая конфигурация не стала готовой.')
+        new = setup.ready_created_revision(result, connector.project, connector.region)
         setup.cloud('run','services','update-traffic',connector.service,'--project='+connector.project,
                     '--region='+connector.region,'--to-revisions='+new+'=100','--format=json')
         return new
