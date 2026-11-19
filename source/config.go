@@ -69,7 +69,7 @@ func loadConfig() Config {
 		FirestoreLeadsCollection:   getEnv("FIRESTORE_LEADS_COLLECTION", "leads"),
 		FirestoreReviewsCollection: getEnv("FIRESTORE_REVIEWS_COLLECTION", "reviews"),
 		CloudTasksProjectID:        cloudTasksProjectID,
-		CloudTasksLocation:         getEnv("CLOUD_TASKS_LOCATION", "europe-north1"),
+		CloudTasksLocation:         getEnv("CLOUD_TASKS_LOCATION", "europe-west3"),
 		CloudTasksQueue:            getEnv("CLOUD_TASKS_QUEUE", "lead-processing"),
 		InternalTaskToken:          getEnv("INTERNAL_TASK_TOKEN", ""),
 		InternalProcessLeadURL:     processLeadURL,

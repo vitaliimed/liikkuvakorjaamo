@@ -92,7 +92,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 			fmt.Fprintf(w, "window.LIIKKUVA_TRACKING=%s;", b)
 			return
 		}
-		public := r.URL.Path == "/" || r.URL.Path == "/en" || r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review"
+		public := r.URL.Path == "/" || r.URL.Path == "/en" || liikkuvaSEOPath(r.URL.Path) || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review"
 		if (r.Method != http.MethodGet && r.Method != http.MethodHead) || !public {
 			next.ServeHTTP(w, r)
 			return

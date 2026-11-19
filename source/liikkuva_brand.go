@@ -50,20 +50,20 @@ func liikkuvaTimestamp(t time.Time) string {
 // service URLs for internal queue processing. Tag URLs and foreign domains
 // are rejected so work is not accidentally dispatched to an old preview.
 func liikkuvaAllowedWorkerURL(raw string) bool {
-    u, err := url.Parse(raw)
-    if err != nil || u.Scheme != "https" || u.User != nil ||
-        u.RawQuery != "" || u.Fragment != "" || u.Path != "/internal/process-lead" ||
-        u.Port() != "" {
-        return false
-    }
-    host := strings.ToLower(u.Hostname())
-    if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
-        host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
-        return true
-    }
-    return strings.HasPrefix(host, "liikkuva-landing-") &&
-       (strings.HasSuffix(host, ".europe-north1.run.app") ||
-        strings.HasSuffix(host, ".a.run.app"))
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "https" || u.User != nil ||
+		u.RawQuery != "" || u.Fragment != "" || u.Path != "/internal/process-lead" ||
+		u.Port() != "" {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	if host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+		host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" {
+		return true
+	}
+	return strings.HasPrefix(host, "liikkuva-landing-") &&
+		(strings.HasSuffix(host, ".europe-north1.run.app") ||
+			strings.HasSuffix(host, ".a.run.app"))
 }
 
 func validateLiikkuva(cfg Config) error {
@@ -96,14 +96,78 @@ func validateLiikkuva(cfg Config) error {
 	return nil
 }
 
+// Public editorial routes are explicit: never turn arbitrary paths into files.
+func liikkuvaSEOPath(path string) bool {
+	switch path {
+	case "/hinnasto", "/palvelualue", "/vikadiagnostiikka", "/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto":
+		return true
+	}
+	return false
+}
+
+// The public Host is replaced by Cloud Run's service Host when Firebase Hosting
+// proxies traffic. Firebase supplies the originally requested frontend hostname
+// via X-Fh-Requested-Host (or X-Forwarded-Host). Only the exact Liikkuva
+// backend and exact real domain qualify. Direct/tagged preview URLs remain noindex.
+func liikkuvaPublicHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == liikkuvaDomain || host == "www."+liikkuvaDomain
+}
+
+func liikkuvaBackendHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == "liikkuva-preview-451713593869.europe-north1.run.app" ||
+		host == "liikkuva-preview-knrjxcx2bq-lz.a.run.app" ||
+		strings.HasSuffix(host, "---liikkuva-preview-knrjxcx2bq-lz.a.run.app")
+}
+
+func liikkuvaForwardedPublicHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	return liikkuvaPublicHost(host) ||
+		host == "https://"+liikkuvaDomain ||
+		host == "https://www."+liikkuvaDomain
+}
+
+// This function controls *only SEO indexing*, not authentication or CSRF.
+// LIIKKUVA_SEO_NOINDEX=1 is the explicit emergency/staging opt-out.
+func liikkuvaIndexable(r *http.Request) bool {
+	if os.Getenv("LIIKKUVA_SEO_NOINDEX") == "1" {
+		return false
+	}
+	if liikkuvaPublicHost(r.Host) {
+		return true
+	}
+	if !liikkuvaBackendHost(r.Host) {
+		return false
+	}
+	// Never infer a frontend hostname from URLs or arbitrary suffix matches.
+	// The proxy header is expected only on requests routed through Hosting.
+	return liikkuvaForwardedPublicHost(r.Header.Get("X-Fh-Requested-Host")) ||
+		liikkuvaForwardedPublicHost(r.Header.Get("X-Forwarded-Host"))
+}
+
+func liikkuvaLandingRobots(r *http.Request) string {
+	if !liikkuvaIndexable(r) {
+		return "noindex, follow"
+	}
+	return "index, follow, max-image-preview:large"
+}
+
 func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !liikkuvaIndexable(r) || strings.HasPrefix(r.URL.Path, "/crm") || strings.HasPrefix(r.URL.Path, "/api/") {
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+		}
+		if strings.HasPrefix(r.URL.Path, "/static/seo/") {
+			w.Header().Set("X-Robots-Tag", "noindex, follow")
+		}
+
 		if r.Method == http.MethodGet || r.Method == http.MethodHead {
 			target := ""
-			if r.URL.Path == "/fi" {
+			if r.URL.Path == "/fi" || r.URL.Path == "/fi/" {
 				target = "/"
 			}
-			for _, path := range []string{"/en", "/hinnasto", "/palvelualue", "/vikadiagnostiikka"} {
+			for _, path := range []string{"/en", "/hinnasto", "/palvelualue", "/vikadiagnostiikka", "/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"} {
 				if r.URL.Path == path+"/" {
 					target = path
 				}
@@ -119,7 +183,7 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		if r.URL.Path == "/hinnasto" || r.URL.Path == "/palvelualue" || r.URL.Path == "/vikadiagnostiikka" {
+		if liikkuvaSEOPath(r.URL.Path) {
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
 				w.Header().Set("Allow", "GET, HEAD")
 				http.Error(w, "Method not allowed", 405)
@@ -190,11 +254,24 @@ func liikkuvaSettings(settings SiteSettings) SiteSettings {
 	if err := json.Unmarshal(liikkuvaSEOJSON, &defaults); err != nil {
 		panic(err)
 	}
+	if settings.LandingSEOTitleFI == "Liikkuva autokorjaamo Uusimaa | Korjaus auton luona" {
+		settings.LandingSEOTitleFI = defaults.LandingSEOTitleFI
+	}
+	if settings.LandingSEOTitleEN == "Mobile mechanic in Uusimaa | Liikkuva Auto Korjaamo" {
+		settings.LandingSEOTitleEN = defaults.LandingSEOTitleEN
+	}
 	if strings.TrimSpace(settings.LandingSEOTitleFI) == "" {
 		settings.LandingSEOTitleFI = defaults.LandingSEOTitleFI
 	}
 	if strings.TrimSpace(settings.LandingSEOTitleEN) == "" {
 		settings.LandingSEOTitleEN = defaults.LandingSEOTitleEN
+	}
+	// Replace shipped pre-launch descriptions only; retain custom admin copy.
+	if strings.HasPrefix(settings.LandingSEODescriptionFI, "Liikkuva autokorjaamo kotiin tai työpaikalle: akun, käynnistyksen ja vikakoodien tarkistus Uudellamaalla. Käynti ") {
+		settings.LandingSEODescriptionFI = defaults.LandingSEODescriptionFI
+	}
+	if strings.HasPrefix(settings.LandingSEODescriptionEN, "A mobile mechanic at your home or workplace in Uusimaa. Battery, starting and fault-code checks. Visit ") {
+		settings.LandingSEODescriptionEN = defaults.LandingSEODescriptionEN
 	}
 	if strings.TrimSpace(settings.LandingSEODescriptionFI) == "" {
 		settings.LandingSEODescriptionFI = defaults.LandingSEODescriptionFI

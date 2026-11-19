@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "liikkuva-korjaamo"
 REGION = "europe-north1"
 SERVICE = "liikkuva-preview"
-BRANCH = "release/ux-crm-brevo-20261112"
+BRANCH = "release/ux-crm-brevo-seo-20261114"
 EXPECTED_VERSION = "2026.11.12-production-candidate"
 DOMAIN = "https://liikkuvakorjaamo.fi"
-TAG = "ux-crm-brevo-preview"
+TAG = "ux-crm-seo-preview"
 STATE_DIR = Path.home() / ".liikkuva-releases"
-STATE_FILE = STATE_DIR / "ux-crm-brevo-release.json"
+STATE_FILE = STATE_DIR / "ux-crm-seo-release.json"
 
 
 def command(args, cwd=ROOT):
@@ -146,8 +146,11 @@ def check(url, revision, bootstrap):
             if resp.status != 200 or "message" not in answer:
                 raise RuntimeError("CRM same-origin recovery API failed")
     except urllib.error.HTTPError as exc:
-        raise RuntimeError("CRM password recovery POST rejected by origin guard: HTTP " +
-                           str(exc.code))
+        snippet = exc.read(900).decode("utf-8", errors="replace")
+        kind = ("CRM application rejected Origin/Host" if "Недопустимый источник запроса" in snippet
+                else "CRM middleware / reverse proxy / Cloudflare rejected POST")
+        raise RuntimeError(kind + ": HTTP " + str(exc.code) +
+                           " at " + test_path + " response=" + snippet[:320])
     # Reject a forged cross-site Origin from the same endpoint.
     req = urllib.request.Request(test_path, data=test_payload, method="POST",
                                  headers={"Content-Type":"application/json",
@@ -177,6 +180,52 @@ def check(url, revision, bootstrap):
         if marker and marker.encode("utf-8") not in body:
             raise RuntimeError("Expected marker missing in " + path)
         print("PASS", path)
+    # SEO pages must render through the real router, not only exist as static files.
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto",
+                 "/hinnasto", "/palvelualue", "/vikadiagnostiikka"):
+        code, body = request(url + path)
+        if code != 200:
+            raise RuntimeError("SEO route failed: " + path + " (HTTP " + str(code) + ")")
+        doc = body.decode("utf-8")
+        canonical = "https://liikkuvakorjaamo.fi" + path
+        if ('rel="canonical" href="' + canonical + '"') not in doc or "<h1" not in doc:
+            raise RuntimeError("SEO canonical/H1 missing on " + path)
+        print("PASS SEO:", path)
+    code, body = request(url + "/sitemap.xml")
+    if code != 200:
+        raise RuntimeError("SEO sitemap is unavailable")
+    sitemap = body.decode("utf-8")
+    for path in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        if "https://liikkuvakorjaamo.fi" + path not in sitemap:
+            raise RuntimeError("SEO sitemap missing " + path)
+    print("PASS SEO: sitemap")
+    # Distinct cache-busted request: Firebase Hosting / Cloudflare may retain
+    # an older cached "/" response during the promotion.
+    probe_url = url + "/?seo_release_probe=" + str(time.time_ns())
+    probe = urllib.request.Request(probe_url, headers={"Cache-Control": "no-cache"})
+    with urllib.request.urlopen(probe, timeout=35) as response:
+        robots_header = response.headers.get("X-Robots-Tag", "").lower()
+        cache_header = response.headers.get("Cache-Control", "")
+        server_header = response.headers.get("Server", "")
+        page = response.read(512 * 1024).decode("utf-8", errors="replace")
+    is_live_domain = url.rstrip("/") == DOMAIN
+    import re
+    meta_match = re.search(r'<meta\s+name="robots"\s+content="([^"]+)"',
+                           page, re.IGNORECASE)
+    if not meta_match:
+        raise RuntimeError("SEO BLOCKED: robots meta not found")
+    robots_meta = meta_match.group(1).lower()
+    meta_noindex = "noindex" in robots_meta
+    if is_live_domain and ("noindex" in robots_header or meta_noindex):
+        raise RuntimeError("SEO BLOCKED: public domain still noindex "
+                           "(X-Robots-Tag=" + repr(robots_header) +
+                           ", robots meta noindex=" + str(meta_noindex) +
+                           ", cache=" + repr(cache_header) +
+                           ", server=" + repr(server_header) + ")")
+    if not is_live_domain and ("noindex" not in robots_header or not meta_noindex):
+        raise RuntimeError("SEO BLOCKED: preview must have BOTH X-Robots-Tag and robots meta noindex")
+    print("PASS SEO: public/preview indexing headers and meta")
+
     if bootstrap == "0":
         code, _ = request(url + "/lead", method="POST", data=b"language=fi")
         if code != 400:
@@ -248,6 +297,8 @@ def stage():
         command(["node", "--test", str(ROOT / "tests" / name)])
         print("PASS Node", name)
     before_service = service()
+    if env_value(before_service, "LIIKKUVA_SEO_NOINDEX") == "1":
+        raise RuntimeError("SEO BLOCKED: LIIKKUVA_SEO_NOINDEX=1; remove only this emergency override before staging")
     before = allocation(before_service)
     if len(before) != 1:
         raise RuntimeError("Multiple production revisions: inspect before staging")
@@ -315,6 +366,8 @@ def stage():
     state["phase"] = "validated"
     save_json(STATE_FILE, state)
     print("\nPREVIEW VERIFIED:", preview)
+    for suffix in ("/auton-korjaus-kotona", "/auto-ei-kaynnisty", "/akun-vaihto"):
+        print("SEO PREVIEW:", preview + suffix)
     print("PREVIEW CRM:", preview + "/crm/")
     print("LIVE DOMAIN UNCHANGED:", DOMAIN)
     print("INTAKE:", "ACTIVE (invalid-input validation checked)" if bootstrap == "0"
@@ -403,6 +456,8 @@ def publish():
     if github_state() != state.get("sha"):
         raise RuntimeError("Git checkout changed since staging")
     now = service()
+    if env_value(now, "LIIKKUVA_SEO_NOINDEX") == "1":
+        raise RuntimeError("SEO BLOCKED: emergency LIIKKUVA_SEO_NOINDEX=1 still active")
     if allocation(now) != state["previous"]:
         raise RuntimeError("Production traffic changed since staging. Do not overwrite it.")
     bootstrap = env_value(now, "LIIKKUVA_BOOTSTRAP")

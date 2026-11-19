@@ -127,6 +127,7 @@ def prepare(source,destination):
         text=text.replace('pageTitle := texts["PAGE_TITLE"]\n\tmetaDescription := texts["META_DESCRIPTION"]', 'seoDefaults:=liikkuvaSettings(SiteSettings{})\n pageTitle,metaDescription:=seoDefaults.LandingSEOTitleEN,seoDefaults.LandingSEODescriptionEN\n if lang=="fi" {pageTitle=seoDefaults.LandingSEOTitleFI;metaDescription=seoDefaults.LandingSEODescriptionFI}',1)
         if '"html/template"' not in text:text=text.replace('"log"','"log"\n"html/template"',1)
         for key in keys:text=re.sub(r'('+key+r':\s*)(build'+key+r'\(settings\))',r'\1template.CSS(\2)',text)
+        text=text.replace('pageURL := strings.TrimRight(h.cfg.SiteURL, "/") + landingPathByLang(lang)', 'robotsMeta = liikkuvaLandingRobots(r)\n pageURL := "https://" + liikkuvaDomain + landingPathByLang(lang)', 1)
         pages.write_text(text)
         visuals=destination/'landing_visuals.go';text=visuals.read_text()
         text=text.replace('func buildHeroSceneImageStyle(settings SiteSettings) string {','func buildHeroSceneImageStyle(settings SiteSettings) string {\n if settings.HeroScenePreset=="" && settings.HeroSceneBrightness=="" && settings.HeroSceneContrast=="" && settings.HeroSceneSaturation=="" && settings.HeroSceneBlur=="" && settings.HeroSceneOpacity=="" && settings.HeroSceneScale=="" {return "filter:none;"}',1)
