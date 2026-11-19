@@ -19,6 +19,9 @@ import (
 )
 
 type Notice struct {
+	Appointment string    `json:"-"`
+	Expires     time.Time `json:"-"`
+
 	Keyboard string `json:"keyboard,omitempty"`
 
 	Fingerprint string    `json:"-"`
@@ -124,14 +127,14 @@ func (s *Server) sendPending(ctx context.Context) (int, int, error) {
 		if e != nil || !claimed {
 			continue
 		}
-		if n.Job != "" && n.Fingerprint != "" {
+		if n.Job != "" && (n.Fingerprint != "" || n.Appointment != "") {
 			jobDoc, readErr := s.Collection("jobs").Doc(n.Job).Get(ctx)
 			var current Job
 			if readErr != nil || jobDoc.DataTo(&current) != nil {
 				failed++
 				continue
 			}
-			if noticeFingerprint(current) != n.Fingerprint {
+			if noticeObsolete(n, current, time.Now()) {
 				n.Status = "superseded"
 				_, err := d.Ref.Set(ctx, n)
 				if err != nil {
@@ -178,9 +181,9 @@ func (s *Server) tickHTTP(w http.ResponseWriter, r *http.Request) {
 		fail(w, 403, "Нет доступа")
 		return
 	}
-	// One bounded indexed query per tick. Only future scheduled jobs in the next hour.
+	// The same indexed range covers both reminder windows.
 	now := time.Now().UTC()
-	ds, e := s.Collection("jobs").Where("Status", "==", "scheduled").Where("Proposal.Start", ">", now).Where("Proposal.Start", "<=", now.Add(time.Hour)).Limit(100).Documents(r.Context()).GetAll()
+	ds, e := s.Collection("jobs").Where("Status", "==", "scheduled").Where("Proposal.Start", ">", now).Where("Proposal.Start", "<=", now.Add(24*time.Hour)).Documents(r.Context()).GetAll()
 	if e != nil {
 		fail(w, 503, "Проверьте индекс Status / Proposal.Start")
 		return
@@ -194,8 +197,16 @@ func (s *Server) tickHTTP(w http.ResponseWriter, r *http.Request) {
 			if target == "" {
 				continue
 			}
-			id := digest(j.ID + "-" + strconv.FormatInt(j.Revision, 10) + "-" + target + "-reminder")
-			_, e = s.Collection("outbox").Doc(id).Create(r.Context(), Notice{Job: j.ID, Target: target, Text: fmt.Sprintf("Выезд в течение часа · %s\n%s\n%s\n%s\n%s/crm/?job=%s", j.Plate, j.Proposal.Start.In(Helsinki).Format("02.01 15:04"), j.Address, j.Phone, s.URL, j.ID), Status: "pending", Created: now, Fingerprint: noticeFingerprint(j)})
+			expires := j.Proposal.Start.Add(-time.Hour)
+			window := "24h"
+			heading := "Напоминание: выезд в течение суток"
+			if !j.Proposal.Start.After(now.Add(time.Hour)) {
+				window = "1h"
+				expires = j.Proposal.Start
+				heading = "Напоминание: выезд в течение часа"
+			}
+			id := digest(j.ID + "-" + appointmentFingerprint(j) + "-" + target + "-" + window)
+			_, e = s.Collection("outbox").Doc(id).Create(r.Context(), Notice{Job: j.ID, Target: target, Text: appointmentText(j, s.URL, heading), Status: "pending", Created: now, Appointment: appointmentFingerprint(j), Expires: expires})
 			if e != nil && status.Code(e) != codes.AlreadyExists {
 				fail(w, 503, "Ошибка сохранения напоминания")
 				return
@@ -263,4 +274,21 @@ func noticeFingerprint(j Job) string {
 		Report           Report
 	}{j.Status, j.Mechanic, j.Proposal, j.Report})
 	return digest(string(b))
+}
+
+// Deliberately excludes unrelated edits and job revision: they must not repeat reminders.
+func appointmentFingerprint(j Job) string {
+	return digest(j.ID + "|" + j.Mechanic + "|" + j.Proposal.Start.UTC().Format(time.RFC3339Nano) + "|" + j.Proposal.End.UTC().Format(time.RFC3339Nano))
+}
+func noticeObsolete(n Notice, j Job, now time.Time) bool {
+	if !n.Expires.IsZero() && !now.Before(n.Expires) {
+		return true
+	}
+	if n.Appointment != "" {
+		return j.Status != "scheduled" || !j.Proposal.Start.After(now) || n.Appointment != appointmentFingerprint(j)
+	}
+	return n.Fingerprint != "" && n.Fingerprint != noticeFingerprint(j)
+}
+func appointmentText(j Job, base, heading string) string {
+	return fmt.Sprintf("%s · %s\n%s — %s (Хельсинки)\nКлиент: %s\nТелефон: %s\nАдрес: %s\nПроблема: %s\nДобавить в календарь телефона (войдите в CRM):\n%s/crm/api/jobs/%s/calendar.ics\nЗаявка: %s/crm/?job=%s\nНапоминания в Telegram: за сутки и за час. Копию в календаре телефона при переносе обновите вручную.", heading, botPlate(j), j.Proposal.Start.In(Helsinki).Format("02.01.2006 15:04"), j.Proposal.End.In(Helsinki).Format("15:04"), j.Name, j.Phone, j.Address, j.Description, base, j.ID, base, j.ID)
 }

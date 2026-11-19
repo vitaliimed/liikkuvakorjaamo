@@ -921,6 +921,9 @@ func (s *Server) mutate(ctx context.Context, id string, a Action, u User) (Job, 
 		}
 		if a.Kind == "propose" || a.Kind == "confirm" || a.Kind == "assign" || a.Kind == "report" || a.Kind == "reschedule" || a.Kind == "cancel" {
 			text := fmt.Sprintf("%s · %s\nКлиент: %s\nОтветить: %s\n%s/crm/?job=%s", n.Plate, a.Kind, n.Name, n.Phone, s.URL, id)
+			if a.Kind == "confirm" {
+				text = appointmentText(n, s.URL, "Выезд подтверждён и добавлен в календарь CRM")
+			}
 			if a.Kind == "propose" {
 				text += "\n\n" + Draft(n)
 			}

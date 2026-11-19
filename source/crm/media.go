@@ -200,7 +200,7 @@ func (s *Server) calendar(w http.ResponseWriter, r *http.Request, j Job) {
 	}
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="visit.ics"`)
-	lines := []string{"BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Liikkuva//CRM//RU", "BEGIN:VEVENT", "UID:" + j.ID + "@liikkuva-crm", "SEQUENCE:" + strconv.FormatInt(j.Revision, 10), "DTSTAMP:" + j.Updated.UTC().Format("20060102T150405Z"), "DTSTART:" + j.Proposal.Start.UTC().Format("20060102T150405Z"), "DTEND:" + j.Proposal.End.UTC().Format("20060102T150405Z"), "SUMMARY:" + icsEscape(j.Plate+" · "+j.Name), "LOCATION:" + icsEscape(j.Address), "DESCRIPTION:" + icsEscape(j.Phone+"\n"+j.Description+"\n"+s.URL+"/crm/?job="+j.ID), "BEGIN:VALARM", "TRIGGER:-PT60M", "ACTION:DISPLAY", "DESCRIPTION:Выезд механика", "END:VALARM", "END:VEVENT", "END:VCALENDAR"}
+	lines := []string{"BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Liikkuva//CRM//RU", "BEGIN:VEVENT", "UID:" + j.ID + "@liikkuva-crm", "SEQUENCE:" + strconv.FormatInt(j.Revision, 10), "DTSTAMP:" + j.Updated.UTC().Format("20060102T150405Z"), "DTSTART:" + j.Proposal.Start.UTC().Format("20060102T150405Z"), "DTEND:" + j.Proposal.End.UTC().Format("20060102T150405Z"), "SUMMARY:" + icsEscape(j.Plate+" · "+j.Name), "LOCATION:" + icsEscape(j.Address), "DESCRIPTION:" + icsEscape(j.Phone+"\n"+j.Description+"\n"+s.URL+"/crm/?job="+j.ID), "BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", "DESCRIPTION:Выезд механика завтра", "END:VALARM", "BEGIN:VALARM", "TRIGGER:-PT60M", "ACTION:DISPLAY", "DESCRIPTION:Выезд механика", "END:VALARM", "END:VEVENT", "END:VCALENDAR"}
 	for _, l := range lines {
 		fmt.Fprint(w, foldICS(l)+"\r\n")
 	}
