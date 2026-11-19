@@ -523,7 +523,15 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 				}
 			}
 		}
-		return tx.Set(ref, User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff, ID: ref.ID, Name: x.Name, Email: x.Email, Role: x.Role, Active: x.Active, Hash: hash, TelegramID: x.TelegramID})
+		saved := User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff, ID: ref.ID, Name: x.Name, Email: x.Email, Role: x.Role, Active: x.Active, Hash: hash, TelegramID: x.TelegramID}
+		if e := tx.Set(ref, saved); e != nil {
+			return e
+		}
+		if saved.Active && saved.TelegramID != "" && (prev.TelegramID != saved.TelegramID || !prev.Active) {
+			keyboard, _ := json.Marshal(botMenu)
+			return tx.Create(s.Collection("outbox").NewDoc(), Notice{Target: ref.ID, Text: botWelcome(saved), Keyboard: string(keyboard), Status: "pending", Created: time.Now().UTC()})
+		}
+		return nil
 	})
 	if e != nil {
 		fail(w, 400, e.Error())

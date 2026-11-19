@@ -56,8 +56,13 @@ func telegramKeyboard(ctx context.Context, chat, text string, keyboard [][]strin
 	if token == "" || chat == "" {
 		return errors.New("Не настроен бот или личный Telegram ID")
 	}
-	if len([]rune(text)) > 4000 {
-		text = string([]rune(text)[:3950]) + "\nПолный текст в CRM"
+	// 2000 runes also fit Telegram's limit when every rune uses two UTF-16 units.
+	if len([]rune(text)) > 2000 {
+		runes := []rune(text)
+		if err := telegramKeyboard(ctx, chat, string(runes[:2000]), nil); err != nil {
+			return err
+		}
+		return telegramKeyboard(ctx, chat, string(runes[2000:]), keyboard)
 	}
 	payload := map[string]any{"chat_id": chat, "text": text, "disable_web_page_preview": true}
 	if len(keyboard) > 0 {

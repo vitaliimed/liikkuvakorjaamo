@@ -241,7 +241,7 @@ func newLedger(j Job) Ledger {
 			a = p.VisitCents + p.WorkCents + p.PartsCents
 		}
 	}
-	return Ledger{JobID: j.ID, Brand: j.Brand, Mechanic: j.Mechanic, Agreed: a, Terms: LedgerTerms{Final: a, Shares: []Share{}}, Entries: []LedgerEntry{}}
+	return Ledger{JobID: j.ID, Brand: j.Brand, Mechanic: j.Mechanic, Agreed: a, Terms: LedgerTerms{OwnerShare: &OwnerShare{Mode: "fixed", Value: 5000, Basis: "margin"}, Final: a, Shares: []Share{}}, Entries: []LedgerEntry{}}
 }
 func applyLedger(l Ledger, req LedgerRequest, u User, j Job) (Ledger, error) {
 	if !u.Manager() {
@@ -382,7 +382,7 @@ func (s *Server) ledger(w http.ResponseWriter, r *http.Request, u User, j Job) {
 	if r.Method == "GET" {
 		d, e := ref.Get(r.Context())
 		if e == nil {
-			e = d.DataTo(&l)
+			e = readStoredLedger(d, &l)
 		}
 		if e != nil && status.Code(e) != codes.NotFound {
 			fail(w, 503, "Ошибка журнала")
@@ -406,7 +406,7 @@ func (s *Server) ledger(w http.ResponseWriter, r *http.Request, u User, j Job) {
 			l = newLedger(current)
 			d, e := tx.Get(ref)
 			if e == nil {
-				if e = d.DataTo(&l); e != nil {
+				if e = readStoredLedger(d, &l); e != nil {
 					return e
 				}
 			} else if status.Code(e) != codes.NotFound {
@@ -427,4 +427,9 @@ func (s *Server) ledger(w http.ResponseWriter, r *http.Request, u User, j Job) {
 		return
 	}
 	write(w, 200, map[string]any{"ledger": l, "totals": ledgerTotals(l, time.Now().In(Helsinki).Format("2006-01-02")), "legacy_report_cents": j.Report.ReceivedCents})
+}
+
+func readStoredLedger(d *firestore.DocumentSnapshot, l *Ledger) error {
+	l.Terms.OwnerShare = nil
+	return d.DataTo(l)
 }

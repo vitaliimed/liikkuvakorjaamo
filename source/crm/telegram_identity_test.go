@@ -2,8 +2,10 @@ package crm
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -25,6 +27,14 @@ func TestEmulatorTelegramIdentityCannotBeShared(t *testing.T) {
 	}
 	if w := post("a@example.test", "123456"); w.Code != 200 {
 		t.Fatal("same user edit rejected", w.Body.String())
+	}
+	notices, err := s.Collection("outbox").Documents(context.Background()).GetAll()
+	if err != nil || len(notices) != 1 {
+		t.Fatalf("welcome must be queued once: %d, %v", len(notices), err)
+	}
+	var welcome Notice
+	if err = notices[0].DataTo(&welcome); err != nil || !strings.Contains(welcome.Text, "Здравствуйте") || welcome.Keyboard == "" {
+		t.Fatal("missing onboarding", err)
 	}
 	if w := post("c@example.test", "-100123"); w.Code != 400 {
 		t.Fatal("group ID accepted")

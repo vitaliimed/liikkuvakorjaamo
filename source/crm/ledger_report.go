@@ -102,7 +102,7 @@ func (s *Server) ledgerReport(w http.ResponseWriter, r *http.Request, u User) {
 		l := newLedger(j)
 		ld, e := s.Collection("ledgers").Doc(j.ID).Get(r.Context())
 		if e == nil {
-			if ld.DataTo(&l) != nil {
+			if readStoredLedger(ld, &l) != nil {
 				fail(w, 503, "Ошибка финансовых данных")
 				return
 			}

@@ -108,7 +108,7 @@ func (s *Server) complete(w http.ResponseWriter, r *http.Request, u User, j Job)
 		l := newLedger(current)
 		d, e = tx.Get(lr)
 		if e == nil {
-			if e = d.DataTo(&l); e != nil {
+			if e = readStoredLedger(d, &l); e != nil {
 				return e
 			}
 		} else if status.Code(e) != codes.NotFound {

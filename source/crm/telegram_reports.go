@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -240,7 +241,7 @@ func (s *Server) handleBotReport(ctx context.Context, u User, updateID int64, te
 		if menu {
 			b.Step = ""
 			b.Choices = nil
-			reply = "Выберите заявку, затем заполните отчёт. Можно ввести номер ABC-123 или 123-ABC. Отмена сбрасывает черновик."
+			reply = botWelcome(u)
 		} else if text == "Мои отправленные отчёты" {
 			q := s.Collection("mechanic_reports").Where("Actor", "==", u.ID)
 			docs, e := tx.Documents(q).GetAll()
@@ -264,15 +265,21 @@ func (s *Server) handleBotReport(ctx context.Context, u User, updateID int64, te
 			if e != nil {
 				return e
 			}
+			jobs := make([]Job, 0, len(docs))
+			for _, d := range docs {
+				var j Job
+				if e := d.DataTo(&j); e != nil {
+					return e
+				}
+				j.ID = d.Ref.ID
+				jobs = append(jobs, j)
+			}
+			sortBotJobs(jobs)
 			b.Choices = map[string]string{}
 			keyboard = nil
 			reply = "Выберите конкретную заявку:"
 			b.Step = "choose"
-			for _, d := range docs {
-				var j Job
-				if d.DataTo(&j) != nil {
-					return errors.New("Ошибка заявки")
-				}
+			for _, j := range jobs {
 				if !u.CanRead(j) {
 					continue
 				}
@@ -285,7 +292,7 @@ func (s *Server) handleBotReport(ctx context.Context, u User, updateID int64, te
 				if text == "Сегодня" && j.Proposal.Start.In(Helsinki).Format("2006-01-02") != now.In(Helsinki).Format("2006-01-02") {
 					continue
 				}
-				label := fmt.Sprintf("%s · %s · %d", j.Plate, j.Created.In(Helsinki).Format("02.01"), len(b.Choices)+1)
+				label := botJobLabel(j, len(b.Choices)+1)
 				b.Choices[label] = j.ID
 				keyboard = append(keyboard, []string{label})
 				if len(b.Choices) >= 50 {
@@ -317,7 +324,7 @@ func (s *Server) handleBotReport(ctx context.Context, u User, updateID int64, te
 					b.Draft.Payment.Participant = "owner"
 				}
 				b.Step = "problem"
-				reply = j.Plate + "\nКакая была проблема?\n" + j.Description
+				reply = botJobCard(j, s.URL) + "\n\nДля отчёта: какая была проблема?"
 				keyboard = [][]string{{"Оставить проблему"}, {"Отмена"}}
 			}
 		} else if b.Step != "" {
@@ -441,7 +448,7 @@ func (s *Server) mechanicReports(w http.ResponseWriter, r *http.Request, u User,
 		l := newLedger(current)
 		d, e = tx.Get(lr)
 		if e == nil {
-			if e = d.DataTo(&l); e != nil {
+			if e = readStoredLedger(d, &l); e != nil {
 				return e
 			}
 		} else if status.Code(e) != codes.NotFound {
@@ -564,4 +571,54 @@ func (s *Server) deliverBotReply(ctx context.Context, u User, updateID int64) {
 		n.Lease = time.Now().Add(time.Minute)
 	}
 	_, _ = ref.Set(ctx, n)
+}
+
+func botWelcome(u User) string {
+	scope := "назначенные вам заявки"
+	if u.Manager() {
+		scope = "все доступные заявки"
+	}
+	return "Здравствуйте, " + u.Name + "! Telegram подключён к CRM.\n\n1. «Мои заявки» — " + scope + ", новые сверху. На кнопке — автомобиль, клиент и проблема.\n2. Выберите заявку: получите контакты, адрес, описание, стоимость и ссылку на фотографии и историю в CRM. Можно искать номером ABC-123 или 123-ABC.\n3. «Сегодня» — выезды на сегодня.\n4. Для отчёта укажите проблему, выполненные работы, полученную сумму (0, если оплаты не было), способ оплаты и расходы. Детализация суммы необязательна.\n5. Проверьте итог и нажмите «Отправить отчёт». Деньги учитываются после подтверждения владельцем.\n«Мои отправленные отчёты» — проверка статуса. «Отмена» сбрасывает черновик, «Помощь» повторяет инструкцию."
+}
+func botShort(s string, n int) string {
+	r := []rune(strings.Join(strings.Fields(s), " "))
+	if len(r) > n {
+		return string(r[:n]) + "…"
+	}
+	return string(r)
+}
+func botPlate(j Job) string {
+	if strings.TrimSpace(j.Plate) == "" {
+		return "Без номера"
+	}
+	return j.Plate
+}
+func sortBotJobs(j []Job) {
+	sort.Slice(j, func(a, b int) bool {
+		if j[a].Created.Equal(j[b].Created) {
+			return j[a].ID > j[b].ID
+		}
+		return j[a].Created.After(j[b].Created)
+	})
+}
+func botJobLabel(j Job, index int) string {
+	return fmt.Sprintf("%d · %s · %s · %s · %s", index, botPlate(j), j.Created.In(Helsinki).Format("02.01.2006"), botShort(j.Name, 24), botShort(j.Description, 40))
+}
+func botJobCard(j Job, base string) string {
+	p := j.Proposal
+	priceStatus := "Предложение (не подтверждено)"
+	if j.Agreed != nil {
+		p = j.Agreed.Proposal
+		priceStatus = "Согласованная стоимость"
+	}
+	text := fmt.Sprintf("Заявка %s · %s\nСоздана: %s\nИсточник: %s · Статус: %s\nКлиент: %s\nТелефон: %s\nEmail: %s\nАдрес: %s\nРайон: %s · Язык: %s\nАвтомобиль: %s %s\nVIN: %s · Пробег: %d\n%s: выезд %.2f €, работы %.2f €, запчасти %.2f €\nСпособ оплаты: %s\nФото (%d), история и полная карточка: %s/crm/?job=%s", j.ID, botPlate(j), j.Created.In(Helsinki).Format("02.01.2006 15:04"), j.Brand, j.Status, j.Name, j.Phone, j.Email, j.Address, j.Area, j.Language, j.Vehicle, j.Model, j.VIN, j.Mileage, priceStatus, float64(p.VisitCents)/100, float64(p.WorkCents)/100, float64(p.PartsCents)/100, p.Payment, len(j.Photos)+len(j.IntakePhotos), strings.TrimRight(base, "/"), j.ID)
+	if !p.Start.IsZero() {
+		text += "\nВыезд: " + p.Start.In(Helsinki).Format("02.01.2006 15:04") + " — " + p.End.In(Helsinki).Format("15:04")
+	}
+	text += "\nПроблема: " + j.Description + "\nПричина: " + p.Cause + "\nПлан: " + p.Plan + "\nВыполнено: " + j.Report.Work + "\nРезультат: " + j.Report.Result
+	text += "\nДиагноз: " + j.Report.Diagnosis + "\nЗапчасти: " + j.Report.Parts + "\nОсталось выполнить: " + j.Report.Remaining
+	if p.WorkPriceSet != nil && !*p.WorkPriceSet {
+		text += "\nСтоимость работ ещё не определена."
+	}
+	return text
 }
