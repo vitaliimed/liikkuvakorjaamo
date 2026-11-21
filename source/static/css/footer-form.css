@@ -65,3 +65,39 @@ html[data-theme="dark"] .footer-lead-mount .request-card{background:#23372b}
 .footer-arrival-reminder{margin:18px 0 8px;padding:13px 15px;border:1px solid rgba(35,55,43,.18);border-radius:12px;background:#fff;color:#23372b;font-weight:650;line-height:1.65}
 html[data-theme="dark"] .visit-arrival-note{background:rgba(249,115,21,.12);color:#f2f6f3}
 html[data-theme="dark"] .footer-arrival-reminder{background:#263b2e;border-color:#738376;color:#f2f6f3}
+
+/* Mobile header settings: edit these two values, then publish the site.
+   Height is a minimum so larger text and controls remain accessible. */
+:root{
+  --mobile-header-height:72px;
+  --mobile-logo-width:170px;
+}
+@media(max-width:600px){
+  html .header .header-inner{min-height:var(--mobile-header-height)}
+  html .header .brand img.brand-logo{width:var(--mobile-logo-width);height:auto;max-width:100%}
+}
+
+/* Both request forms stay white in light and dark themes. */
+html .hero .request-card,html .footer-lead-mount .request-card{
+  background:#fff!important;color:#23372b!important;border-color:#d9dfda!important;
+  color-scheme:light;
+}
+html :is(.hero,.footer-lead-mount) .request-card h3,html :is(.hero,.footer-lead-mount) .request-card .field label,
+html :is(.hero,.footer-lead-mount) .request-card .form-privacy,html :is(.hero,.footer-lead-mount) .request-card .form-privacy a,
+html :is(.hero,.footer-lead-mount) .request-card .photo-dropzone-text,html :is(.hero,.footer-lead-mount) .request-card .photo-dropzone-icon,
+html :is(.hero,.footer-lead-mount) .request-card .inline-actions .btn,html :is(.hero,.footer-lead-mount) .request-card .inline-actions button{
+  color:#23372b!important;
+}
+html :is(.hero,.footer-lead-mount) .request-card .field input:not([type=file]),
+html :is(.hero,.footer-lead-mount) .request-card .field textarea,html :is(.hero,.footer-lead-mount) .request-card .field select,
+html :is(.hero,.footer-lead-mount) .request-card .photo-dropzone{
+  background:#fff!important;color:#23372b!important;border-color:#89998f!important;
+}
+html :is(.hero,.footer-lead-mount) .request-card .field input::placeholder,
+html :is(.hero,.footer-lead-mount) .request-card .field textarea::placeholder,
+html :is(.hero,.footer-lead-mount) .request-card .photo-dropzone-hint{color:#56675c!important;opacity:1}
+html :is(.hero,.footer-lead-mount) .request-card .field input:focus-visible,
+html :is(.hero,.footer-lead-mount) .request-card .field textarea:focus-visible,
+html :is(.hero,.footer-lead-mount) .request-card .photo-dropzone:focus-visible{
+  outline:2px solid #23372b;outline-offset:2px;
+}
