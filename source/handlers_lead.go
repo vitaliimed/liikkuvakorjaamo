@@ -165,15 +165,13 @@ func buildLeadFromRequest(cfg Config, r *http.Request, lang string) Lead {
 }
 
 func processLeadNow(ctx context.Context, cfg Config, lead Lead) error {
-	if err := processLeadCoreNow(cfg, lead); err != nil {
-		return err
-	}
+	coreErr := processLeadCoreNow(cfg, lead)
 	if strings.TrimSpace(lead.Email) != "" {
 		if err := sendLeadConfirmationEmail(cfg, lead); err != nil {
 			log.Printf("Lead confirmation email warning: %v", err)
 		}
 	}
-	return nil
+	return coreErr
 }
 
 func processLeadCoreNow(cfg Config, lead Lead) error {
@@ -235,19 +233,13 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 		}
 	}
 
-	if len(processingErrs) > 0 {
-		joined := strings.Join(processingErrs, " | ")
-		_ = markLeadFailed(ctx, cfg, leadID, joined)
-		return errors.New(joined)
-	}
-
 	if strings.TrimSpace(record.Lead.Email) != "" && record.ConfirmationEmailStatus != "sent" {
 		if err := sendLeadConfirmationEmail(cfg, record.Lead); err != nil {
 			log.Printf("Confirmation email failed for %s: %v", leadID, err)
 			if saveErr := markConfirmationEmailFailed(ctx, cfg, leadID, err.Error()); saveErr != nil {
 				return fmt.Errorf("persist confirmation email failure: %w", saveErr)
 			}
-			if isSMTPIPAuthorizationDenied(err) || errors.Is(err, errLeadPriceSnapshotMissing) {
+			if (isSMTPIPAuthorizationDenied(err) || errors.Is(err, errLeadPriceSnapshotMissing)) && len(processingErrs) == 0 {
 				// SMTP IP authorization denial and missing quoted prices cannot
 				// be fixed by automatic Cloud Tasks retries. Preserve the error
 				// for the owner and avoid a permanent retry storm.
@@ -265,6 +257,12 @@ func processLeadFromRecord(ctx context.Context, cfg Config, leadID string) error
 		} else if err := markConfirmationEmailSent(ctx, cfg, leadID); err != nil {
 			return fmt.Errorf("confirmation email status update failed: %w", err)
 		}
+	}
+
+	if len(processingErrs) > 0 {
+		joined := strings.Join(processingErrs, " | ")
+		_ = markLeadFailed(ctx, cfg, leadID, joined)
+		return errors.New(joined)
 	}
 
 	if !coreAlreadyDone {

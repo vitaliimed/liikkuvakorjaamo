@@ -384,7 +384,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		fail(w, 429, "Слишком много попыток или вход временно недоступен. Повторите через 15 минут")
 		return
 	}
-	d, e := s.Collection("users").Doc(id).Get(r.Context())
+	d, e := s.userByEmail(r.Context(), strings.ToLower(strings.TrimSpace(in.Email)))
 	var u User
 	if e == nil {
 		e = d.DataTo(&u)
@@ -429,6 +429,7 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		return
 	}
 	var x struct {
+		ID         string          `json:"id"`
 		MainCity   string          `json:"main_city"`
 		Phone      string          `json:"phone"`
 		Exceptions []WorkException `json:"exceptions"`
@@ -455,13 +456,27 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 			return
 		}
 	}
-	if !strings.Contains(x.Email, "@") || x.Name == "" || x.Role != "mechanic" {
+	if normalizedCRMEmail(x.Email) == "" || x.Name == "" || x.Role != "mechanic" {
 		fail(w, 400, "Укажите имя, email и роль")
 		return
 	}
 	if x.Password != "" && !validCRMPassword(x.Password) {
 		fail(w, 400, "Пароль не должен быть пустым; максимум 72 байта")
 		return
+	}
+	cities := strings.Split(x.MainCity, ",")
+	x.MainCity = Area(cities[0])
+	combined := append(append([]string{}, x.Areas...), cities[1:]...)
+	x.Areas = nil
+	seenAreas := map[string]bool{}
+	for _, group := range combined {
+		for _, city := range strings.Split(group, ",") {
+			city = Area(city)
+			if city != "" && !seenAreas[city] {
+				x.Areas = append(x.Areas, city)
+				seenAreas[city] = true
+			}
+		}
 	}
 	candidate := User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff}
 	if e := ValidateAvailability(candidate); e != nil {
@@ -471,9 +486,41 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 	for i := range x.Areas {
 		x.Areas[i] = Area(x.Areas[i])
 	}
-	ref := s.Collection("users").Doc(digest(x.Email))
+	userID := x.ID
+	if userID == "" {
+		userID = digest(x.Email)
+	}
+	if strings.Contains(userID, "/") || len(userID) > 128 {
+		fail(w, 400, "Некорректный ID сотрудника")
+		return
+	}
+	ref := s.Collection("users").Doc(userID)
 	e := s.DB.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		var prev User
+		// A shared reservation serializes competing renames and creations.
+		emailRef := s.Collection("user_emails").Doc(digest(x.Email))
+		reservation, err := tx.Get(emailRef)
+		if err != nil && status.Code(err) != codes.NotFound {
+			return err
+		}
+		if err == nil {
+			var claim struct{ User string }
+			if err = reservation.DataTo(&claim); err != nil {
+				return err
+			}
+			if claim.User != ref.ID {
+				return errors.New("Этот email уже занят другим сотрудником")
+			}
+		}
+		matches, err := tx.Documents(s.Collection("users").Where("Email", "==", x.Email).Limit(2)).GetAll()
+		if err != nil {
+			return err
+		}
+		for _, match := range matches {
+			if match.Ref.ID != ref.ID {
+				return errors.New("Этот email уже занят другим сотрудником")
+			}
+		}
 		if x.TelegramID != "" {
 			users, err := tx.Documents(s.Collection("users").Where("TelegramID", "==", x.TelegramID).Limit(2)).GetAll()
 			if err != nil {
@@ -489,9 +536,15 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 		if e != nil && status.Code(e) != codes.NotFound {
 			return e
 		}
+		if x.ID != "" && status.Code(e) == codes.NotFound {
+			return errors.New("Сотрудник не найден")
+		}
 		if e == nil {
 			if e = d.DataTo(&prev); e != nil {
 				return e
+			}
+			if x.ID == "" && prev.Email != x.Email {
+				return errors.New("Для изменения сотрудника откройте его карточку в разделе Команда")
 			}
 			if prev.Role == "owner" {
 				return ErrForbidden
@@ -524,12 +577,20 @@ func (s *Server) users(w http.ResponseWriter, r *http.Request, u User) {
 			}
 		}
 		saved := User{MainCity: Area(x.MainCity), Phone: x.Phone, Exceptions: x.Exceptions, Areas: x.Areas, Shifts: x.Shifts, DaysOff: x.DaysOff, ID: ref.ID, Name: x.Name, Email: x.Email, Role: x.Role, Active: x.Active, Hash: hash, TelegramID: x.TelegramID}
+		if prev.Email != "" && prev.Email != saved.Email {
+			if e := tx.Delete(s.Collection("user_emails").Doc(digest(prev.Email))); e != nil {
+				return e
+			}
+		}
+		if e := tx.Set(emailRef, map[string]string{"User": ref.ID}); e != nil {
+			return e
+		}
 		if e := tx.Set(ref, saved); e != nil {
 			return e
 		}
 		if saved.Active && saved.TelegramID != "" && (prev.TelegramID != saved.TelegramID || !prev.Active) {
 			keyboard, _ := json.Marshal(botMenu)
-			return tx.Create(s.Collection("outbox").NewDoc(), Notice{Target: ref.ID, Text: botWelcome(saved), Keyboard: string(keyboard), Status: "pending", Created: time.Now().UTC()})
+			return tx.Create(s.Collection("outbox").NewDoc(), Notice{Target: ref.ID, Text: botWelcome(saved, s.URL), Keyboard: string(keyboard), Status: "pending", Created: time.Now().UTC()})
 		}
 		return nil
 	})
@@ -945,4 +1006,15 @@ func internalAuthorized(r *http.Request) bool {
 	expected := os.Getenv("CRM_INTERNAL_TOKEN")
 	given := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 	return len(expected) >= 32 && subtle.ConstantTimeCompare([]byte(expected), []byte(given)) == 1
+}
+
+func (s *Server) userByEmail(ctx context.Context, email string) (*firestore.DocumentSnapshot, error) {
+	docs, err := s.Collection("users").Where("Email", "==", email).Limit(2).Documents(ctx).GetAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(docs) != 1 {
+		return nil, status.Error(codes.NotFound, "Account not found")
+	}
+	return docs[0], nil
 }

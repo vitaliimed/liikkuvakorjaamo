@@ -325,7 +325,7 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 		lines := []string{
 			"Hei " + name + ",",
 			"",
-			"Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.",
+			"Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti. Odota yhteydenottoamme: asiakaspalvelumme ottaa sinuun yhteyttä sopiakseen hinnasta, ajasta ja työn yksityiskohdista.",
 			"",
 			fmt.Sprintf("Automekaanikon käynti alkaen %d €.", liikkuvaLeadFee(lead)),
 			"Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Se ei sisällä diagnostiikkaa eikä korjausta.",
@@ -346,7 +346,7 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 	lines := []string{
 		"Hello " + name + ",",
 		"",
-		"Thank you for your request. We have received it successfully.",
+		"Thank you for your request. We have received it successfully. Please wait for our operator to contact you to agree on the price, time and details of the work.",
 		"",
 		fmt.Sprintf("Mechanic visit from €%d.", liikkuvaLeadFee(lead)),
 		"The visit fee only covers the mechanic arriving at your agreed location. Diagnostics and repairs are not included.",
@@ -366,7 +366,7 @@ func buildLeadConfirmationText(cfg Config, lead Lead) string {
 
 func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 	if strings.EqualFold(strings.TrimSpace(lead.Language), "fi") {
-		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti.</p>
+		content := `<p style="margin:0 0 16px;">Kiitos pyynnöstäsi. Olemme vastaanottaneet sen onnistuneesti. Odota yhteydenottoamme: asiakaspalvelumme ottaa sinuun yhteyttä sopiakseen hinnasta, ajasta ja työn yksityiskohdista.</p>
 		<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 			<div style="font-size:24px;font-weight:800;color:#0f172a;">Automekaanikon käynti alkaen ` + fmt.Sprintf("%d €", liikkuvaLeadFee(lead)) + `</div>
 			<p style="margin:10px 0 0;">Käyntimaksu kattaa vain mekaanikon saapumisen sovittuun paikkaan. Diagnostiikka ja korjaustyöt eivät sisälly käyntimaksuun.</p>
@@ -376,7 +376,7 @@ func buildLeadConfirmationHTML(cfg Config, lead Lead) string {
 		return buildBrandedActionEmailHTML(cfg, lead, "Pyyntö vastaanotettu", content, "", "")
 	}
 
-	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully.</p>
+	content := `<p style="margin:0 0 16px;">Thank you for your request. We have received it successfully. Please wait for our operator to contact you to agree on the price, time and details of the work.</p>
 	<div style="background:#f4f5f2;border:1px solid #e5e9e6;border-radius:16px;padding:18px;margin:0 0 18px;">
 		<div style="font-size:24px;font-weight:800;color:#0f172a;">Mechanic visit from €` + fmt.Sprintf("%d", liikkuvaLeadFee(lead)) + `</div>
 		<p style="margin:10px 0 0;">The visit fee only covers the mechanic arriving at your agreed location. Diagnostics and repairs are not included.</p>

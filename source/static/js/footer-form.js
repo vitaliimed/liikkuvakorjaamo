@@ -1,3 +1,15 @@
+function maskRegistrationNumber(value) {
+  const raw = String(value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (!raw) return '';
+  const lettersFirst = /^[A-Z]/.test(raw);
+  let first = '', second = '';
+  for (const ch of raw) {
+    const letter = /^[A-Z]$/.test(ch);
+    if (first.length < 3) { if (letter === lettersFirst) first += ch; }
+    else if (second.length < 3 && letter !== lettersFirst) second += ch;
+  }
+  return first + (first.length === 3 ? '-' + second : '');
+}
 function normalizeRegistrationNumber(value) {
     const raw = String(value || "").toUpperCase().trim();
     const compact = raw.replace(/[ \t]/g, "");
@@ -141,8 +153,10 @@ function normalizeRegistrationNumber(value) {
 
     const phone = form.elements.namedItem("phone");
     const plate = form.elements.namedItem("car");
-    if (plate) plate.addEventListener("input", function () {
-      this.value = normalizeRegistrationNumber(this.value);
+    if (plate) plate.maxLength = 7;
+ if (plate) plate.addEventListener("input", function (event) {
+      this.value = maskRegistrationNumber(this.value);
+ if (event.inputType && event.inputType.startsWith("delete") && this.value.endsWith("-")) this.value = this.value.slice(0,-1);
     });
     form.addEventListener("submit", async function (event) {
       event.preventDefault();

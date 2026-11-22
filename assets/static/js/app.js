@@ -1,3 +1,15 @@
+function maskRegistrationNumber(value) {
+  const raw = String(value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (!raw) return '';
+  const lettersFirst = /^[A-Z]/.test(raw);
+  let first = '', second = '';
+  for (const ch of raw) {
+    const letter = /^[A-Z]$/.test(ch);
+    if (first.length < 3) { if (letter === lettersFirst) first += ch; }
+    else if (second.length < 3 && letter !== lettersFirst) second += ch;
+  }
+  return first + (first.length === 3 ? '-' + second : '');
+}
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("leadForm");
   if (!form) return;
@@ -854,10 +866,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (carInput) {
-    carInput.addEventListener("input", function () {
+    carInput.maxLength = 7;
+ carInput.addEventListener("input", function (event) {
       const oldValue = carInput.value;
       const oldStart = carInput.selectionStart || 0;
-      const newValue = normalizeRegistrationNumber(oldValue);
+      let newValue = maskRegistrationNumber(oldValue);
+ if (event.inputType && event.inputType.startsWith("delete") && newValue.endsWith("-")) newValue = newValue.slice(0,-1);
       carInput.value = newValue;
       setCookie("car", newValue, 30);
 

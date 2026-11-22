@@ -37,7 +37,7 @@ func Area(s string) string {
 	switch s {
 	case "хельсинки", "helsinki":
 		return "Helsinki"
-	case "ванта", "вантаа", "вента", "vantaa":
+	case "ванта", "вантаа", "вента", "vantaa", "vanta":
 		return "Vantaa"
 	case "эспоо", "эспо", "espoo":
 		return "Espoo"
