@@ -109,6 +109,7 @@ type Event struct {
 type Action struct {
 	Outcome string `json:"outcome,omitempty"`
 
+	Address   *string  `json:"address,omitempty"`
 	Area      string   `json:"area"`
 	Email     string   `json:"email"`
 	Kind      string   `json:"kind"`
@@ -170,6 +171,15 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		if Area(a.Area) != j.Area && (j.Status == "scheduled" || j.Status == "in_progress") {
 			return bad("Для изменения зоны сначала перенесите выезд")
 		}
+		if a.Address != nil {
+			if strings.TrimSpace(*a.Address) == "" || len(*a.Address) > 1000 {
+				return bad("Укажите адрес до 1000 символов")
+			}
+			if *a.Address != j.Address && (j.Status == "scheduled" || j.Status == "in_progress") {
+				return bad("Для изменения адреса сначала перенесите выезд")
+			}
+			j.Address = strings.TrimSpace(*a.Address)
+		}
 		j.Area = Area(a.Area)
 		j.Email = strings.TrimSpace(a.Email)
 	case "reassign":
@@ -181,6 +191,12 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		if a.Mechanic == "" || strings.TrimSpace(a.Text) == "" {
 			return bad("Укажите механика и причину")
+		}
+		if strings.TrimSpace(a.Area) != "" {
+			j.Area = Area(a.Area)
+		}
+		if j.Area == "" {
+			j.Area = InferArea(j.Address)
 		}
 		j.Mechanic = a.Mechanic
 		j.Status = "assigned"
@@ -194,6 +210,12 @@ func Apply(j Job, a Action, u User, now time.Time) (Job, error) {
 		}
 		if a.Mechanic == "" {
 			return bad("Выберите механика")
+		}
+		if strings.TrimSpace(a.Area) != "" {
+			j.Area = Area(a.Area)
+		}
+		if j.Area == "" {
+			j.Area = InferArea(j.Address)
 		}
 		j.Mechanic = a.Mechanic
 		j.Status = "assigned"
