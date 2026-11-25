@@ -21,3 +21,9 @@ html:has(.liikkuva-consent-root:not([style*="none"])),html:has(dialog[open]){ove
 .exit-offer-link{cursor:pointer;padding:.6rem 1rem;margin:1rem}
 .service-detail{padding-block:2rem}.service-detail p{max-width:76ch}.service-detail article{margin:1.2rem 0}
 #exitOffer .footer-lead-mount{min-height:0}
+@media(max-width:374px){
+ html .header .header-inner{gap:6px}
+ html .header .header-inner>.brand{flex:1 1 0;min-width:0}
+ html .header .brand img.brand-logo{max-width:100%!important}
+ html .header .header-actions{gap:4px}
+}

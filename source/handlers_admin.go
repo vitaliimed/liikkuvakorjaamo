@@ -252,9 +252,15 @@ func normalizeAdminSettingsForTemplate(settings SiteSettings) SiteSettings {
 	settings = liikkuvaProDefaults(settings)
  settings.ServicePages = serviceCatalog(settings)
  if !settings.DraftsInitialized {
-  for _, subject := range []string{"Akun vaihto", "Käynnistysvika", "Vikadiagnostiikka", "Latausjärjestelmä", "Kotipihalla tehty korjaus", "Työpaikalla tehty tarkastus"} {
-   settings.Testimonials = append(settings.Testimonials, AdminTestimonialItem{Name:"Черновик · "+subject, QuoteFI:subject+" — [asiakkaan palaute]", Rating:5, Draft:true})
+  examples := []AdminTestimonialItem{
+   {Name:"Черновик · аккумулятор", QuoteFI:"Mekaanikko tarkisti ensin akun kunnon ja kertoi, mitä vaihto maksaisi. Auto saatiin käyntiin kotipihalla.", QuoteEN:"The mechanic checked the battery and explained the replacement cost. The car started again on my driveway."},
+   {Name:"Черновик · запуск", QuoteFI:"Kerroin puhelimessa, mitä tapahtui avainta kääntäessä. Asentaja tuli sovittuna aikana ja selvitti käynnistysvian.", QuoteEN:"I described what happened when I turned the key. The mechanic came at the agreed time and traced the starting fault."},
+   {Name:"Черновик · диагностика", QuoteFI:"Sain vikakoodeista selkeän selityksen ja tiesin käynnin jälkeen, mitä kannattaa tarkistaa seuraavaksi.", QuoteEN:"The mechanic explained the fault codes clearly. After the visit I knew what needed checking next."},
+   {Name:"Черновик · зарядка", QuoteFI:"Latausjärjestelmä mitattiin ennen osien tilaamista. Arvostin sitä, että vaihtoehdot käytiin rauhassa läpi.", QuoteEN:"The charging system was tested before ordering parts. I appreciated having time to discuss the options."},
+   {Name:"Черновик · ремонт дома", QuoteFI:"Auton siirtäminen olisi ollut hankalaa. Sovimme työn etukäteen ja korjaus onnistui omalla pihalla.", QuoteEN:"Moving the car would have been difficult. We agreed on the work beforehand and the repair was done at home."},
+   {Name:"Черновик · у работы", QuoteFI:"Asentaja löysi auton työpaikan parkkipaikalta ohjeillani. Sain käynnin jälkeen yhteenvedon tarkastuksesta.", QuoteEN:"The mechanic found the car in my work car park using my directions and explained the inspection results afterwards."},
   }
+  for _,item:=range examples {item.Draft=true;item.Rating=5;settings.Testimonials=append(settings.Testimonials,item)}
  }
  if len(settings.ServiceItems) == 0 {
 		settings.ServiceItems = []AdminServiceItem{{}}

@@ -66,6 +66,7 @@ type Agreement struct {
 }
 
 type Job struct {
+ Attribution map[string]string `json:"attribution,omitempty" firestore:"Attribution,omitempty"`
 	Outcome string `json:"outcome,omitempty"`
 
 	Agreed          *Agreement `json:"agreed,omitempty"`

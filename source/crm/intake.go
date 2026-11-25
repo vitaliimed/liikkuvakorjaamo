@@ -13,7 +13,7 @@ import (
 func AddLeadToBatch(db *firestore.Client, b *firestore.WriteBatch, leadID, plate, name, phone, email, address, description, brand, language string, photos []string) error {
 	return AddLeadToBatchAt(db, b, leadID, plate, name, phone, email, address, description, brand, language, photos, time.Time{})
 }
-func AddLeadToBatchAt(db *firestore.Client, b *firestore.WriteBatch, leadID, plate, name, phone, email, address, description, brand, language string, photos []string, created time.Time) error {
+func AddLeadToBatchAt(db *firestore.Client, b *firestore.WriteBatch, leadID, plate, name, phone, email, address, description, brand, language string, photos []string, created time.Time, attribution ...map[string]string) error {
 	if description == "" {
 		description = "Клиент не описал проблему — уточнить перед выездом"
 	}
@@ -39,7 +39,8 @@ func AddLeadToBatchAt(db *firestore.Client, b *firestore.WriteBatch, leadID, pla
 	}
 	j.Vehicle = stable
 	j.VehicleID = stable
-	j.Email = email
+	if len(attribution)>0 {j.Attribution=attribution[0]}
+ j.Email = email
 	j.IntakePhotos = photos
 	ref := db.Collection("crm_jobs").Doc(id)
 	b.Create(ref, j)

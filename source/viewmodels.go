@@ -279,6 +279,7 @@ type LandingContent struct {
 }
 
 type LandingPageData struct {
+ ExtraServiceLinks []ServicePage
  ServicePage *ServicePage
  ExitTitle string
  ExitUntil int64

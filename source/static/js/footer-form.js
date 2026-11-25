@@ -184,6 +184,7 @@ function normalizeRegistrationNumber(value) {
       ["source", "medium", "campaign", "term", "content"].forEach(function (name) {
         if (utms.has("utm_" + name)) fields.set("utm_" + name, utms.get("utm_" + name));
       });
+      window.liikkuvaSetLeadAttribution?.(fields);
       setBusy(true);
       try {
         const response = await fetch("/lead", {method:"POST", body:fields, credentials:"same-origin"});

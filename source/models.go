@@ -5,6 +5,7 @@ import "time"
 const visitPriceEUR = 75
 
 type Lead struct {
+ Attribution map[string]string `json:"-" firestore:"attribution,omitempty"`
 	DiagnosticFromEUR  int      `json:"diagnostic_from_eur" firestore:"diagnostic_from_eur"`
 	Site               string   `json:"site" firestore:"site"`
 	SubmissionID       string   `json:"submission_id" firestore:"submission_id"`

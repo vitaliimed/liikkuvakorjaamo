@@ -246,7 +246,8 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		Content: content,
 	}
 
-	if settings.ExitEnabled {
+	for _,p:=range settings.ServicePages {if p.Published && p.Language==lang && extraServicePath.MatchString(p.Path) && p.Path!=r.URL.Path {data.ExtraServiceLinks=append(data.ExtraServiceLinks,p)}}
+    if settings.ExitEnabled {
         data.ExitUntil = campaignDeadline(settings.ExitDate)
         if data.ExitUntil > time.Now().Unix() {
             data.ExitTitle = settings.ExitTitleFI
