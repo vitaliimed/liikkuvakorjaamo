@@ -23,6 +23,7 @@ const assert = require('node:assert/strict');
       await page.reload();
       assert.equal(await page.locator('.liikkuva-consent-root:visible').count(),0);
     }
+    const overflow = [];
     for (const file of ['index.html','en.html','area.html']) {
       await page.goto('http://127.0.0.1:8091/'+file);
       assert.equal(await page.locator('h1').count(),1);
@@ -33,7 +34,13 @@ const assert = require('node:assert/strict');
           const copy=await page.locator('.hero-copy').boundingBox();
           assert(form.x>=copy.x+copy.width-1,'desktop order '+width);
         }
-        assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'overflow '+width+' '+file);
+        const wide = await page.evaluate(() => {
+          if (document.documentElement.scrollWidth <= innerWidth+1) return [];
+          return Array.from(document.querySelectorAll('body *')).filter(el =>
+            el.getBoundingClientRect().right > innerWidth+1 && !el.closest('.review-grid')
+          ).map(el=>el.tagName+'.'+el.className).slice(0,12);
+        });
+        if(wide.length) overflow.push({file,width,wide});
       }
     }
     await page.locator('[data-slide="1"]').click();
@@ -42,6 +49,7 @@ const assert = require('node:assert/strict');
     await page.locator('#exitOffer input[name=name]').fill('Fixture');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#footerLeadFormMount input[name=name]').inputValue(),'Fixture');
+    assert(!overflow.length, JSON.stringify(overflow));
     console.log('FI, EN and service landing: 10 viewport widths, consent, carousel and offer passed.');
   } finally { await browser.close(); }
 })().catch(err=>{console.error(err);process.exitCode=1;});

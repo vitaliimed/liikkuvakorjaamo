@@ -24,3 +24,16 @@ jobs:
           python3 -m http.server 8091 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/landing-http.log" 2>&1 &
           npm install --prefix "$RUNNER_TEMP/landing-browser" playwright@1.56.1
           NODE_PATH="$RUNNER_TEMP/landing-browser/node_modules" node tests/landing-browser.cjs
+  public-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record public production revision and crawl metadata
+        run: |
+          curl --fail --retry 2 --max-time 30 https://liikkuvakorjaamo.fi/api/health
+          python3 scripts/audit-public-seo.py > seo-production.csv
+          cat seo-production.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo-production-inventory
+          path: seo-production.csv
