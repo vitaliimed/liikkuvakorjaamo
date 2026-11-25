@@ -17,7 +17,7 @@ type ServicePage struct {
     Path, Language, Title, Description, Heading, Intro string
     OGTitle, OGDescription, Image, ImageAlt, CTA, Keywords, Kind, Created, Updated string
     HideFAQ, HideReviews, NoIndex bool
-    CanonicalPath, TranslationPath string
+    CanonicalPath, TranslationPath, Layout string
     Blocks []ServiceBlock
     Published bool
 }
@@ -94,6 +94,9 @@ func parseServiceEdits(r *http.Request) ([]ServicePage,error) {
         for _,link:=range []string{p.CanonicalPath,p.TranslationPath}{
             if link!="" && !liikkuvaSEOPath(link) && !extraServicePath.MatchString(link){return nil,fmt.Errorf("Укажите внутренний адрес посадочной страницы: %s",link)}
         }
+        p.Layout=field("layout")
+        allowed:=map[string]bool{"-":true,"content":true,"benefits":true,"promo":true,"stats":true,"services":true,"pricing":true,"process":true,"cases":true,"capability":true,"areas":true,"reviews":true,"faq":true,"links":true,"request":true,"cta":true}
+        for _,part:=range strings.Fields(p.Layout){if !allowed[part]{return nil,fmt.Errorf("Некорректный блок %s",part)};delete(allowed,part)}
         p.Keywords,p.Kind=field("keywords"),field("kind")
         p.HideFAQ,p.HideReviews=field("faq")=="hide",field("reviews")=="hide"
         if p.Image!="" && !strings.HasPrefix(p.Image,"/static/img/") && !strings.HasPrefix(p.Image,"/review-media/") && !strings.HasPrefix(p.Image,"https://"){return nil,fmt.Errorf("%s: неверный адрес изображения",path)}

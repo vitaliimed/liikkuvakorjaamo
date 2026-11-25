@@ -7,7 +7,28 @@
     const title=field(entry,'title').value, text=field(entry,'description').value;
     entry.querySelector('[data-snippet]').textContent = title+' ('+title.length+') · '+text+' ('+text.length+')';
   }
+  const names={content:'Описание страницы',benefits:'Преимущества',promo:'Акция',stats:'Статистика',services:'Услуги',pricing:'Цены',process:'Порядок работы',cases:'Примеры работ',capability:'Возможности ремонта',areas:'Зона выезда',reviews:'Отзывы',faq:'FAQ',links:'Связанные услуги',request:'Контакты',cta:'Призыв к действию'};
+  function layoutEditor(entry) {
+    const mount=entry.querySelector('[data-layout-list]');
+    const input=field(entry,'layout');
+    const chosen=input.value.trim()?input.value.trim().split(/\s+/):Object.keys(names);
+    mount.replaceChildren();
+    for(const key of [...chosen.filter(k=>k in names),...Object.keys(names).filter(k=>!chosen.includes(k))]){
+      const row=document.createElement('div'),check=document.createElement('input'),label=document.createElement('label');
+      check.type='checkbox';check.checked=chosen.includes(key);check.value=key;
+      label.append(check,' '+names[key]);row.append(label);
+      function save(){input.value=Array.from(mount.querySelectorAll('input:checked'),el=>el.value).join(' ') || '-';}
+      check.onchange=save;
+      for(const [step,arrow] of [[-1,'↑'],[1,'↓']]){
+        const button=document.createElement('button');button.type='button';button.textContent=arrow;
+        button.onclick=()=>{const other=step<0?row.previousElementSibling:row.nextElementSibling;if(other){if(step<0)other.before(row);else other.after(row);save();}};
+        row.append(button);
+      }
+      mount.append(row);
+    }
+  }
   for(const entry of entries) {
+    layoutEditor(entry);
     snippet(entry);
     entry.addEventListener('input',()=>snippet(entry));
     entry.querySelector('[data-seo-copy]')?.addEventListener('click',()=>{
@@ -15,6 +36,7 @@
       if(field(draft,'path').value && !confirm('Заменить структуру новой страницы?')) return;
       field(draft,'body').value=field(entry,'body').value.split('\n---\n').map(b=>b.split('\n')[0]+'\n').join('\n---\n');
       for(const key of ['faq','reviews','kind']) field(draft,key).value=field(entry,key).value;
+      field(draft,'layout').value=field(entry,'layout').value;layoutEditor(draft);
       field(draft,'status').value='draft';
       draft.hidden=false;draft.open=true;field(draft,'path').focus();
     });
@@ -37,6 +59,7 @@
             field(entry,'faq').value=p.HideFAQ?'hide':'show';field(entry,'reviews').value=p.HideReviews?'hide':'show';
             field(entry,'robots').value=p.NoIndex?'noindex':'index';
             field(entry,'status').value=p.Published?'published':'draft';
+            field(entry,'layout').value=p.Layout||'';layoutEditor(entry);
             snippet(entry);target.textContent='Версия восстановлена в редакторе. Сохраните настройки для применения.';
           };
           target.append(b);

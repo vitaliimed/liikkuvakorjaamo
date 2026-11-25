@@ -24,6 +24,19 @@ jobs:
           python3 -m http.server 8091 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/landing-http.log" 2>&1 &
           npm install --prefix "$RUNNER_TEMP/landing-browser" playwright@1.56.1
           NODE_PATH="$RUNNER_TEMP/landing-browser/node_modules" node tests/landing-browser.cjs
+      - name: Measure the service landing in Lighthouse
+        run: |
+          python3 -m http.server 8092 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/lighthouse-http.log" 2>&1 &
+          for mode in mobile desktop; do
+            options=()
+            if [[ "$mode" == desktop ]]; then options+=(--preset=desktop); fi
+            npx --yes lighthouse@12.8.2 http://127.0.0.1:8092/area.html "${options[@]}" --chrome-flags="--headless --no-sandbox" --output=json --output-path="$RUNNER_TEMP/lighthouse-$mode.json" --quiet
+            jq -c '{device:.configSettings.formFactor, scores:(.categories|map_values(.score)),LCP:.audits["largest-contentful-paint"].numericValue,CLS:.audits["cumulative-layout-shift"].numericValue}' "$RUNNER_TEMP/lighthouse-$mode.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: landing-lighthouse
+          path: ${{ runner.temp }}/lighthouse-*.json
   public-inventory:
     runs-on: ubuntu-latest
     steps:

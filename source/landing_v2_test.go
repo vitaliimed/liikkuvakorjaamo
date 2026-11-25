@@ -60,3 +60,11 @@ func TestCustomDraftCanOnlyRenderInAdmin(t *testing.T) {
         if strings.Contains(w.Body.String(),draft.Heading) || (path=="/sitemap.xml" && strings.Contains(w.Body.String(),draft.Path)){t.Fatal("Draft visible at "+path)}
     }
 }
+
+func TestEditorSectionOrderPreservesForms(t *testing.T){
+    var out strings.Builder
+    page:=`<main><form id="leadForm"></form><section data-service-block="areas">Map</section><section data-service-block="faq">Questions</section><section data-service-block="stats">Unused</section><section id="footer-lead">Form</section></main>`
+    if err:=renderServiceLayout(&out,strings.NewReader(page),"faq areas");err!=nil{t.Fatal(err)}
+    got:=out.String()
+    if strings.Contains(got,"Unused") || strings.Index(got,"Questions")>strings.Index(got,"Map") || !strings.Contains(got,"leadForm") || !strings.Contains(got,"footer-lead"){t.Fatal(got)}
+}

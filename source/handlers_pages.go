@@ -271,6 +271,11 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
         }
         if !found {http.NotFound(w,r);return}
     }
+    if data.ServicePage!=nil && data.ServicePage.Layout!="" {
+        w.Header().Set("Content-Type","text/html; charset=utf-8")
+        if err:=h.renderer.renderOrderedServicePage(w,data);err!=nil {http.Error(w,"Unable to render page",500)}
+        return
+    }
     if err := h.renderer.renderLanding(w, data); err != nil {
 		http.Error(w, "failed to render landing", http.StatusInternalServerError)
 		return
