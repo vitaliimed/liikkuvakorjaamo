@@ -62,6 +62,9 @@ type LeadRecord struct {
 }
 
 type ReviewRecord struct {
+ PhotoURL string `firestore:"photo_url,omitempty"`
+ OriginalName string `firestore:"original_name,omitempty"`
+ OriginalMessage string `firestore:"original_message,omitempty"`
 	ID             string    `json:"id,omitempty" firestore:"-"`
 	LeadID         string    `json:"lead_id" firestore:"lead_id"`
 	Name           string    `json:"name" firestore:"name"`

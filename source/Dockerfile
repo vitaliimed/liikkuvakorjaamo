@@ -5,7 +5,7 @@ RUN go mod download
 COPY . .
 RUN go test ./... && CGO_ENABLED=0 go build -buildvcs=false -trimpath -o /out/server .
 FROM alpine:3.23
-RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
+RUN apk add --no-cache ca-certificates vips-tools vips-heif && adduser -D -u 10001 app
 WORKDIR /app
 COPY --from=build /out/server .
 COPY *.html ./

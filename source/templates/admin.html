@@ -1215,7 +1215,12 @@
 
 
             <section class="card panel {{if eq .ActiveTab "promo"}}active{{end}}" data-panel="promo">
-              <h2>Блок предложения</h2>
+              <h2>Форма при уходе со страницы</h2>
+ <label><input type="checkbox" name="exit_enabled" value="1" {{if .Settings.ExitEnabled}}checked{{end}}> Включить форму</label>
+ <div class="field"><label>Заголовок FI<textarea name="exit_title_fi" maxlength="1200">{{.Settings.ExitTitleFI}}</textarea></label></div>
+ <div class="field"><label>Заголовок EN<textarea name="exit_title_en" maxlength="1200">{{.Settings.ExitTitleEN}}</textarea></label></div>
+ <label>Последний день показа (Хельсинки) <input type="date" name="exit_date" value="{{.Settings.ExitDate}}"></label>
+ <h2>Блок предложения</h2>
               <p class="panel-intro">Акции, сезонные предложения и рекламные сообщения на сайте.</p>
 
               <div class="meta-box">
@@ -1276,12 +1281,12 @@
         <div class="grid">
           <div class="field">
             <label>Имя</label>
-            <input type="text" name="testimonial_name[]" value="{{.Name}}">
+            <input type="text" name="testimonial_name[]" value="{{.Name}}"><label>Публикация<select name="testimonial_state[]"><option value="public">Опубликовать</option><option value="draft" {{if .Draft}}selected{{end}}>Черновик</option></select></label>
           </div>
 
           <div class="field">
             <label>Фото URL</label>
-            <input type="text" name="testimonial_photo_url[]" value="{{.PhotoURL}}">
+            <input type="text" name="testimonial_photo_url[]" value="{{.PhotoURL}}"><label>Фото автомобиля или детали<input type="file" data-review-photo accept="image/*,.heic,.heif,.avif"></label><output aria-live="polite"></output>
           </div>
 
           <div class="field">
@@ -1317,12 +1322,12 @@
       <div class="grid">
         <div class="field">
           <label>Имя</label>
-          <input type="text" name="testimonial_name[]" value="">
+          <input type="text" name="testimonial_name[]" value=""><label>Публикация<select name="testimonial_state[]"><option value="public">Опубликовать</option><option value="draft" >Черновик</option></select></label>
         </div>
 
         <div class="field">
           <label>Фото URL</label>
-          <input type="text" name="testimonial_photo_url[]" value="">
+          <input type="text" name="testimonial_photo_url[]" value=""><label>Фото автомобиля или детали<input type="file" data-review-photo accept="image/*,.heic,.heif,.avif"></label><output aria-live="polite"></output>
         </div>
 
         <div class="field">
@@ -1733,7 +1738,10 @@
               </div>
             </section>
 
-            <section class="card panel {{if eq .ActiveTab "seo"}}active{{end}}" data-panel="seo">
+            <section class="card panel {{if eq .ActiveTab "seo"}}active{{end}}" data-panel="seo"><input type="hidden" name="landing_editor_version" value="2"><h2>SEO и посадочные страницы</h2><p>Существующие шесть адресов опубликованы постоянно. Для новой страницы используйте /palvelut/nimi или /en/services/name. Оставьте адрес пустым, чтобы пропустить новую страницу.</p>{{range .Settings.ServicePages}}<details><summary>{{.Path}}</summary><div class="field"><label>URL<input readonly name="service_page_path" value="{{.Path}}"></label><label>Title<input name="service_page_title" value="{{.Title}}"></label><label>Description<textarea name="service_page_description" >{{.Description}}</textarea></label><label>H1<input name="service_page_heading" value="{{.Heading}}"></label><label>Введение<textarea name="service_page_intro" >{{.Intro}}</textarea></label><label>Разделы (заголовок на первой строке, отдельная строка --- между разделами)<textarea name="service_page_body" rows="8">{{range $i,$b:=.Blocks}}{{if $i}}
+---
+{{end}}{{$b.Title}}
+{{$b.Text}}{{end}}</textarea></label><label>Статус<select name="service_page_status"><option value="draft">Черновик</option><option value="published" {{if .Published}}selected{{end}}>Опубликована</option></select></label></div></details>{{end}}<details><summary>Новая страница</summary><div class="field"><label>URL<input name="service_page_path" value=""></label><label>Title<input name="service_page_title" value=""></label><label>Description<textarea name="service_page_description" ></textarea></label><label>H1<input name="service_page_heading" value=""></label><label>Введение<textarea name="service_page_intro" ></textarea></label><label>Разделы (заголовок на первой строке, отдельная строка --- между разделами)<textarea name="service_page_body" rows="8"></textarea></label><label>Статус<select name="service_page_status"><option value="draft">Черновик</option><option value="published">Опубликована</option></select></label></div></details>
               <h2>SEO и индексация</h2>
               <p class="panel-intro">Заголовки и описания для поиска, настройки индексации и robots.txt.</p>
 
@@ -1799,6 +1807,11 @@
 				</div>
 				<div class="section-title">Текст отзыва</div>
 				<div class="code-block">{{.Message}}</div>
+ <details><summary>Редактировать отзыв</summary><form action="/admin/reviews/moderate" method="post">
+ <input type="hidden" name="access_csrf" value="{{$.CSRF}}"><input type="hidden" name="review_id" value="{{.ID}}"><input type="hidden" name="action" value="edit">
+ <label>Имя<input name="name" value="{{.Name}}" required maxlength="80"></label><label>Отзыв<textarea name="message" required maxlength="1200">{{.Message}}</textarea></label>
+ <div class="review-edit-photo"><label>URL фото<input type="text" name="photo_url" value="{{.PhotoURL}}"></label><label>Загрузить фото<input type="file" data-review-photo accept="image/*,.heic,.heif,.avif"></label><output aria-live="polite"></output></div>
+ <button type="submit">Сохранить правки</button></form></details>
 				<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
 				  <form method="post" action="/admin/reviews/moderate"><input type="hidden" name="access_csrf" value="{{$.CSRF}}">
 					<input type="hidden" name="review_id" value="{{.ID}}">
@@ -2121,5 +2134,5 @@
       </div>
     {{end}}
   </div>
-</body>
+<script src="/static/js/review-photo.js?v=1" defer></script></body>
 </html>

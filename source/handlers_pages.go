@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+ "time"
 )
 
 type PageHandler struct {
@@ -77,7 +78,14 @@ func (h *PageHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	content := strings.ReplaceAll(string(fileBytes), "{{SITE_URL}}", strings.TrimRight(h.cfg.SiteURL, "/"))
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+    settings,err:=loadSiteSettings(r.Context(),h.cfg)
+    if err!=nil {http.Error(w,"Sitemap temporarily unavailable",503);return}
+    var entries strings.Builder
+    for _,p:=range settings.ServicePages {
+        if p.Published && extraServicePath.MatchString(p.Path) {entries.WriteString("<url><loc>https://"+liikkuvaDomain+p.Path+"</loc></url>")}
+    }
+    content=strings.Replace(content,"</urlset>",entries.String()+"</urlset>",1)
+    w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	_, _ = w.Write([]byte(content))
 }
 
@@ -238,7 +246,21 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		Content: content,
 	}
 
-	if err := h.renderer.renderLanding(w, data); err != nil {
+	if settings.ExitEnabled {
+        data.ExitUntil = campaignDeadline(settings.ExitDate)
+        if data.ExitUntil > time.Now().Unix() {
+            data.ExitTitle = settings.ExitTitleFI
+            if lang == "en" { data.ExitTitle = settings.ExitTitleEN }
+        }
+    }
+    if liikkuvaSEOPath(r.URL.Path) || extraServicePath.MatchString(r.URL.Path) {
+        var found bool
+        for _,page:=range serviceCatalog(settings) {
+            if page.Published && page.Path==r.URL.Path { configureServicePage(&data,page,page.Path);found=true;break }
+        }
+        if !found {http.NotFound(w,r);return}
+    }
+    if err := h.renderer.renderLanding(w, data); err != nil {
 		http.Error(w, "failed to render landing", http.StatusInternalServerError)
 		return
 	}

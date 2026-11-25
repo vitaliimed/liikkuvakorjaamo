@@ -8,8 +8,8 @@
   <meta name="robots" content="{{.RobotsMeta}}">
 
   <link rel="canonical" href="{{.CanonicalURL}}">
-  <link rel="alternate" hreflang="fi" href="{{.HrefLangFI}}">
-  <link rel="alternate" hreflang="en" href="{{.HrefLangEN}}">
+  {{if not .ServicePage}}<link rel="alternate" hreflang="fi" href="{{.HrefLangFI}}">
+  <link rel="alternate" hreflang="en" href="{{.HrefLangEN}}">{{end}}
 
   <meta property="og:title" content="{{.OGTitle}}">
   <meta property="og:description" content="{{.OGDescription}}">
@@ -153,6 +153,11 @@
 
     window.LIIKKUVA_CONSENT_KEY = "liikkuva_consent_v1";
     try {
+      if (!localStorage.getItem(window.LIIKKUVA_CONSENT_KEY)) document.documentElement.inert = true;
+    } catch { document.documentElement.inert = true; }
+    // Keep navigation available if the consent asset fails to load.
+    window.setTimeout(() => { document.documentElement.inert = false; }, 8000);
+    try {
       var rawConsent = localStorage.getItem(window.LIIKKUVA_CONSENT_KEY);
       var parsedConsent = rawConsent ? JSON.parse(rawConsent) : null;
       var defaultConsent = {
@@ -188,7 +193,7 @@
   
   {{end}}
   {{end}}
-<script src="/static/js/surface.js?v=20261112" defer></script><link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/">
+<script src="/static/js/surface.js?v=20261112" defer></script>{{if not .ServicePage}}<link rel="alternate" hreflang="x-default" href="https://liikkuvakorjaamo.fi/">{{end}}
 <meta property="og:image" content="https://liikkuvakorjaamo.fi/static/img/logo-white.png?v=20261112-share">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1600">
@@ -196,9 +201,9 @@
 <meta property="og:image:alt" content="Liikkuva auto korjaamo – logo">
 <meta name="twitter:image" content="https://liikkuvakorjaamo.fi/static/img/logo-white.png?v=20261112-share">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://liikkuvakorjaamo.fi/#organization","name":"Liikkuva Auto Korjaamo","url":"https://liikkuvakorjaamo.fi/","logo":"https://liikkuvakorjaamo.fi/static/img/logo_liikkuva.svg"},{"@type":"Service","@id":"https://liikkuvakorjaamo.fi/#service","name":"Liikkuva autokorjaamo Uusimaa","serviceType":"Mobile car diagnostics and suitable on-site repairs","provider":{"@id":"https://liikkuvakorjaamo.fi/#organization"},"areaServed":["Helsinki","Espoo","Vantaa","Kerava","Järvenpää","Hyvinkää","Porvoo","Lohja"],"url":"https://liikkuvakorjaamo.fi/"}]}</script>
+{{if .ServicePage}}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":{{.ServicePage.Heading}},"url":{{.CanonicalURL}},"description":{{.MetaDescription}},"provider":{"@id":"https://liikkuvakorjaamo.fi/#organization"}}</script>{{else}}<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://liikkuvakorjaamo.fi/#organization","name":"Liikkuva Auto Korjaamo","url":"https://liikkuvakorjaamo.fi/","logo":"https://liikkuvakorjaamo.fi/static/img/logo_liikkuva.svg"},{"@type":"Service","@id":"https://liikkuvakorjaamo.fi/#service","name":"Liikkuva autokorjaamo Uusimaa","serviceType":"Mobile car diagnostics and suitable on-site repairs","provider":{"@id":"https://liikkuvakorjaamo.fi/#organization"},"areaServed":["Helsinki","Espoo","Vantaa","Kerava","Järvenpää","Hyvinkää","Porvoo","Lohja"],"url":"https://liikkuvakorjaamo.fi/"}]}</script>{{end}}
 <link rel="stylesheet" href="/static/css/pro.css?v=20261112"><script src="/static/js/events.js?v=20261112" defer></script><link rel="stylesheet" href="/static/css/responsive.css?v=20261112">
-<link rel="stylesheet" href="/static/css/brand.css?v=20261112"><link rel="stylesheet" href="/static/css/hero-form-ux.css?v=20261112-fix1"><link rel="stylesheet" href="/static/css/footer-form.css?v=20261121-white"><script src="/static/js/theme.js?v=20261114-toggle1" defer></script></head>{{if eq .Lang "en"}}<body>
+<link rel="stylesheet" href="/static/css/brand.css?v=20261112"><link rel="stylesheet" href="/static/css/hero-form-ux.css?v=20261112-fix1"><link rel="stylesheet" href="/static/css/footer-form.css?v=20261121-white"><script src="/static/js/theme.js?v=20261114-toggle1" defer></script><link rel="stylesheet" href="/static/css/landing-v2.css?v=1"><script src="/static/js/landing-v2.js?v=1" defer></script></head>{{if eq .Lang "en"}}<body>
 <a href="#main" class="skip-link">Skip to content</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -321,7 +326,7 @@
   </figure>
  </div></section>
 
- <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
+ {{with .ServicePage}}<section class="container service-detail"><nav aria-label="Breadcrumb"><a href="/">{{if eq .Language "en"}}Home{{else}}Etusivu{{end}}</a> / {{.Heading}}</nav>{{range .Blocks}}<article><h2>{{.Title}}</h2><p style="white-space:pre-line">{{.Text}}</p></article>{{end}}</section>{{end}}<div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
 
  
 
@@ -356,7 +361,7 @@ Then we agree.</h3>
 
  
 
- {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Still have a question? Send it through the form.</p><a href="#lead-form" class="text-link">Contact us <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
+ {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-controls"><button type="button" data-slide="-1" aria-label='{{if eq .Lang "fi"}}Edellinen{{else}}Previous{{end}}'>←</button><button type="button" data-slide="1" aria-label='{{if eq .Lang "fi"}}Seuraava{{else}}Next{{end}}'>→</button></div><div class="review-grid" tabindex="0">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="review-author"><span class="author-circle" aria-hidden="true">●</span><strong>{{.Author}}</strong></div><div class="stars" aria-label="{{.Rating}} / 5">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote>{{if .ImageURL}}<img class="review-photo" src="{{.ImageURL}}" alt="" loading="lazy">{{end}}</article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Still have a question? Send it through the form.</p><a href="#lead-form" class="text-link">Contact us <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
 
  <div class="resource-links"><a href="/auton-korjaus-kotona">Auton korjaus kotona ja työpaikalla ↗</a><a href="/auto-ei-kaynnisty">Auto ei käynnisty – apua auton luokse ↗</a><a href="/akun-vaihto">Auton akun tarkastus ja vaihto kotona ↗</a><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="request-more"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / REQUEST HELP</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-bottom-action"><a class="btn btn-orange" href="#lead-form">Send a request ↑</a></div></div></section>
 
@@ -365,9 +370,9 @@ Then we agree.</h3>
 </main>
 
 <footer class="footer"><div class="container"><div class="footer-top"><div class="footer-identity"><strong>Liikkuva auto korjaamo</strong><p>Car repair at your location.
-Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{if .Content.Footer.Phone}}<a href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.Email}}<a href="mailto:{{.Content.Footer.Email}}">{{.Content.Footer.Email}}</a>{{end}}{{if .Content.Footer.WorkingHours}}<span>{{.Content.Footer.WorkingHours}}</span>{{end}}</div></div><div class="footer-bottom"><span>© <span data-year>2026</span> liikkuvakorjaamo.fi  </span>{{if .Content.Footer.BusinessName}} · {{.Content.Footer.BusinessName}}{{end}}{{if .Content.Footer.YTunnus}} · Y-tunnus {{.Content.Footer.YTunnus}}{{end}}<div><a href="/review?lang=en">Leave a review</a><a href="/privacy?lang=en">Privacy</a></div>{{if .Content.Footer.InstagramURL}}<a href="{{.Content.Footer.InstagramURL}}" target="_blank" rel="noopener" class="social-icon" aria-label="Instagram"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>{{end}}{{if .Content.Footer.TikTokURL}}<a href="{{.Content.Footer.TikTokURL}}" target="_blank" rel="noopener">TikTok</a>{{end}}</div></div></footer>
+Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{if .Content.Footer.Phone}}<a href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.Email}}<a href="mailto:{{.Content.Footer.Email}}">{{.Content.Footer.Email}}</a>{{end}}{{if .Content.Footer.WorkingHours}}<span>{{.Content.Footer.WorkingHours}}</span>{{end}}</div></div><div class="footer-bottom"><span>© <span data-year>2026</span> liikkuvakorjaamo.fi  </span>{{if .Content.Footer.BusinessName}} · {{.Content.Footer.BusinessName}}{{end}}{{if .Content.Footer.YTunnus}} · Y-tunnus {{.Content.Footer.YTunnus}}{{end}}<div><a href="/review?lang=en">Leave a review</a><a href="/privacy?lang=en">Privacy</a></div>{{if .Content.Footer.InstagramURL}}<a href="{{.Content.Footer.InstagramURL}}" target="_blank" rel="noopener" class="social-icon" aria-label="Instagram"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>{{end}}{{if .Content.Footer.TikTokURL}}<a href="{{.Content.Footer.TikTokURL}}" target="_blank" rel="noopener">TikTok</a>{{end}}</div></div>{{if .ExitTitle}}<button type="button" class="exit-offer-link" data-offer-open>{{if eq .Lang "fi"}}Katso tarjous{{else}}View offer{{end}}</button><dialog id="exitOffer" data-until="{{.ExitUntil}}" aria-labelledby="offerTitle"><button class="offer-close" type="button" aria-label='{{if eq .Lang "fi"}}Sulje{{else}}Close{{end}}'>×</button><h2 id="offerTitle">{{.ExitTitle}}</h2><p data-countdown></p><div class="footer-lead-mount" data-offer-form></div></dialog>{{end}}</footer>
 
-<div class="mobile-cta"><a href="#lead-form" id="mobileStickyFormLink" class="btn btn-orange">{{.Content.Header.CTA}}</a>{{if .Content.Footer.Phone}}<a class="mobile-call" href="{{.Content.Footer.PhoneHref}}"><svg class="icon"><use href="#phone-icon"></use></svg></a>{{end}}</div>
+
 <div id="mapPickerModal" class="map-modal" role="dialog" aria-modal="true" aria-label="Map" data-leaflet-css="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" data-leaflet-js="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     <div class="map-modal-dialog">
       <div class="map-modal-header">
@@ -387,7 +392,7 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{i
 
 <script src="/static/js/app.js?v=20261122-access-mask" defer></script><script src="/static/js/footer-form.js?v=20261122-mask" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{else}}<body>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261125" defer></script>{{end}}</body>{{else}}<body>
 <a href="#main" class="skip-link">Siirry sisältöön</a>
 <svg class="svg-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
  <symbol id="arrow" viewbox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></symbol>
@@ -510,7 +515,7 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{i
   </figure>
  </div></section>
 
- <div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
+ {{with .ServicePage}}<section class="container service-detail"><nav aria-label="Breadcrumb"><a href="/">{{if eq .Language "en"}}Home{{else}}Etusivu{{end}}</a> / {{.Heading}}</nav>{{range .Blocks}}<article><h2>{{.Title}}</h2><p style="white-space:pre-line">{{.Text}}</p></article>{{end}}</section>{{end}}<div class="promise-bar container">{{range .Content.Hero.TrustCards}}<div><svg class="icon"><use href="#check"></use></svg><span><strong>{{.Title}}</strong><small>{{.Text}}</small></span></div>{{end}}</div>
 
  
 
@@ -545,7 +550,7 @@ Sitten sovitaan.</h3>
 
  
 
- {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-grid">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="stars">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote><div class="review-author">{{if .ImageURL}}<img src="{{.ImageURL}}" alt="" loading="lazy">{{end}}<span>{{.Author}}</span></div></article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Jäikö jotain kysyttävää? Kerro meille lomakkeella.</p><a href="#lead-form" class="text-link">Ota yhteyttä <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
+ {{if and .Content.ShowTestimonials (gt (len .Content.Testimonials.Items) 0)}}<section class="section reviews"><div class="container"><div class="section-heading"><h2>{{.Content.Testimonials.Heading.Title}}</h2></div><div class="review-controls"><button type="button" data-slide="-1" aria-label='{{if eq .Lang "fi"}}Edellinen{{else}}Previous{{end}}'>←</button><button type="button" data-slide="1" aria-label='{{if eq .Lang "fi"}}Seuraava{{else}}Next{{end}}'>→</button></div><div class="review-grid" tabindex="0">{{range .Content.Testimonials.Items}}<article class="testimonial-card"><div class="review-author"><span class="author-circle" aria-hidden="true">●</span><strong>{{.Author}}</strong></div><div class="stars" aria-label="{{.Rating}} / 5">{{.RatingStars}}</div><blockquote>{{.Quote}}</blockquote>{{if .ImageURL}}<img class="review-photo" src="{{.ImageURL}}" alt="" loading="lazy">{{end}}</article>{{end}}</div></div></section>{{end}}{{if .Content.ShowFAQ}}<section class="section faq" id="faq"><div class="container faq-layout"><div><span class="eyebrow">{{.Content.FAQ.Heading.Kicker}}</span><h2>{{.Content.FAQ.Heading.Title}}</h2><p>Jäikö jotain kysyttävää? Kerro meille lomakkeella.</p><a href="#lead-form" class="text-link">Ota yhteyttä <span>↗</span></a></div><div class="faq-list">{{range .Content.FAQ.Items}}<details><summary>{{.Question}}<span class="faq-plus" aria-hidden="true">+</span></summary><p>{{.Answer}}</p></details>{{end}}</div></div></section>{{end}}
 
  <div class="resource-links"><a href="/auton-korjaus-kotona">Auton korjaus kotona ja työpaikalla ↗</a><a href="/auto-ei-kaynnisty">Auto ei käynnisty – apua auton luokse ↗</a><a href="/akun-vaihto">Auton akun tarkastus ja vaihto kotona ↗</a><a href="/vikadiagnostiikka">{{if eq .Lang "fi"}}Vikadiagnostiikka{{else}}Diagnostics (in Finnish){{end}} ↗</a><a href="/hinnasto">Hinnasto / Pricing ↗</a><a href="/palvelualue">Palvelualue / Service area ↗</a></div><section class="request-section" id="request-more"><div class="container request-layout"><div class="request-copy"><span class="eyebrow">06 / PYYDÄ APUA</span><h2>{{.Content.TrustPanel.Title}}</h2><p>{{.Content.TrustPanel.Text}}</p><ul class="request-points">{{range .Content.TrustPanel.Items}}<li><svg class="icon"><use href="#check"></use></svg>{{.}}</li>{{end}}</ul>{{if .Content.Footer.Phone}}<a class="request-contact" href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.WhatsAppHref}}<a class="text-link" href="{{.Content.Footer.WhatsAppHref}}" rel="noopener" target="_blank">WhatsApp ↗</a>{{end}}</div><div class="request-bottom-action"><a class="btn btn-orange" href="#lead-form">Lähetä avunpyyntö ↑</a></div></div></section>
 
@@ -554,9 +559,9 @@ Sitten sovitaan.</h3>
 </main>
 
 <footer class="footer"><div class="container"><div class="footer-top"><div class="footer-identity"><strong>Liikkuva auto korjaamo</strong><p>Auton korjaus paikan päällä.
-Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{if .Content.Footer.Phone}}<a href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.Email}}<a href="mailto:{{.Content.Footer.Email}}">{{.Content.Footer.Email}}</a>{{end}}{{if .Content.Footer.WorkingHours}}<span>{{.Content.Footer.WorkingHours}}</span>{{end}}</div></div><div class="footer-bottom"><span>© <span data-year>2026</span> liikkuvakorjaamo.fi  </span>{{if .Content.Footer.BusinessName}} · {{.Content.Footer.BusinessName}}{{end}}{{if .Content.Footer.YTunnus}} · Y-tunnus {{.Content.Footer.YTunnus}}{{end}}<div><a href="/review?lang=fi">Jätä arvostelu</a><a href="/privacy?lang=fi">Tietosuoja</a></div>{{if .Content.Footer.InstagramURL}}<a href="{{.Content.Footer.InstagramURL}}" target="_blank" rel="noopener" class="social-icon" aria-label="Instagram"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>{{end}}{{if .Content.Footer.TikTokURL}}<a href="{{.Content.Footer.TikTokURL}}" target="_blank" rel="noopener">TikTok</a>{{end}}</div></div></footer>
+Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{if .Content.Footer.Phone}}<a href="{{.Content.Footer.PhoneHref}}">{{.Content.Footer.Phone}}</a>{{end}}{{if .Content.Footer.Email}}<a href="mailto:{{.Content.Footer.Email}}">{{.Content.Footer.Email}}</a>{{end}}{{if .Content.Footer.WorkingHours}}<span>{{.Content.Footer.WorkingHours}}</span>{{end}}</div></div><div class="footer-bottom"><span>© <span data-year>2026</span> liikkuvakorjaamo.fi  </span>{{if .Content.Footer.BusinessName}} · {{.Content.Footer.BusinessName}}{{end}}{{if .Content.Footer.YTunnus}} · Y-tunnus {{.Content.Footer.YTunnus}}{{end}}<div><a href="/review?lang=fi">Jätä arvostelu</a><a href="/privacy?lang=fi">Tietosuoja</a></div>{{if .Content.Footer.InstagramURL}}<a href="{{.Content.Footer.InstagramURL}}" target="_blank" rel="noopener" class="social-icon" aria-label="Instagram"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>{{end}}{{if .Content.Footer.TikTokURL}}<a href="{{.Content.Footer.TikTokURL}}" target="_blank" rel="noopener">TikTok</a>{{end}}</div></div>{{if .ExitTitle}}<button type="button" class="exit-offer-link" data-offer-open>{{if eq .Lang "fi"}}Katso tarjous{{else}}View offer{{end}}</button><dialog id="exitOffer" data-until="{{.ExitUntil}}" aria-labelledby="offerTitle"><button class="offer-close" type="button" aria-label='{{if eq .Lang "fi"}}Sulje{{else}}Close{{end}}'>×</button><h2 id="offerTitle">{{.ExitTitle}}</h2><p data-countdown></p><div class="footer-lead-mount" data-offer-form></div></dialog>{{end}}</footer>
 
-<div class="mobile-cta"><a href="#lead-form" id="mobileStickyFormLink" class="btn btn-orange">{{.Content.Header.CTA}}</a>{{if .Content.Footer.Phone}}<a class="mobile-call" href="{{.Content.Footer.PhoneHref}}"><svg class="icon"><use href="#phone-icon"></use></svg></a>{{end}}</div>
+
 <div id="mapPickerModal" class="map-modal" role="dialog" aria-modal="true" aria-label="Map" data-leaflet-css="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" data-leaflet-js="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     <div class="map-modal-dialog">
       <div class="map-modal-header">
@@ -576,4 +581,4 @@ Helsinki, Espoo, Vantaa &amp; Uusimaa.</p></div><div class="footer-contacts">{{i
 
 <script src="/static/js/app.js?v=20261122-access-mask" defer></script><script src="/static/js/footer-form.js?v=20261122-mask" defer></script>
 
-{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261112" defer></script>{{end}}</body>{{end}}</html>
+{{if .EnableConsentMode}}<script src="/static/js/consent.js?v=20261125" defer></script>{{end}}</body>{{end}}</html>

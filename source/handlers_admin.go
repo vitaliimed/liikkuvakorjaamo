@@ -86,8 +86,9 @@ func parseAdminTestimonials(r *http.Request) []AdminTestimonialItem {
 		}
 
 		items = append(items, AdminTestimonialItem{
-			Name:     name,
-			QuoteFI:  quoteFI,
+			Draft: i < len(r.Form["testimonial_state[]"]) && r.Form["testimonial_state[]"][i] == "draft",
+            Name:     name,
+            QuoteFI:  quoteFI,
 			QuoteEN:  quoteEN,
 			PhotoURL: photoURL,
 			Rating:   normalizeTestimonialRating(ratingValue),
@@ -249,7 +250,13 @@ func padAdminCases(items []AdminCaseItem, size int) []AdminCaseItem {
 
 func normalizeAdminSettingsForTemplate(settings SiteSettings) SiteSettings {
 	settings = liikkuvaProDefaults(settings)
-	if len(settings.ServiceItems) == 0 {
+ settings.ServicePages = serviceCatalog(settings)
+ if !settings.DraftsInitialized {
+  for _, subject := range []string{"Akun vaihto", "Käynnistysvika", "Vikadiagnostiikka", "Latausjärjestelmä", "Kotipihalla tehty korjaus", "Työpaikalla tehty tarkastus"} {
+   settings.Testimonials = append(settings.Testimonials, AdminTestimonialItem{Name:"Черновик · "+subject, QuoteFI:subject+" — [asiakkaan palaute]", Rating:5, Draft:true})
+  }
+ }
+ if len(settings.ServiceItems) == 0 {
 		settings.ServiceItems = []AdminServiceItem{{}}
 	}
 	if len(settings.CaseItems) == 0 {
@@ -425,6 +432,11 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 	}
 	settings := SiteSettings{
 		Revision:                  revision,
+        DraftsInitialized: true,
+        ExitEnabled: r.FormValue("exit_enabled") == "1",
+        ExitTitleFI: strings.TrimSpace(r.FormValue("exit_title_fi")),
+        ExitTitleEN: strings.TrimSpace(r.FormValue("exit_title_en")),
+        ExitDate: strings.TrimSpace(r.FormValue("exit_date")),
 		ProVisitEUR:               visitFee,
 		ProDiagnosticEUR:          diagnosticFee,
 		ProFontSize:               liikkuvaInt(r.FormValue("ProFontSize"), 18, 16, 22),
@@ -772,7 +784,14 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 		RobotsTXT:          strings.TrimSpace(r.FormValue("robots_txt")),
 	}
 
-	if err := saveSiteSettings(r.Context(), h.cfg, settings); err != nil {
+	var serviceErr error
+    settings.ServicePages,serviceErr=parseServiceEdits(r)
+    if serviceErr!=nil {http.Error(w,serviceErr.Error(),400);return}
+    if settings.ExitEnabled && (campaignDeadline(settings.ExitDate) == 0 || settings.ExitTitleFI == "" || settings.ExitTitleEN == "") {
+        http.Error(w,"Заполните оба заголовка и дату окончания предложения.",http.StatusBadRequest)
+        return
+    }
+    if err := saveSiteSettings(r.Context(), h.cfg, settings); err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		code := http.StatusServiceUnavailable
 		if errors.Is(err, errSiteSettingsConflict) {
@@ -1113,7 +1132,8 @@ func buildAdminReviewList(records []ReviewRecord) []AdminReviewListItem {
 	items := make([]AdminReviewListItem, 0, len(records))
 	for _, record := range records {
 		items = append(items, AdminReviewListItem{
-			ID:        record.ID,
+			PhotoURL: record.PhotoURL,
+ ID:        record.ID,
 			LeadID:    record.LeadID,
 			CreatedAt: formatAdminTime(record.CreatedAt),
 			Name:      adminValue(record.Name),
@@ -1290,7 +1310,11 @@ func (h *AdminHandler) ModerateReview(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin?tab=reviews&error="+url.QueryEscape("review_id is required"), http.StatusSeeOther)
 		return
 	}
-	if err := moderateReviewRecord(r.Context(), h.cfg, reviewID, action); err != nil {
+	var err error
+    if action=="edit" {
+        err=editReviewRecord(r.Context(),h.cfg,reviewID,strings.TrimSpace(r.FormValue("name")),strings.TrimSpace(r.FormValue("message")),strings.TrimSpace(r.FormValue("photo_url")))
+    } else {err=moderateReviewRecord(r.Context(),h.cfg,reviewID,action)}
+    if err != nil {
 		http.Redirect(w, r, "/admin?tab=reviews&error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
 		return
 	}

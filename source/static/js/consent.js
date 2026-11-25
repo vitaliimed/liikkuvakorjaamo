@@ -119,6 +119,7 @@
   }
 
   function getSavedConsent() {
+    if (sessionDecision) return sessionDecision;
     var raw = "";
     try {
       raw = localStorage.getItem(consentKey);
@@ -128,7 +129,9 @@
     return normalizeConsent(safeParse(raw, getDefaultConsent()));
   }
 
+  var sessionDecision = null;
   function hasSavedConsent() {
+    if (sessionDecision) return true;
     try {
       return !!localStorage.getItem(consentKey);
     } catch (error) {
@@ -139,6 +142,7 @@
   function saveConsent(consent) {
     var payload = normalizeConsent(consent);
     payload.savedAt = new Date().toISOString();
+    sessionDecision = payload;
 
     try {
       localStorage.setItem(consentKey, JSON.stringify(payload));
@@ -531,7 +535,8 @@
     .liikkuva-consent-root {
       position: fixed;
       inset: 0;
-      pointer-events: none;
+      background: rgba(17,30,22,.40);
+      pointer-events: auto;
       z-index: 2147483000;
       font-family: Arial, Helvetica, sans-serif;
     }
@@ -916,12 +921,15 @@
     var texts = getTexts();
     var root = document.createElement("div");
     root.className = "liikkuva-consent-root";
+    root.setAttribute("role","dialog");
+    root.setAttribute("aria-modal","true");
+    root.setAttribute("aria-labelledby","consent-banner-title");
 
     var banner = document.createElement("div");
     banner.className = "liikkuva-consent-banner";
     banner.innerHTML =
       '<div class="liikkuva-consent-badge">' + escapeHtml(texts.badge) + "</div>" +
-      '<h3 class="liikkuva-consent-title">' + escapeHtml(texts.title) + "</h3>" +
+      '<h3 id="consent-banner-title" class="liikkuva-consent-title">' + escapeHtml(texts.title) + "</h3>" +
       '<p class="liikkuva-consent-text">' + escapeHtml(texts.text) + "</p>" +
       '<div class="liikkuva-consent-actions">' +
       '<button type="button" class="liikkuva-consent-btn liikkuva-consent-btn-secondary" data-consent-action="reject">' + escapeHtml(texts.rejectAll) + "</button>" +
@@ -1084,6 +1092,7 @@ function openSettingsModal() {
 
   if (state.modalEl) {
     state.modalEl.classList.add("is-open");
+    restrictBackground(state.modalEl);
   }
 
   if (state.manageButtonEl) {
@@ -1097,6 +1106,7 @@ function openSettingsModal() {
 function closeSettingsModal() {
   if (state.modalEl) {
     state.modalEl.classList.remove("is-open");
+    restrictBackground(!hasSavedConsent() ? state.bannerEl : null);
   }
 
   document.documentElement.classList.remove("liikkuva-consent-lock");
@@ -1105,10 +1115,23 @@ function closeSettingsModal() {
   updateManageButtonVisibility();
 }
 
+  const gatedElements = new Set();
+  function restrictBackground(active) {
+    for (const element of gatedElements) element.inert = false;
+    gatedElements.clear();
+    if (!active) return;
+    for (const element of document.body.children) {
+      if (element === active || element.inert || /^(SCRIPT|STYLE|LINK)$/.test(element.tagName)) continue;
+      element.inert = true;
+      gatedElements.add(element);
+    }
+    active.querySelector("button")?.focus({preventScroll:true});
+  }
   function showBanner() {
     createBanner();
     if (state.bannerEl) {
       state.bannerEl.style.display = "block";
+      restrictBackground(state.bannerEl);
     }
     updateManageButtonVisibility();
   }
@@ -1116,6 +1139,7 @@ function closeSettingsModal() {
   function hideBanner() {
     if (state.bannerEl) {
       state.bannerEl.style.display = "none";
+      restrictBackground(null);
     }
   }
 
@@ -1168,6 +1192,7 @@ function closeSettingsModal() {
   }
 
   function bootUI() {
+    document.documentElement.inert = false;
     injectStyles();
     createSettingsModal();
     createManageButton();
@@ -1187,8 +1212,8 @@ function closeSettingsModal() {
   window.liikkuvaTrackCustomEvent = trackCustomEvent;
 
   document.addEventListener("DOMContentLoaded", function () {
-    bootTracking();
     bootUI();
+    bootTracking();
     bootLeadRecovery();
   });
 })();

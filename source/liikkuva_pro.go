@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -113,7 +111,7 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 			fmt.Fprintf(w, "window.LIIKKUVA_TRACKING=%s;", b)
 			return
 		}
-		public := r.URL.Path == "/" || r.URL.Path == "/en" || liikkuvaSEOPath(r.URL.Path) || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review"
+		public := r.URL.Path == "/" || r.URL.Path == "/en" || liikkuvaSEOPath(r.URL.Path) || extraServicePath.MatchString(r.URL.Path) || strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/fi" || r.URL.Path == "/privacy" || r.URL.Path == "/review"
 		if (r.Method != http.MethodGet && r.Method != http.MethodHead) || !public {
 			next.ServeHTTP(w, r)
 			return
@@ -141,71 +139,6 @@ func liikkuvaPro(cfg Config, next http.Handler) http.Handler {
 		body = liikkuvaThemeHTML(body, settings)
 		css := fmt.Sprintf(`<style>:root{--brand:%s;--blue:%s}html{font-size:%dpx}.btn-orange,.btn-primary{background:%s}</style>`, settings.ProAccent, settings.ProAccent, settings.ProFontSize, settings.ProAccent)
 		body = strings.Replace(body, "</head>", css+"</head>", 1)
-		extra := ""
-		switch r.URL.Path {
-		case "/hinnasto":
-			extra = settings.ProPricingText
-		case "/palvelualue":
-			extra = settings.ProAreasText
-		case "/vikadiagnostiikka":
-			extra = settings.ProDiagnosticsText
-		}
-		if extra != "" {
-			block := `<div class="seo-columns"><article class="seo-block"><p>` + strings.ReplaceAll(html.EscapeString(liikkuvaPriceText(extra, settings)), "\n", "<br>") + `</p></article></div>`
-			body = regexp.MustCompile(`(?s)<div class="seo-columns">.*?<div class="seo-bottom">`).ReplaceAllStringFunc(body, func(string) string { return block + `<div class="seo-bottom">` })
-		}
-		section := ""
-		switch r.URL.Path {
-		case "/hinnasto":
-			section = "Pricing"
-		case "/palvelualue":
-			section = "Areas"
-		case "/vikadiagnostiikka":
-			section = "Diagnostics"
-		}
-		if section != "" {
-			v := reflect.ValueOf(settings)
-			title := v.FieldByName("Pro" + section + "Title").String()
-			description := v.FieldByName("Pro" + section + "Description").String()
-			heading := v.FieldByName("Pro" + section + "Heading").String()
-			title = liikkuvaPriceText(title, settings)
-			description = liikkuvaPriceText(description, settings)
-			heading = liikkuvaPriceText(heading, settings)
-			if title != "" {
-				body = regexp.MustCompile(`<title>.*?</title>`).ReplaceAllStringFunc(body, func(string) string { return "<title>" + html.EscapeString(title) + "</title>" })
-				body = regexp.MustCompile(`<meta property="og:title" content="[^"]*">`).ReplaceAllStringFunc(body, func(string) string { return `<meta property="og:title" content="` + html.EscapeString(title) + `">` })
-			}
-			if description != "" {
-				for _, attribute := range []string{`name="description"`, `property="og:description"`} {
-					body = regexp.MustCompile(`<meta `+attribute+` content="[^"]*">`).ReplaceAllStringFunc(body, func(string) string {
-						return `<meta ` + attribute + ` content="` + html.EscapeString(description) + `">`
-					})
-				}
-			}
-			if heading != "" {
-				body = regexp.MustCompile(`(?s)<h1>.*?</h1>`).ReplaceAllStringFunc(body, func(string) string { return "<h1>" + html.EscapeString(heading) + "</h1>" })
-			}
-			body = regexp.MustCompile(`(?s)<script type="application/ld\+json">(.*?)</script>`).ReplaceAllStringFunc(body, func(block string) string {
-				start := strings.Index(block, ">") + 1
-				end := strings.LastIndex(block, "</script>")
-				var data map[string]interface{}
-				if json.Unmarshal([]byte(block[start:end]), &data) != nil {
-					return block
-				}
-				if title != "" {
-					data["name"] = title
-				}
-				if description != "" {
-					data["description"] = description
-				}
-				b, e := json.Marshal(data)
-				if e != nil {
-					return block
-				}
-				return `<script type="application/ld+json">` + string(b) + `</script>`
-			})
-		}
-
 		for k, v := range rec.Header() {
 			w.Header()[k] = v
 		}

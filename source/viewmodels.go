@@ -43,6 +43,7 @@ type TestimonialCard struct {
 }
 
 type AdminTestimonialItem struct {
+ Draft bool `firestore:"draft,omitempty"`
 	Name     string `json:"name" firestore:"name"`
 	QuoteFI  string `json:"quote_fi" firestore:"quote_fi"`
 	QuoteEN  string `json:"quote_en" firestore:"quote_en"`
@@ -278,6 +279,10 @@ type LandingContent struct {
 }
 
 type LandingPageData struct {
+ ServicePage *ServicePage
+ ExitTitle string
+ ExitUntil int64
+
 	Lang                         string
 	PageTitle                    string
 	MetaDescription              string
@@ -447,6 +452,13 @@ type PrivacyPageData struct {
 }
 
 type SiteSettings struct {
+ ExitEnabled bool
+ ExitTitleFI string
+ ExitTitleEN string
+ ExitDate string
+ ServicePages []ServicePage
+ DraftsInitialized bool
+
 	Revision                     int64 `firestore:"revision"`
 	ProVisitEUR                  int
 	ProDiagnosticEUR             int
@@ -859,6 +871,7 @@ type AdminLeadDetails struct {
 }
 
 type AdminReviewListItem struct {
+ PhotoURL string
 	ID        string
 	LeadID    string
 	CreatedAt string
