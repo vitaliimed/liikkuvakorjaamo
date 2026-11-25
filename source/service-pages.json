@@ -1,0 +1,182 @@
+{
+  "/akun-vaihto": {
+    "Title": "Auton akun vaihto kotona | Helsinki, Espoo ja Vantaa",
+    "Description": "Auton akun tarkastus ja soveltuva akun vaihto kotona tai työpaikalla. Palvelemme Helsingissä, Espoossa ja Vantaalla. Akun sopivuus ja hinta sovitaan ensin.",
+    "Heading": "Auton akun tarkastus ja vaihto kotona",
+    "Intro": "Heikosti käynnistyvä auto ei aina tarvitse uutta akkua. Liikkuva Auto Korjaamo tarkistaa akun ja tilanteeseen sopivat liitännät ennen vaihtopäätöstä. Akun vaihto voidaan sopia auton luokse Helsinkiin, Espooseen tai Vantaalle, kun työ soveltuu kohteessa tehtäväksi.",
+    "Blocks": [
+      {
+        "Title": "Ensin tarkistus, sitten päätös vaihdosta",
+        "Text": "Kerro, milloin ongelma alkoi, onko auto seissyt pitkään ja onko akku vaihdettu äskettäin. Akun varaustila, kunto ja latauksen toiminta ovat eri asioita. Tarkistuksen avulla arvioidaan, riittääkö muu toimenpide vai onko akun vaihtaminen perusteltua."
+      },
+      {
+        "Title": "Mikä akku autoon sopii?",
+        "Text": "Rekisterinumero ja automalli auttavat sopivan akun selvittämisessä. Akun tyyppi, koko ja auton varusteet vaikuttavat valintaan. Start-stop-auton tai muun erityisjärjestelmän vaatimukset tarkistetaan ennen varaosan hankintaa. Akun hinta vahvistetaan erikseen."
+      },
+      {
+        "Title": "Onnistuuko vaihto kaikissa autoissa?",
+        "Text": "Akun sijainti ja mahdollinen rekisteröinti tai muu mallikohtainen toimenpide vaikuttavat työn toteutukseen. Kerromme ennen käyntiä, voidaanko pyydetty työ tehdä käytettävissä olevilla välineillä. Sivun palvelu koskee auton 12 voltin akkua, ei sähköauton tai hybridin ajoakun vaihtoa."
+      },
+      {
+        "Title": "Paljonko akun vaihto maksaa?",
+        "Text": "Kokonaishintaan vaikuttavat käynti, tarvittava tarkistus, vaihtotyö ja akku. Varaosa ei sisälly käyntimaksuun. Pyydä arvio rekisterinumerolla ja osoitteella; sovimme työn sisällön ja hinnan ennen vaihtoa."
+      },
+      {
+        "Title": "Käynti ja hinnoittelu",
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
+      },
+      {
+        "Title": "Usein kysytyt kysymykset",
+        "Text": "Sisältyykö uusi akku käyntimaksuun?\n Ei. Akun ja vaihtotyön hinta sovitaan erikseen auton ja tarvittavan akun perusteella.\n Voiko akun vaihtaa pysäköintihallissa?\n Mahdollisuus arvioidaan hallin sääntöjen, kulkuyhteyksien ja työskentelytilan perusteella. Kerro olosuhteet yhteydenoton yhteydessä."
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  },
+  "/auto-ei-kaynnisty": {
+    "Title": "Auto ei käynnisty? Apua auton luokse | Liikkuva",
+    "Description": "Auto ei käynnisty kotipihalla? Käynnistysongelman selvitys Helsingissä, Espoossa ja Vantaalla. Kerro oire, rekisterinumero ja sijainti. Sovitaan tarkistus.",
+    "Heading": "Auto ei käynnisty – apua auton luokse",
+    "Intro": "Jos auto ei käynnisty kotona tai työpaikalla, vian selvitys voidaan usein aloittaa auton luona. Liikkuva Auto Korjaamo arvioi käynnistysongelmia Helsingissä, Espoossa ja Vantaalla. Pelkkä käynnistymättömyys ei vielä kerro, mikä osa on viallinen.",
+    "Blocks": [
+      {
+        "Title": "Mitä auto tekee käynnistettäessä?",
+        "Text": "Kerro, pyörittääkö käynnistin moottoria, kuuluuko vain naksahdus vai pysyykö auto täysin hiljaisena. Mainitse myös, syttyvätkö mittariston valot ja näkyykö ilmoituksia. Nämä havainnot auttavat suunnittelemaan tarkistuksen, mutta eivät yksin varmista vian syytä."
+      },
+      {
+        "Title": "Akku, lataus vai muu käynnistysvika?",
+        "Text": "Heikko akku on yksi mahdollinen syy. Ongelma voi liittyä myös liitoksiin, lataukseen, käynnistimeen tai auton ohjausjärjestelmiin. Tarkistukset valitaan oireen ja automallin mukaan. Emme suosittele osan vaihtoa vain yhden oireen perusteella."
+      },
+      {
+        "Title": "Käynnistysapu vai vianmääritys?",
+        "Text": "Apuvirta voi auttaa silloin, kun ongelma liittyy akun varaustilaan ja menetelmä sopii autolle. Se ei korjaa esimerkiksi latausvikaa. Kerro, onko auto jo käynnistetty apuvirralla ja toistuiko ongelma. Tarkistamme sopivan toimintatavan ennen työn aloittamista."
+      },
+      {
+        "Title": "Mitä tehdä ennen käyntiä?",
+        "Text": "Pidä auton avain saatavilla ja ilmoita, jos ovia tai konepeltiä ei saa auki. Älä jatka toistuvia käynnistysyrityksiä, jos ilmenee poikkeavaa hajua, savua tai muuta vaaraa. Noudata auton käyttöohjetta. Tämä on ajanvarauksella sovittava palvelu; saatavuus vahvistetaan erikseen."
+      },
+      {
+        "Title": "Käynti ja hinnoittelu",
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
+      },
+      {
+        "Title": "Usein kysytyt kysymykset",
+        "Text": "Onko vika aina akussa?\n Ei. Samankaltaisen oireen taustalla voi olla eri vikoja. Tarkistus tehdään havaintojen ja auton tietojen perusteella.\n Voitteko tulla heti?\n Kerro sijainti ja toivottu aika. Vahvistamme vapaan ajan erikseen emmekä lupaa ympärivuorokautista päivystystä."
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  },
+  "/auton-korjaus-kotona": {
+    "Title": "Auton korjaus kotona | Helsinki, Espoo ja Vantaa",
+    "Description": "Auton korjaus kotona tai työpaikalla Helsingissä, Espoossa ja Vantaalla. Kerro auton oire ja sijainti. Vahvistamme työn soveltuvuuden ja hinnan ennen käyntiä.",
+    "Heading": "Auton korjaus kotona ja työpaikalla",
+    "Intro": "Kun auton vieminen korjaamolle on hankalaa, liikkuva asentaja voi selvittää vian auton luona. Liikkuva Auto Korjaamo tekee diagnostiikkaa ja soveltuvia korjauksia kotipihalla tai työpaikan pysäköintialueella Helsingissä, Espoossa ja Vantaalla. Työ ja saapumisaika sovitaan etukäteen.",
+    "Blocks": [
+      {
+        "Title": "Millaisia töitä auton luona voidaan tehdä?",
+        "Text": "Akun ja käynnistysjärjestelmän tarkastus, vikakoodien luku sekä pienet sähkö- ja mekaaniset korjaukset voivat onnistua paikan päällä. Soveltuvuus riippuu auton mallista, osan sijainnista, tarvittavista työkaluista ja työskentelytilasta. Kuvaus oireesta auttaa rajaamaan työn ennen lähtöä."
+      },
+      {
+        "Title": "Millainen paikka sopii korjaukseen?",
+        "Text": "Kerro, onko auto kotipihalla, kadun varressa vai pysäköintihallissa. Tarvitsemme turvallisen työskentelypaikan ja luvan tehdä työn alueella. Ilmoita porttikoodi, hallin korkeusrajoitus ja muut pääsyyn vaikuttavat asiat. Ahtaassa tai vilkkaassa paikassa kaikkea työtä ei voida tehdä."
+      },
+      {
+        "Title": "Milloin auto tarvitsee korjaamon?",
+        "Text": "Nosturia, laajaa purkamista tai erityisiä laitteita vaativa työ voi edellyttää korjaamoa. Sää ja pysäköintipaikan olosuhteet vaikuttavat myös. Jos vikaa ei voi korjata kohteessa, kerromme havainnot ja sovimme seuraavan vaiheen. Käynti ei ole lupaus kaikkien vikojen korjaamisesta samalla kertaa."
+      },
+      {
+        "Title": "Näin pyydät korjausta kotiin",
+        "Text": "Lähetä rekisterinumero, tarkka osoite ja oirekuvaus. Kerro myös, käynnistyykö auto ja voiko sitä siirtää. Lisää halutessasi kuva mittariston ilmoituksesta tai näkyvästä viasta. Vahvistamme saatavuuden, hinnan ja suunnitellun työn ennen käyntiä."
+      },
+      {
+        "Title": "Käynti ja hinnoittelu",
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
+      },
+      {
+        "Title": "Usein kysytyt kysymykset",
+        "Text": "Voiko asentajan tilata työpaikalle?\n Kyllä, kun sijainti ja työskentelyolosuhteet sopivat tehtävään. Kerro pysäköintialue ja kulkuohjeet pyynnössä.\n Tarkoittaako lomakkeen lähettäminen vahvistettua varausta?\n Ei. Tarkistamme pyynnön ja vahvistamme ajan sekä työn ehdot erikseen."
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  },
+  "/hinnasto": {
+    "Title": "Liikkuvan autokorjaamon hinnasto – Helsinki ja Uusimaa",
+    "Description": "Mitä auton korjaus kotona maksaa? Katso käyntimaksu ja diagnostiikan lähtöhinta. Korjaustyöt ja varaosat sovitaan erikseen ennen työn aloittamista.",
+    "Heading": "Liikkuvan autokorjaamon hinnasto",
+    "Intro": "Liikkuvan autokorjaamon palvelu alkaa käynnistä auton luona. Kerro oire ja sijainti, jotta voimme arvioida tarvittavan työn ja vahvistaa ehdot ennen lähtöä.",
+    "Blocks": [
+      {
+        "Title": "Mistä hinta muodostuu?",
+        "Text": "Liikkuva Auto Korjaamo — hinnasto    Mekaanikon käynti (vain saapuminen)  alk. {visit} €    Vianmääritys ja pienet korjaukset  alk. {diagnostic} € (erikseen)    Korjaustyö ja varaosat  Sovitaan erikseen     Käyntimaksu kattaa vain mekaanikon saapumisen. Vianmääritys ja soveltuvat pienet korjaukset alkaen {diagnostic} € veloitetaan käyntimaksun lisäksi. Yhteensä alkaen {total} €, jos molemmat palvelut tarvitaan. Varaosat ja vaativammat työt sovitaan ja hinnoitellaan erikseen ennen työn aloittamista.\n Lähetetty lomake on yhteydenottopyyntö, ei vahvistettu ajanvaraus. Kun olemme vahvistaneet käyntiajan, odota mekaanikkoa ilmoittamassasi paikassa sovittuna aikana ja varmista esteetön pääsy autolle."
+      },
+      {
+        "Title": "Diagnoosi ennen osien vaihtoa",
+        "Text": "Käynnistysongelmassa käymme läpi oireet ja arvioimme akun, liitäntöjen sekä lataus- tai käynnistysjärjestelmän tarkistuksen tarpeen. Vikakoodi on yksi havainto, ei yksin korjauspäätös.\n Kun työn laajuus selviää, sovimme seuraavan korjausvaiheen ja osat kanssasi. Jos työ vaatii korjaamon, kerromme siitä ennen jatkotoimia."
+      },
+      {
+        "Title": "Mitä lähetän tarjouspyynnössä?",
+        "Text": "Auton rekisteritunnus ja oireen kuvaus.\n Tarkka sijainti ja tieto siitä, pääseekö auton ympärillä työskentelemään.\n Milloin oire alkoi ja toistuuko se joka kerta.\n Mahdollinen kuva mittariston ilmoituksesta.\n  Älä osta osia pelkän arvauksen perusteella. Sopivuus ja korjauksen toteutus arvioidaan ensin."
+      },
+      {
+        "Title": "Sopimus ennen lisätöitä",
+        "Text": "Emme esitä varaosille yleistä hintaa, koska osa ja työn määrä riippuvat autosta ja viasta. Mahdolliset lisätyöt sovitaan erikseen.\n Käynnin saatavuus ja kohteen soveltuvuus riippuvat sijainnista, työtilanteesta ja olosuhteista.  Katso palvelualue →"
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  },
+  "/palvelualue": {
+    "Title": "Palvelualue – Liikkuva autokorjaamo Uudellamaalla",
+    "Description": "Auton korjaus ja diagnostiikka auton luona Helsingissä, Espoossa, Vantaalla ja muualla Uudellamaalla sopimuksen mukaan. Tarkista alue ja pyydä käynti.",
+    "Heading": "Liikkuvan autokorjaamon palvelualue Uudellamaalla",
+    "Intro": "Liikkuva Auto Korjaamo palvelee Uudellamaalla sovitussa kohteessa. Lähetä auton sijainti ja oireet: vahvistamme saatavuuden ja työn soveltuvuuden ennen käyntiä.",
+    "Blocks": [
+      {
+        "Title": "Missä palvelemme?",
+        "Text": "Palvelualueeseen kuuluvat Helsinki, Espoo, Vantaa, Kerava, Järvenpää, Hyvinkää, Porvoo ja Lohja.\n Kaupunkiluettelo ei tarkoita, että asentaja on jokaisella alueella jatkuvasti saatavilla. Ajankohta ja tarkka osoite vahvistetaan erikseen. Alueen ulkopuolisessa kohteessa kysy saatavuutta ensin."
+      },
+      {
+        "Title": "Kotipiha, työpaikka vai parkkihalli?",
+        "Text": "Kerro lomakkeessa, missä auto on. Tarvitsemme turvallisen ja luvallisen työskentelypaikan sekä riittävästi tilaa auton ympärille.\n Työpaikan tai taloyhtiön pysäköintipaikalla varmista lupa. Hallissa kerro sisäänajon korkeus, pääsy ja mahdolliset työskentelyrajoitukset. Sää ja työn laajuus vaikuttavat siihen, onnistuuko korjaus ulkona."
+      },
+      {
+        "Title": "Näin valmistelet käynnin",
+        "Text": "Anna rekisteritunnus ja yhteyshenkilön puhelinnumero.\n Lähetä osoite tai valitse sijainti lomakkeen kartalta.\n Kerro portti-, halli- tai kulkuohjeet yhteydenoton yhteydessä.\n Kuvaile oire; kerro myös, liikkuuko auto omalla voimalla.\n Pidä auton avaimet saatavilla sovittuna aikana."
+      },
+      {
+        "Title": "Kaikki työt eivät sovi ulos",
+        "Text": "Monet akun, käynnistyksen ja vikakoodien tarkistukset sekä soveltuvat pienkorjaukset voidaan tehdä auton luona. Nosturia, laajaa purkamista tai muita erityisolosuhteita vaativa työ voi edellyttää korjaamoa.\n Arvioimme työn ennen aloittamista. Jos auto ei ole ajokuntoinen, kerro siitä jo pyynnössä.  Katso hinnan muodostuminen →"
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  },
+  "/vikadiagnostiikka": {
+    "Title": "Auton vikadiagnostiikka kotona – Helsinki ja Uusimaa",
+    "Description": "Auton vikadiagnostiikka ja vikakoodien luku kotona Helsingissä, Espoossa ja Vantaalla. Selvitämme oireen ja sovimme jatkosta ennen korjausta.",
+    "Heading": "Auton vikadiagnostiikka paikan päällä",
+    "Intro": "Auton oire, mittariston ilmoitus tai käynnistysongelma kaipaa selvitystä? Liikkuva Auto Korjaamo arvioi tilanteen auton luona — kotipihalla, työpaikalla tai muussa sovitussa kohteessa.",
+    "Blocks": [
+      {
+        "Title": "Mitä käynnillä selvitetään?",
+        "Text": "Lähetä ensin oireet ja auton rekisteritunnus. Arvioimme, millaisesta tarkistuksesta kannattaa aloittaa ja sopiiko työ kohteessa tehtäväksi.\n Käynnillä käydään läpi asiakkaan kuvaama ongelma ja tarvittavat tarkistukset. Vikakoodien luku on yksi osa vianmääritystä: korjauspäätös tehdään oireiden ja havaintojen perusteella.\n Tarkistusten laajuus ja käytettävissä olevat toiminnot riippuvat autosta ja viasta. Kaikkia erikoistoimintoja tai laajaa purkamista ei voi tehdä pysäköintipaikalla."
+      },
+      {
+        "Title": "Paljonko diagnostiikka maksaa?",
+        "Text": "Käynti ja diagnostiikka    Mekaanikon saapuminen (vain käynti)  alk. {visit} €    Vianmääritys ja soveltuvat pienet korjaukset  alk. {diagnostic} € (erikseen)    Käynti sekä erillinen diagnostiikka yhteensä alkaen  {total} €     Vianmääritys ja soveltuva pieni korjaus sisältyvät diagnostiikan alkaen-hintaan, joka veloitetaan erikseen käyntimaksun lisäksi. Varaosista ja vaativammista töistä sovitaan erikseen. Lomakkeen lähettäminen ei veloita mitään; aika ja työn ehdot vahvistetaan ennen käyntiä."
+      },
+      {
+        "Title": "Näillä tiedoilla pääsemme alkuun",
+        "Text": "Rekisteritunnus ja auton sijainti.\n Mitä auto tekee tai jättää tekemättä?\n Milloin oire alkoi ja kuinka usein se toistuu?\n Onko autolle tehty korjaus tai osanvaihto juuri ennen oiretta?\n Mittariston ilmoitus tai turvallisesti pysäköitynä otettu kuva, jos sellainen on.\n  Kirjoita oma havaintosi sellaisenaan. Valmista diagnoosia ei tarvitse tietää ennen yhteydenottoa."
+      },
+      {
+        "Title": "Mitä tapahtuu selvityksen jälkeen?",
+        "Text": "Käymme löydökset ja ehdotetun seuraavan vaiheen läpi kanssasi. Jos työ soveltuu auton luona tehtäväksi, sovimme korjauksen sisällön ja kustannukset ennen aloittamista.\n Jos jatkotarkistus vaatii nosturia, laajaa purkamista tai muita korjaamon olosuhteita, kerromme siitä. Käynti ei tarkoita lupausta, että jokainen vika voidaan korjata ulkona samalla kertaa.\n Tarkista alue ja työskentelypaikka →"
+      }
+    ],
+    "Language": "fi",
+    "Published": true
+  }
+}

@@ -554,6 +554,10 @@ class Updater:
                                                  timeout=min(12, max(0.1, deadline - time.monotonic())))
                         if self.health_matches(body, revision):
                             for path, marker in [('/admin', 'Войти в кабинет'),
+                                                 ('/palvelualue', 'class="container service-detail"'),
+                                                 ('/hinnasto', 'id="leadForm"'),
+                                                 ('/vikadiagnostiikka', 'id="footerLeadFormMount"'),
+                                                 ('/static/js/landing-v2.js?v=1', 'exitOffer'),
                                                  ('/static/css/hero-form-ux.css?v=20261112-fix1', '.hero .hero-layout'),
                                                  ('/static/js/theme.js?v=20261114-toggle1', '__liikkuvaThemeInitialized')]:
                                 page = self.endpoint(url + path, identity_token=token)

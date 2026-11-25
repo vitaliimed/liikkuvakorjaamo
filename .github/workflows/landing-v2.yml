@@ -1,0 +1,78 @@
+name: Landing checks
+on:
+  push:
+    branches: [feat/seo-landing-pages-v2]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: source/go.sum
+      - run: go test ./...
+        working-directory: source
+      - run: node --test tests/*.test.cjs
+      - name: Browser regression on rendered FI and EN pages
+        run: |
+          docker run --rm -v "$PWD/source:/work" -w /work alpine:3.23 sh -ec 'apk add --no-cache vips-tools && sh build-landing-images.sh'
+          mkdir "$RUNNER_TEMP/landing-fixtures"
+          (cd source && LANDING_FIXTURE_DIR="$RUNNER_TEMP/landing-fixtures" go test -run '^TestRenderBrowserFixtures$')
+          ln -s "$GITHUB_WORKSPACE/source/static" "$RUNNER_TEMP/landing-fixtures/static"
+          python3 -m http.server 8091 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/landing-http.log" 2>&1 &
+          npm install --prefix "$RUNNER_TEMP/landing-browser" playwright@1.56.1
+          NODE_PATH="$RUNNER_TEMP/landing-browser/node_modules" node tests/landing-browser.cjs
+      - name: Measure the service landing in Lighthouse
+        run: |
+          python3 -m http.server 8092 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/lighthouse-http.log" 2>&1 &
+          for mode in mobile desktop; do
+            options=()
+            if [[ "$mode" == desktop ]]; then options+=(--preset=desktop); fi
+            npx --yes lighthouse@12.8.2 http://127.0.0.1:8092/area.html "${options[@]}" --chrome-flags="--headless --no-sandbox" --output=json --output-path="$RUNNER_TEMP/lighthouse-$mode.json" --quiet
+            jq -c '{device:.configSettings.formFactor, scores:(.categories|map_values(.score)),LCP:.audits["largest-contentful-paint"].numericValue,CLS:.audits["cumulative-layout-shift"].numericValue}' "$RUNNER_TEMP/lighthouse-$mode.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: landing-lighthouse
+          path: ${{ runner.temp }}/lighthouse-*.json
+  public-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record public production revision and crawl metadata
+        run: |
+          curl --fail --retry 2 --max-time 30 https://liikkuvakorjaamo.fi/api/health
+          python3 scripts/audit-public-seo.py > seo-production.csv
+          cat seo-production.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo-production-inventory
+          path: seo-production.csv
+  review-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check photo conversion in the release runtime
+        run: |
+          docker run --rm -v "$PWD/source/static/img:/images:ro" alpine:3.23 sh -ec '
+            apk add --no-cache vips-tools vips-heif
+            vips thumbnail /images/logo-white.png "/tmp/review.jpg[Q=78,keep=none]" 1200 --height 900 --size down
+            test -s /tmp/review.jpg
+            test "$(vipsheader -f width /tmp/review.jpg)" -le 1200
+          '
+
+  go-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Check new Go source formatting
+        run: |
+          gofmt -w source/service_editor.go source/service_layout.go source/service_pages.go source/review_media.go source/landing_v2_test.go
+          git diff --exit-code

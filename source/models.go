@@ -5,6 +5,7 @@ import "time"
 const visitPriceEUR = 75
 
 type Lead struct {
+ Attribution map[string]string `json:"-" firestore:"attribution,omitempty"`
 	DiagnosticFromEUR  int      `json:"diagnostic_from_eur" firestore:"diagnostic_from_eur"`
 	Site               string   `json:"site" firestore:"site"`
 	SubmissionID       string   `json:"submission_id" firestore:"submission_id"`
@@ -62,6 +63,9 @@ type LeadRecord struct {
 }
 
 type ReviewRecord struct {
+ PhotoURL string `firestore:"photo_url,omitempty"`
+ OriginalName string `firestore:"original_name,omitempty"`
+ OriginalMessage string `firestore:"original_message,omitempty"`
 	ID             string    `json:"id,omitempty" firestore:"-"`
 	LeadID         string    `json:"lead_id" firestore:"lead_id"`
 	Name           string    `json:"name" firestore:"name"`

@@ -135,7 +135,8 @@ func (h LeadHandler) handleAsyncSubmit(ctx context.Context, lead Lead) (bool, er
 
 func buildLeadFromRequest(cfg Config, r *http.Request, lang string) Lead {
 	return Lead{
-		Site:           liikkuvaDomain,
+		Attribution: leadAttribution(r),
+        Site:           liikkuvaDomain,
 		SubmissionID:   liikkuvaSubmissionID(),
 		Name:           strings.TrimSpace(r.FormValue("name")),
 		Phone:          normalizePhone(strings.TrimSpace(r.FormValue("phone"))),
@@ -534,4 +535,13 @@ func thankYouRedirectByLanguage(lang string) string {
 		return "/thank-you-fi"
 	}
 	return "/thank-you-en"
+}
+
+func leadAttribution(r *http.Request) map[string]string {
+    fields:=map[string]string{}
+    for _,key:=range []string{"landing_page","form_page","referer","service_type","utm_source","utm_medium","utm_campaign","utm_content","utm_term","gclid","gbraid","wbraid","fbclid"} {
+        value:=[]rune(strings.TrimSpace(r.FormValue(key)))
+        if len(value)>0 && len(value)<=300 {fields[key]=string(value)}
+    }
+    return fields
 }

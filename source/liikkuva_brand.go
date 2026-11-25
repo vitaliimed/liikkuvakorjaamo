@@ -183,14 +183,18 @@ func liikkuvaSecurity(cfg Config, next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		if liikkuvaSEOPath(r.URL.Path) {
+		if liikkuvaSEOPath(r.URL.Path) || extraServicePath.MatchString(r.URL.Path) {
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
 				w.Header().Set("Allow", "GET, HEAD")
 				http.Error(w, "Method not allowed", 405)
 				return
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			http.ServeFile(w, r, "static/seo"+r.URL.Path+".html")
+			renderer,err:=serviceRenderer()
+            if err!=nil {http.Error(w,"Template unavailable",500);return}
+            lang:="fi"
+            if strings.HasPrefix(r.URL.Path,"/en/"){lang="en"}
+            NewPageHandler(cfg,renderer).serveLanding(w,r,lang)
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/thank-you") || r.URL.Path == "/privacy" || r.URL.Path == "/review" {

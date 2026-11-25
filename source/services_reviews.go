@@ -163,7 +163,8 @@ func approvedReviewCards(records []ReviewRecord, lang string, limit int) []Testi
 			continue
 		}
 		items = append(items, TestimonialCard{
-			Quote:       record.Message,
+			ImageURL: record.PhotoURL,
+ Quote:       record.Message,
 			Author:      record.Name,
 			Rating:      normalizeTestimonialRatingValue(record.Rating),
 			RatingStars: testimonialStars(record.Rating),
@@ -210,4 +211,26 @@ func normalizeReviewStatusFilter(value string) string {
 	default:
 		return "all"
 	}
+}
+
+func editReviewRecord(ctx context.Context,cfg Config,id,name,message,photo string) error {
+    if strings.Contains(id,"/") || len([]rune(name))<2 || len([]rune(name))>80 || len([]rune(message))<10 || len([]rune(message))>1200 {
+        return fmt.Errorf("Проверьте имя (2–80 символов) и отзыв (10–1200 символов)")
+    }
+    if photo!="" && !(strings.HasPrefix(photo,"/review-media/") && reviewImageName.MatchString(strings.TrimPrefix(photo,"/review-media/"))) {
+        return fmt.Errorf("Используйте загруженную фотографию")
+    }
+    client,err:=newFirestoreClient(ctx,cfg)
+    if err!=nil{return err}
+    defer client.Close()
+    ref:=client.Collection(reviewsCollection(cfg)).Doc(id)
+    return client.RunTransaction(ctx,func(ctx context.Context,tx *firestore.Transaction) error {
+        snap,err:=tx.Get(ref)
+        if err!=nil{return err}
+        var before ReviewRecord
+        if err=snap.DataTo(&before);err!=nil{return err}
+        changes:=[]firestore.Update{{Path:"name",Value:name},{Path:"message",Value:message},{Path:"photo_url",Value:photo},{Path:"updated_at",Value:time.Now().UTC()}}
+        if before.OriginalMessage=="" {changes=append(changes,firestore.Update{Path:"original_message",Value:before.Message},firestore.Update{Path:"original_name",Value:before.Name})}
+        return tx.Update(ref,changes)
+    })
 }

@@ -48,7 +48,7 @@ func saveLeadRecord(ctx context.Context, cfg Config, lead Lead) (string, error) 
 	ref := client.Collection(cfg.FirestoreLeadsCollection).NewDoc()
 	batch := client.Batch()
 	batch.Create(ref, record)
-	if err := crm.AddLeadToBatch(client, batch, ref.ID, lead.Car, lead.Name, lead.Phone, lead.Email, lead.Address, lead.Message, "liikkuva", lead.Language, lead.PhotoURLs); err != nil {
+	if err := crm.AddLeadToBatchAt(client, batch, ref.ID, lead.Car, lead.Name, lead.Phone, lead.Email, lead.Address, lead.Message, "liikkuva", lead.Language, lead.PhotoURLs, time.Time{},lead.Attribution); err != nil {
 		return "", fmt.Errorf("prepare CRM case: %w", err)
 	}
 	if _, err := batch.Commit(ctx); err != nil {

@@ -1,0 +1,29 @@
+@media(min-width:1001px){
+ .hero .hero-layout{grid-template-columns:minmax(0,1fr) minmax(370px,480px)}
+ .hero .hero-copy{grid-column:1}
+ .hero .hero-form{grid-column:2}
+}
+html:has(.liikkuva-consent-root:not([style*="none"])),html:has(dialog[open]){overflow:hidden}
+.reviews .review-grid{display:grid;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:calc((100% - 3rem)/4);gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 0 14px}
+.reviews .testimonial-card{display:flex;flex-direction:column;gap:.7rem;scroll-snap-align:start;background:#fff;color:#23372b;border:1px solid #dedfd9;border-radius:16px;padding:18px;min-width:0;overflow-wrap:anywhere}
+.reviews .testimonial-card blockquote{margin:0;color:#23372b}
+.reviews .review-author{display:flex;align-items:center;gap:.6rem;color:#23372b}
+.reviews .author-circle{border-radius:50%;background:#e7eee8;color:#23372b;width:42px;height:42px;display:grid;place-items:center}
+.reviews .review-photo{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;margin-top:auto}
+.review-controls{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+.review-controls button,.offer-close{cursor:pointer;min-width:44px;min-height:44px;border-radius:50%;border:1px solid #c5cfc8;background:#fff;color:#23372b}
+@media(max-width:950px){.reviews .review-grid{grid-auto-columns:calc((100% - 1rem)/2)}}
+@media(max-width:560px){.reviews .review-grid{grid-auto-columns:88%}}
+#exitOffer{position:fixed;inset:0;margin:auto;width:min(560px,94vw);max-height:90dvh;overflow:auto;border:0;border-radius:18px;padding:22px;color:#23372b;background:#fff}
+#exitOffer::backdrop{background:rgba(14,25,18,.55)}
+#offerTitle{font-size:clamp(1.25rem,4vw,1.8rem);overflow-wrap:anywhere;white-space:pre-line}
+.offer-close{float:right}
+.exit-offer-link{cursor:pointer;padding:.6rem 1rem;margin:1rem}
+.service-detail{padding-block:2rem}.service-detail p{max-width:76ch}.service-detail article{margin:1.2rem 0}
+#exitOffer .footer-lead-mount{min-height:0}
+@media(max-width:374px){
+ html .header .header-inner{gap:6px}
+ html .header .header-inner>.brand{flex:1 1 0;min-width:0}
+ html .header .brand img.brand-logo{max-width:100%!important}
+ html .header .header-actions{gap:4px}
+}

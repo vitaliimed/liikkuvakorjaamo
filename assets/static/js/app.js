@@ -706,6 +706,7 @@ document.addEventListener("DOMContentLoaded", function () {
       syncSelectedFilesToInput();
 
       const formData = new FormData(form);
+      window.liikkuvaSetLeadAttribution?.(formData);
       const response = await fetch("/lead", {
         method: "POST",
         body: formData,

@@ -873,6 +873,7 @@ func buildTestimonialsFromSettings(settings SiteSettings, lang string) []Testimo
 
 	out := make([]TestimonialCard, 0, len(settings.Testimonials))
 	for _, item := range settings.Testimonials {
+        if item.Draft { continue }
 		author := strings.TrimSpace(item.Name)
 		if author == "" {
 			continue

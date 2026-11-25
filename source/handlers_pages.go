@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+ "time"
 )
 
 type PageHandler struct {
@@ -69,15 +70,20 @@ func (h *PageHandler) Robots(w http.ResponseWriter, r *http.Request) {
 
 func (h *PageHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	fileBytes, err := os.ReadFile("static/sitemap.xml")
-	if err != nil {
-		content := fallbackSitemapXML(h.cfg.SiteURL)
-		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		_, _ = w.Write([]byte(content))
-		return
-	}
-
-	content := strings.ReplaceAll(string(fileBytes), "{{SITE_URL}}", strings.TrimRight(h.cfg.SiteURL, "/"))
-	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	if err!=nil {fileBytes=[]byte(fallbackSitemapXML(h.cfg.SiteURL))}
+    content:=strings.ReplaceAll(string(fileBytes),"{{SITE_URL}}",strings.TrimRight(h.cfg.SiteURL,"/"))
+    settings,err:=loadSiteSettings(r.Context(),h.cfg)
+    if err!=nil {http.Error(w,"Sitemap temporarily unavailable",503);return}
+    var entries strings.Builder
+    for _,p:=range settings.ServicePages {
+        if p.NoIndex || (p.CanonicalPath!="" && p.CanonicalPath!=p.Path) {
+            content=strings.Replace(content,"<url><loc>https://"+liikkuvaDomain+p.Path+"</loc></url>","",1)
+            continue
+        }
+        if p.Published && extraServicePath.MatchString(p.Path) {entries.WriteString("<url><loc>https://"+liikkuvaDomain+p.Path+"</loc></url>")}
+    }
+    content=strings.Replace(content,"</urlset>",entries.String()+"</urlset>",1)
+    w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	_, _ = w.Write([]byte(content))
 }
 
@@ -238,7 +244,45 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
 		Content: content,
 	}
 
-	if err := h.renderer.renderLanding(w, data); err != nil {
+	for _,p:=range settings.ServicePages {if p.Published && p.Language==lang && extraServicePath.MatchString(p.Path) && p.Path!=r.URL.Path {data.ExtraServiceLinks=append(data.ExtraServiceLinks,p)}}
+    if settings.ExitEnabled {
+        data.ExitUntil = campaignDeadline(settings.ExitDate)
+        if data.ExitUntil > time.Now().Unix() {
+            data.ExitTitle = settings.ExitTitleFI
+            if lang == "en" { data.ExitTitle = settings.ExitTitleEN }
+        }
+    }
+    path:=r.URL.Path
+    preview:=path=="/admin/seo/preview"
+    if preview {path=r.URL.Query().Get("path");data.RobotsMeta="noindex, nofollow";data.EnableConsentMode=false;data.ExitTitle="";data.EditorPreview=true}
+    if liikkuvaSEOPath(path) || extraServicePath.MatchString(path) {
+        var found bool
+        for _,page:=range serviceCatalog(settings) {
+            if (preview || page.Published) && page.Path==path { configureServicePage(&data,page,page.Path)
+                for _,other:=range serviceCatalog(settings) {
+                    if other.Path==page.TranslationPath && other.TranslationPath==page.Path && other.Language!=page.Language && other.Published && !other.NoIndex && !page.NoIndex {
+                        data.HasTranslation=true
+                        data.HrefLangFI="https://"+liikkuvaDomain+page.Path
+                        data.HrefLangEN="https://"+liikkuvaDomain+other.Path
+                        if lang=="en" {data.HrefLangFI,data.HrefLangEN=data.HrefLangEN,data.HrefLangFI}
+                    }
+                }
+                found=true;break }
+        }
+        if !found {http.NotFound(w,r);return}
+    }
+    _,cssErr:=os.Stat("static/css/landing-release.css")
+    data.BundledLandingCSS=cssErr==nil
+    if strings.Split(data.Content.Hero.BackgroundURL,"?")[0]=="/static/img/mobile-mechanic-v2.png" {
+        _,imageErr:=os.Stat("static/img/landing-v2/hero-1536.webp")
+        data.ResponsiveHero=imageErr==nil
+    }
+    if data.ServicePage!=nil && data.ServicePage.Layout!="" {
+        w.Header().Set("Content-Type","text/html; charset=utf-8")
+        if err:=h.renderer.renderOrderedServicePage(w,data);err!=nil {http.Error(w,"Unable to render page",500)}
+        return
+    }
+    if err := h.renderer.renderLanding(w, data); err != nil {
 		http.Error(w, "failed to render landing", http.StatusInternalServerError)
 		return
 	}
