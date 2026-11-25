@@ -271,6 +271,8 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
         }
         if !found {http.NotFound(w,r);return}
     }
+    _,cssErr:=os.Stat("static/css/landing-release.css")
+    data.BundledLandingCSS=cssErr==nil
     if strings.Split(data.Content.Hero.BackgroundURL,"?")[0]=="/static/img/mobile-mechanic-v2.png" {
         _,imageErr:=os.Stat("static/img/landing-v2/hero-1536.webp")
         data.ResponsiveHero=imageErr==nil

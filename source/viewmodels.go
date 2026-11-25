@@ -280,6 +280,7 @@ type LandingContent struct {
 
 type LandingPageData struct {
  ServiceSchema map[string]interface{}
+ BundledLandingCSS bool
  ResponsiveHero bool
  HasTranslation bool
  EditorPreview bool

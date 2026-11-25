@@ -1211,8 +1211,11 @@ function closeSettingsModal() {
   window.liikkuvaInitMetaPixel = initMetaPixel;
   window.liikkuvaTrackCustomEvent = trackCustomEvent;
 
+  // Deferred landing scripts run after parsing; make the choice available as
+  // soon as this controller is ready, independently of the map and forms.
+  if (document.body && document.readyState !== "loading") bootUI();
   document.addEventListener("DOMContentLoaded", function () {
-    bootUI();
+    if (!state.modalEl) bootUI();
     bootTracking();
     bootLeadRecovery();
   });
