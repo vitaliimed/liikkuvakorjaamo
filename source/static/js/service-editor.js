@@ -56,6 +56,7 @@
             const keys={title:'Title',heading:'Heading',description:'Description',intro:'Intro',ogtitle:'OGTitle',ogdesc:'OGDescription',image:'Image',alt:'ImageAlt',cta:'CTA',keywords:'Keywords',kind:'Kind',canonical:'CanonicalPath',translation:'TranslationPath'};
             for(const [k,prop] of Object.entries(keys)) field(entry,k).value=p[prop]||'';
             field(entry,'body').value=(p.Blocks||[]).map(b=>b.Title+'\n'+b.Text).join('\n---\n');
+            field(entry,'questions').value=(p.FAQ||[]).map(q=>q.Question+'\n'+q.Answer).join('\n---\n');
             field(entry,'faq').value=p.HideFAQ?'hide':'show';field(entry,'reviews').value=p.HideReviews?'hide':'show';
             field(entry,'robots').value=p.NoIndex?'noindex':'index';
             field(entry,'status').value=p.Published?'published':'draft';

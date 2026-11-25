@@ -17,6 +17,8 @@ type ServiceBlock struct {
 	Text  string
 }
 type ServicePage struct {
+	FAQ []FAQItem
+
 	Path, Language, Title, Description, Heading, Intro                             string
 	OGTitle, OGDescription, Image, ImageAlt, CTA, Keywords, Kind, Created, Updated string
 	HideFAQ, HideReviews, NoIndex                                                  bool
@@ -107,6 +109,9 @@ func configureServicePage(data *LandingPageData, page ServicePage, path string) 
 	if page.CTA != "" {
 		data.Content.Hero.PrimaryCTA = page.CTA
 	}
+	if len(page.FAQ) > 0 {
+		data.Content.FAQ.Items = page.FAQ
+	}
 	if page.HideFAQ {
 		data.Content.ShowFAQ = false
 	}
@@ -124,6 +129,16 @@ func configureServicePage(data *LandingPageData, page ServicePage, path string) 
 				map[string]interface{}{"@type": "ListItem", "position": 2, "name": page.Heading, "item": data.OGURL},
 			}},
 		},
+	}
+	if data.Content.ShowFAQ && (page.Layout == "" || strings.Contains(" "+page.Layout+" ", " faq ")) {
+		questions := make([]map[string]interface{}, 0, len(data.Content.FAQ.Items))
+		for _, item := range data.Content.FAQ.Items {
+			questions = append(questions, map[string]interface{}{"@type": "Question", "name": item.Question, "acceptedAnswer": map[string]string{"@type": "Answer", "text": item.Answer}})
+		}
+		if len(questions) > 0 {
+			graph := data.ServiceSchema["@graph"].([]interface{})
+			data.ServiceSchema["@graph"] = append(graph, map[string]interface{}{"@type": "FAQPage", "@id": data.OGURL + "#faq", "mainEntity": questions})
+		}
 	}
 	data.ServicePage = &page
 }
@@ -151,6 +166,16 @@ func parseServiceEdits(r *http.Request) ([]ServicePage, error) {
 		p := ServicePage{Path: path, Language: "fi", Title: field("title"), Description: field("description"), Heading: field("heading"), Intro: field("intro"), Published: builtin || field("status") == "published"}
 		p.OGTitle, p.OGDescription = field("ogtitle"), field("ogdesc")
 		p.Image, p.ImageAlt, p.CTA = field("image"), field("alt"), field("cta")
+		for _, pair := range strings.Split(strings.ReplaceAll(field("questions"), "\r\n", "\n"), "\n---\n") {
+			if strings.TrimSpace(pair) == "" {
+				continue
+			}
+			q, a, ok := strings.Cut(strings.TrimSpace(pair), "\n")
+			if !ok || strings.TrimSpace(a) == "" {
+				return nil, fmt.Errorf("%s: заполните ответ FAQ", path)
+			}
+			p.FAQ = append(p.FAQ, FAQItem{Question: q, Answer: strings.TrimSpace(a)})
+		}
 		p.NoIndex = field("robots") == "noindex"
 		p.CanonicalPath, p.TranslationPath = field("canonical"), field("translation")
 		for _, link := range []string{p.CanonicalPath, p.TranslationPath} {
