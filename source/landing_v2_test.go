@@ -48,3 +48,15 @@ func TestRenderBrowserFixtures(t *testing.T) {
         if err:=os.WriteFile(filepath.Join(dir,item.file),w.Body.Bytes(),0600);err!=nil{t.Fatal(err)}
     }
 }
+
+func TestCustomDraftCanOnlyRenderInAdmin(t *testing.T) {
+    draft:=ServicePage{Path:"/helsinki", Language:"fi", Heading:"Kaupungin sivu", Title:"Helsinki draft", Description:"Draft",Intro:"Esikatselu"}
+    cfg:=Config{SiteURL:"https://liikkuvakorjaamo.fi",SettingsStore:seoSettingsStore{SiteSettings{ServicePages:[]ServicePage{draft}}}}
+    renderer,err:=newTemplateRenderer();if err!=nil{t.Fatal(err)}
+    h:=newServer(cfg,renderer).Handler
+    for _,path:=range []string{"/helsinki","/sitemap.xml","/admin/seo/preview?path=/helsinki"} {
+        w:=httptest.NewRecorder();h.ServeHTTP(w,httptest.NewRequest("GET",cfg.SiteURL+path,nil))
+        if path=="/helsinki" && w.Code!=404{t.Fatal(w.Code)}
+        if strings.Contains(w.Body.String(),draft.Heading) || (path=="/sitemap.xml" && strings.Contains(w.Body.String(),draft.Path)){t.Fatal("Draft visible at "+path)}
+    }
+}

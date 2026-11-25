@@ -65,7 +65,9 @@ func newRouter(cfg Config, renderer *TemplateRenderer) *http.ServeMux {
 	mux.HandleFunc("/admin/leads/send-ready-email", admin.SendReadyEmail)
 	mux.HandleFunc("/admin/leads/send-custom-email", admin.SendCustomEmail)
 	mux.HandleFunc("/admin/leads/send-review-email", admin.SendReviewEmail)
-	mux.HandleFunc("/admin/reviews/photo",admin.UploadReviewImage)
+	mux.HandleFunc("/admin/seo/history",admin.ServiceHistory)
+ mux.HandleFunc("/admin/seo/preview",admin.PreviewService)
+ mux.HandleFunc("/admin/reviews/photo",admin.UploadReviewImage)
  mux.HandleFunc("/review-media/",func(w http.ResponseWriter,r *http.Request){serveReviewImage(cfg,w,r)})
  mux.HandleFunc("/admin/reviews/moderate", admin.ModerateReview)
 

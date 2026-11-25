@@ -37,3 +37,15 @@ jobs:
         with:
           name: seo-production-inventory
           path: seo-production.csv
+  review-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check photo conversion in the release runtime
+        run: |
+          docker run --rm -v "$PWD/source/static/img:/images:ro" alpine:3.23 sh -ec '
+            apk add --no-cache vips-tools vips-heif
+            vips thumbnail /images/logo-white.png "/tmp/review.jpg[Q=78,keep=none]" 1200 --height 900 --size down
+            test -s /tmp/review.jpg
+            test "$(vipsheader -f width /tmp/review.jpg)" -le 1200
+          '

@@ -58,6 +58,10 @@ func saveSiteSettings(ctx context.Context, cfg Config, settings SiteSettings) er
 			return SiteSettings{}, errSiteSettingsConflict
 		}
 		next := settings
+        if !next.DraftsInitialized && current.DraftsInitialized {
+            return SiteSettings{},errSiteSettingsConflict
+        }
+        syncLegacyServiceFields(current,&next)
 		next.Revision = expectedRevision + 1
 		return next, nil
 	}
@@ -90,6 +94,7 @@ func saveSiteSettings(ctx context.Context, cfg Config, settings SiteSettings) er
 		if err != nil {
 			return err
 		}
-		return tx.Set(ref, next)
+		if err:=recordServiceChanges(tx,ref,current,&next);err!=nil{return err}
+        return tx.Set(ref, next)
 	})
 }

@@ -23,7 +23,7 @@
       },
       {
         "Title": "Käynti ja hinnoittelu",
-        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä.\n Katso hinnasto →"
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
       },
       {
         "Title": "Usein kysytyt kysymykset",
@@ -57,7 +57,7 @@
       },
       {
         "Title": "Käynti ja hinnoittelu",
-        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä.\n Katso hinnasto →"
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
       },
       {
         "Title": "Usein kysytyt kysymykset",
@@ -91,7 +91,7 @@
       },
       {
         "Title": "Käynti ja hinnoittelu",
-        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä.\n Katso hinnasto →"
+        "Text": "Käyntimaksu on {visit} €. Tarvittava diagnostiikka maksaa erikseen alkaen {diagnostic} €, joten käynti ja diagnostiikka ovat yhteensä alkaen {total} €. Korjaustyö ja varaosat sovitaan erikseen. Tarkka hinta ja työn laajuus vahvistetaan ennen käyntiä."
       },
       {
         "Title": "Usein kysytyt kysymykset",
@@ -165,7 +165,7 @@
       },
       {
         "Title": "Paljonko diagnostiikka maksaa?",
-        "Text": "Käynti ja diagnostiikka    Mekaanikon saapuminen (vain käynti)  alk. {visit} €    Vianmääritys ja soveltuvat pienet korjaukset  alk. {diagnostic} € (erikseen)    Käynti sekä erillinen diagnostiikka yhteensä alkaen  {total} €     Vianmääritys ja soveltuva pieni korjaus sisältyvät diagnostiikan alkaen-hintaan, joka veloitetaan erikseen käyntimaksun lisäksi. Varaosista ja vaativammista töistä sovitaan erikseen. Lomakkeen lähettäminen ei veloita mitään; aika ja työn ehdot vahvistetaan ennen käyntiä.\n Katso koko hinnasto →"
+        "Text": "Käynti ja diagnostiikka    Mekaanikon saapuminen (vain käynti)  alk. {visit} €    Vianmääritys ja soveltuvat pienet korjaukset  alk. {diagnostic} € (erikseen)    Käynti sekä erillinen diagnostiikka yhteensä alkaen  {total} €     Vianmääritys ja soveltuva pieni korjaus sisältyvät diagnostiikan alkaen-hintaan, joka veloitetaan erikseen käyntimaksun lisäksi. Varaosista ja vaativammista töistä sovitaan erikseen. Lomakkeen lähettäminen ei veloita mitään; aika ja työn ehdot vahvistetaan ennen käyntiä."
       },
       {
         "Title": "Näillä tiedoilla pääsemme alkuun",

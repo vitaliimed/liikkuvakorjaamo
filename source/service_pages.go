@@ -15,6 +15,9 @@ import (
 type ServiceBlock struct { Title string; Text string }
 type ServicePage struct {
     Path, Language, Title, Description, Heading, Intro string
+    OGTitle, OGDescription, Image, ImageAlt, CTA, Keywords, Kind, Created, Updated string
+    HideFAQ, HideReviews, NoIndex bool
+    CanonicalPath, TranslationPath string
     Blocks []ServiceBlock
     Published bool
 }
@@ -28,7 +31,7 @@ var servicePages = func() map[string]ServicePage {
 }()
 
 var serviceRenderer = sync.OnceValues(newTemplateRenderer)
-var extraServicePath = regexp.MustCompile(`^/(palvelut|en/services)/[a-z0-9]+(-[a-z0-9]+)*$`)
+var extraServicePath = regexp.MustCompile(`^/((palvelut|en/services)/[a-z0-9]+(-[a-z0-9]+)*|helsinki|espoo|vantaa|kerava|jarvenpaa|kirkkonummi|tuusula|sipoo|hyvinkaa|porvoo|lohja|starttimoottorin-vaihto|laturin-vaihto|jarrujen-korjaus|jarrupalojen-vaihto|auton-sahkoviat|auton-kaynnistysapu|auton-vikakoodien-luku|auton-pienkorjaukset|auton-huolto-kotona)$`)
 func campaignDeadline(date string) int64 {
     loc, err := time.LoadLocation("Europe/Helsinki")
     if err != nil { return 0 }
@@ -60,8 +63,16 @@ func configureServicePage(data *LandingPageData, page ServicePage, path string) 
     data.MetaDescription,data.OGDescription=page.Description,page.Description
     data.CanonicalURL="https://"+liikkuvaDomain+path
     data.OGURL=data.CanonicalURL
+    if page.CanonicalPath!="" {data.CanonicalURL="https://"+liikkuvaDomain+page.CanonicalPath}
+    if page.NoIndex {data.RobotsMeta="noindex, follow"}
     data.Content.Hero.Title,data.Content.Hero.Subtitle=page.Heading,page.Intro
     data.HeroTitle,data.HeroSubtitle=page.Heading,page.Intro
+    data.OGTitle=firstNonEmpty(page.OGTitle,data.OGTitle)
+    data.OGDescription=firstNonEmpty(page.OGDescription,data.OGDescription)
+    if page.Image!="" {data.Content.Hero.BackgroundURL=page.Image}
+    if page.CTA!="" {data.Content.Hero.PrimaryCTA=page.CTA}
+    if page.HideFAQ {data.Content.ShowFAQ=false}
+    if page.HideReviews {data.Content.ShowTestimonials=false}
     data.ServicePage=&page
 }
 func parseServiceEdits(r *http.Request) ([]ServicePage,error) {
@@ -76,7 +87,21 @@ func parseServiceEdits(r *http.Request) ([]ServicePage,error) {
         seen[path]=true
         field:=func(key string)string {values:=r.Form["service_page_"+key];if i<len(values){return strings.TrimSpace(values[i])};return ""}
         p:=ServicePage{Path:path,Language:"fi",Title:field("title"),Description:field("description"),Heading:field("heading"),Intro:field("intro"),Published:builtin || field("status")=="published"}
+        p.OGTitle,p.OGDescription=field("ogtitle"),field("ogdesc")
+        p.Image,p.ImageAlt,p.CTA=field("image"),field("alt"),field("cta")
+        p.NoIndex=field("robots")=="noindex"
+        p.CanonicalPath,p.TranslationPath=field("canonical"),field("translation")
+        for _,link:=range []string{p.CanonicalPath,p.TranslationPath}{
+            if link!="" && !liikkuvaSEOPath(link) && !extraServicePath.MatchString(link){return nil,fmt.Errorf("Укажите внутренний адрес посадочной страницы: %s",link)}
+        }
+        p.Keywords,p.Kind=field("keywords"),field("kind")
+        p.HideFAQ,p.HideReviews=field("faq")=="hide",field("reviews")=="hide"
+        if p.Image!="" && !strings.HasPrefix(p.Image,"/static/img/") && !strings.HasPrefix(p.Image,"/review-media/") && !strings.HasPrefix(p.Image,"https://"){return nil,fmt.Errorf("%s: неверный адрес изображения",path)}
+        if p.Image!="" && p.ImageAlt==""{return nil,fmt.Errorf("%s: добавьте alt изображения",path)}
         if strings.HasPrefix(path,"/en/"){p.Language="en"}
+        for _,old:=range out {
+            if old.Language==p.Language && p.Published && old.Published && (strings.EqualFold(old.Title,p.Title) || strings.EqualFold(old.Heading,p.Heading)) {return nil,fmt.Errorf("Title или H1 повторяется на %s и %s",old.Path,path)}
+        }
         if p.Title=="" || p.Description=="" || p.Heading=="" || p.Intro=="" {return nil,fmt.Errorf("%s: заполните заголовки, описание и введение",path)}
         for _,block:=range strings.Split(strings.ReplaceAll(field("body"),"\r\n","\n"),"\n---\n"){
             title,body,ok:=strings.Cut(strings.TrimSpace(block),"\n")
@@ -86,4 +111,9 @@ func parseServiceEdits(r *http.Request) ([]ServicePage,error) {
         out=append(out,p)
     }
     return out,nil
+}
+
+func (p ServicePage) SocialImageURL() string {
+    if strings.HasPrefix(p.Image,"/"){return "https://"+liikkuvaDomain+p.Image}
+    return p.Image
 }

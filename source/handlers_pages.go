@@ -70,18 +70,16 @@ func (h *PageHandler) Robots(w http.ResponseWriter, r *http.Request) {
 
 func (h *PageHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	fileBytes, err := os.ReadFile("static/sitemap.xml")
-	if err != nil {
-		content := fallbackSitemapXML(h.cfg.SiteURL)
-		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		_, _ = w.Write([]byte(content))
-		return
-	}
-
-	content := strings.ReplaceAll(string(fileBytes), "{{SITE_URL}}", strings.TrimRight(h.cfg.SiteURL, "/"))
+	if err!=nil {fileBytes=[]byte(fallbackSitemapXML(h.cfg.SiteURL))}
+    content:=strings.ReplaceAll(string(fileBytes),"{{SITE_URL}}",strings.TrimRight(h.cfg.SiteURL,"/"))
     settings,err:=loadSiteSettings(r.Context(),h.cfg)
     if err!=nil {http.Error(w,"Sitemap temporarily unavailable",503);return}
     var entries strings.Builder
     for _,p:=range settings.ServicePages {
+        if p.NoIndex || (p.CanonicalPath!="" && p.CanonicalPath!=p.Path) {
+            content=strings.Replace(content,"<url><loc>https://"+liikkuvaDomain+p.Path+"</loc></url>","",1)
+            continue
+        }
         if p.Published && extraServicePath.MatchString(p.Path) {entries.WriteString("<url><loc>https://"+liikkuvaDomain+p.Path+"</loc></url>")}
     }
     content=strings.Replace(content,"</urlset>",entries.String()+"</urlset>",1)
@@ -254,10 +252,22 @@ func (h *PageHandler) serveLanding(w http.ResponseWriter, r *http.Request, lang 
             if lang == "en" { data.ExitTitle = settings.ExitTitleEN }
         }
     }
-    if liikkuvaSEOPath(r.URL.Path) || extraServicePath.MatchString(r.URL.Path) {
+    path:=r.URL.Path
+    preview:=path=="/admin/seo/preview"
+    if preview {path=r.URL.Query().Get("path");data.RobotsMeta="noindex, nofollow";data.EnableConsentMode=false;data.ExitTitle="";data.EditorPreview=true}
+    if liikkuvaSEOPath(path) || extraServicePath.MatchString(path) {
         var found bool
         for _,page:=range serviceCatalog(settings) {
-            if page.Published && page.Path==r.URL.Path { configureServicePage(&data,page,page.Path);found=true;break }
+            if (preview || page.Published) && page.Path==path { configureServicePage(&data,page,page.Path)
+                for _,other:=range serviceCatalog(settings) {
+                    if other.Path==page.TranslationPath && other.TranslationPath==page.Path && other.Language!=page.Language && other.Published && !other.NoIndex && !page.NoIndex {
+                        data.HasTranslation=true
+                        data.HrefLangFI="https://"+liikkuvaDomain+page.Path
+                        data.HrefLangEN="https://"+liikkuvaDomain+other.Path
+                        if lang=="en" {data.HrefLangFI,data.HrefLangEN=data.HrefLangEN,data.HrefLangFI}
+                    }
+                }
+                found=true;break }
         }
         if !found {http.NotFound(w,r);return}
     }

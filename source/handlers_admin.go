@@ -438,7 +438,7 @@ func (h *AdminHandler) Save(w http.ResponseWriter, r *http.Request) {
 	}
 	settings := SiteSettings{
 		Revision:                  revision,
-        DraftsInitialized: true,
+        DraftsInitialized: r.FormValue("landing_editor_version")=="2",
         ExitEnabled: r.FormValue("exit_enabled") == "1",
         ExitTitleFI: strings.TrimSpace(r.FormValue("exit_title_fi")),
         ExitTitleEN: strings.TrimSpace(r.FormValue("exit_title_en")),

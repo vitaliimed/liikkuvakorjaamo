@@ -279,6 +279,8 @@ type LandingContent struct {
 }
 
 type LandingPageData struct {
+ HasTranslation bool
+ EditorPreview bool
  ExtraServiceLinks []ServicePage
  ServicePage *ServicePage
  ExitTitle string
