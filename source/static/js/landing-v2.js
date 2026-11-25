@@ -38,7 +38,24 @@
   dialog.addEventListener('close', () => {clearInterval(timer); if(anchor) anchor.replaceWith(card);});
   trigger.onclick = open;
   dialog.querySelector('.offer-close').onclick = () => dialog.close();
+  // On touch devices the browser exposes neither a close-button event nor a
+  // pointer leaving the viewport. A deliberate return to the top after
+  // reading the page provides an exit-intent signal without trapping Back.
+  let furthest = window.scrollY, previous = furthest, touchScrolling = false;
+  function editingRequest() {
+    return !!document.activeElement?.closest('form, dialog') ||
+      Array.from(document.querySelectorAll('form input[name="phone"], form textarea[name="message"]'))
+        .some(field => field.value.trim());
+  }
+  window.addEventListener('touchmove', () => {touchScrolling=true;},{passive:true});
+  window.addEventListener('scroll', () => {
+    if (!matchMedia('(pointer:coarse)').matches || !touchScrolling || shown) return;
+    const y=window.scrollY;
+    furthest=Math.max(furthest,y);
+    if (furthest>innerHeight*1.5 && previous>y && y<64 && !editingRequest()) open();
+    previous=y;
+  },{passive:true});
   document.addEventListener('mouseout', e => {
-    if (!shown && !e.relatedTarget && e.clientY <= 0 && matchMedia('(pointer:fine)').matches) open();
+    if (!shown && !editingRequest() && !e.relatedTarget && e.clientY <= 0 && matchMedia('(pointer:fine)').matches) open();
   });
 })();

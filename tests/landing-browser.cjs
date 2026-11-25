@@ -50,6 +50,16 @@ const assert = require('node:assert/strict');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#footerLeadFormMount input[name=name]').inputValue(),'Fixture');
     assert(!overflow.length, JSON.stringify(overflow));
+    const touch=await browser.newContext({isMobile:true,hasTouch:true,viewport:{width:390,height:844}});
+    const mobile=await touch.newPage();
+    await mobile.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+    await mobile.goto(url);
+    await mobile.locator('[data-consent-action="reject"]').click();
+    await mobile.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.dispatchEvent(new Event('touchmove'));window.scrollTo(0,2000);});
+    await mobile.waitForFunction(()=>scrollY>1500);
+    await mobile.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,0);resolve();}))));
+    await mobile.waitForFunction(()=>document.querySelector('#exitOffer').open);
+    await touch.close();
     console.log('FI, EN and service landing: 10 viewport widths, consent, carousel and offer passed.');
   } finally { await browser.close(); }
 })().catch(err=>{console.error(err);process.exitCode=1;});
