@@ -16,3 +16,11 @@ jobs:
       - run: go test ./...
         working-directory: source
       - run: node --test tests/*.test.cjs
+      - name: Browser regression on rendered FI and EN pages
+        run: |
+          mkdir "$RUNNER_TEMP/landing-fixtures"
+          (cd source && LANDING_FIXTURE_DIR="$RUNNER_TEMP/landing-fixtures" go test -run '^TestRenderBrowserFixtures$')
+          ln -s "$GITHUB_WORKSPACE/source/static" "$RUNNER_TEMP/landing-fixtures/static"
+          python3 -m http.server 8091 --bind 127.0.0.1 --directory "$RUNNER_TEMP/landing-fixtures" >"$RUNNER_TEMP/landing-http.log" 2>&1 &
+          npm install --prefix "$RUNNER_TEMP/landing-browser" playwright@1.56.1
+          NODE_PATH="$RUNNER_TEMP/landing-browser/node_modules" node tests/landing-browser.cjs

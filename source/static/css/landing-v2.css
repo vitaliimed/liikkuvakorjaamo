@@ -20,3 +20,4 @@ html:has(.liikkuva-consent-root:not([style*="none"])),html:has(dialog[open]){ove
 .offer-close{float:right}
 .exit-offer-link{cursor:pointer;padding:.6rem 1rem;margin:1rem}
 .service-detail{padding-block:2rem}.service-detail p{max-width:76ch}.service-detail article{margin:1.2rem 0}
+#exitOffer .footer-lead-mount{min-height:0}

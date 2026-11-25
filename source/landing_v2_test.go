@@ -2,6 +2,8 @@ package main
 
 import (
     "net/http/httptest"
+    "os"
+    "path/filepath"
     "strings"
     "testing"
     "time"
@@ -27,4 +29,22 @@ func TestReviewExamplesStayPrivate(t *testing.T){
 func TestOfferEndsAtHelsinkiMidnight(t *testing.T){
     if got:=time.Unix(campaignDeadline("2026-12-31"),0).UTC().Format(time.RFC3339);got!="2026-12-31T22:00:00Z"{t.Fatal(got)}
     if campaignDeadline("2026-02-31")!=0{t.Fatal("invalid deadline accepted")}
+}
+
+// Write isolated, rendered fixtures only when the browser smoke test requests them.
+func TestRenderBrowserFixtures(t *testing.T) {
+    dir:=os.Getenv("LANDING_FIXTURE_DIR")
+    if dir=="" { t.Skip("browser fixture export disabled") }
+    settings:=SiteSettings{ExitEnabled:true,ExitDate:"2099-12-31",ExitTitleEN:"Request a visit",ExitTitleFI:"Pyydä käyntiä",GA4MeasurementID:"G-TEST"}
+    for i:=0;i<6;i++ {settings.Testimonials=append(settings.Testimonials,AdminTestimonialItem{Name:"Fixture",QuoteEN:"Test review",QuoteFI:"Testipalaute",Rating:5})}
+    cfg:=Config{SiteURL:"https://liikkuvakorjaamo.fi",SettingsStore:seoSettingsStore{settings}}
+    renderer,err:=newTemplateRenderer()
+    if err!=nil{t.Fatal(err)}
+    handler:=newServer(cfg,renderer).Handler
+    for _,item:=range []struct{path,file string}{{"/","index.html"},{"/en","en.html"},{"/palvelualue","area.html"}} {
+        w:=httptest.NewRecorder()
+        handler.ServeHTTP(w,httptest.NewRequest("GET",cfg.SiteURL+item.path,nil))
+        if w.Code!=200{t.Fatalf("%s: %d",item.path,w.Code)}
+        if err:=os.WriteFile(filepath.Join(dir,item.file),w.Body.Bytes(),0600);err!=nil{t.Fatal(err)}
+    }
 }
