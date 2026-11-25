@@ -33,3 +33,32 @@
 По умолчанию canonical указывает на саму страницу. В редакторе можно выбрать другой внутренний адрес и выставить noindex. Карта сайта исключает такие дубли и страницы с запретом индексации. Для пары FI/EN укажите ссылку на перевод в каждой версии. После публикации обеих страниц появятся взаимные hreflang.
 
 В «Порядок и видимость блоков» галочки выбирают разделы, а стрелки меняют их порядок. Первый экран и нижняя форма заявки сохраняются. Индивидуальный порядок применяется на сервере и виден поисковым системам.
+
+## Обновление через Cloud Shell
+
+В каталоге существующего клона получите ветку и создайте отдельную рабочую папку. Перед публикацией запишите распределение трафика. Команда update.py запускает Go-тесты, собирает ревизию без трафика и проверяет её до переключения. Для отката используйте сохранённое распределение с командой gcloud run services update-traffic.
+
+```bash
+(
+  set -e
+  cd "$HOME/liikkuva"
+  git fetch origin feat/seo-landing-pages-v2
+  release_dir=$(mktemp -d "$HOME/liikkuva-seo.XXXXXX")
+  git worktree add --detach "$release_dir" FETCH_HEAD
+  cd "$release_dir"
+  gcloud run services describe liikkuva-preview --project=liikkuva-korjaamo --region=europe-north1 --format=json |
+    python3 -c 'import json,sys; print(",".join(x["revisionName"]+"="+str(x["percent"]) for x in json.load(sys.stdin)["status"]["traffic"] if x.get("percent")))' > "$release_dir/traffic-before.txt"
+  test -s "$release_dir/traffic-before.txt"
+  python3 scripts/audit-public-seo.py > "$release_dir/seo-before.csv"
+  node --test tests/*.test.cjs
+  python3 update.py --project=liikkuva-korjaamo --region=europe-north1 --service=liikkuva-preview
+  python3 scripts/audit-public-seo.py > "$release_dir/seo-after.csv"
+  printf 'Отчёты и состояние до публикации: %s\n' "$release_dir"
+)
+```
+
+Для отката из этой же папки релиза:
+
+```bash
+gcloud run services update-traffic liikkuva-preview --project=liikkuva-korjaamo --region=europe-north1 --to-revisions="$(cat traffic-before.txt)"
+```

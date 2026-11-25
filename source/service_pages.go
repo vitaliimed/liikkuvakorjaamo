@@ -73,6 +73,18 @@ func configureServicePage(data *LandingPageData, page ServicePage, path string) 
     if page.CTA!="" {data.Content.Hero.PrimaryCTA=page.CTA}
     if page.HideFAQ {data.Content.ShowFAQ=false}
     if page.HideReviews {data.Content.ShowTestimonials=false}
+    data.ServiceSchema=map[string]interface{}{
+        "@context":"https://schema.org",
+        "@graph":[]interface{}{
+            map[string]interface{}{"@type":"WebPage","@id":data.OGURL+"#page","url":data.OGURL,"name":page.Title,"description":page.Description,"inLanguage":page.Language},
+            map[string]interface{}{"@type":"Organization","@id":"https://"+liikkuvaDomain+"/#organization","name":"Liikkuva Auto Korjaamo","url":"https://"+liikkuvaDomain+"/"},
+            map[string]interface{}{"@type":"Service","name":page.Heading,"url":data.OGURL,"provider":map[string]string{"@id":"https://"+liikkuvaDomain+"/#organization"}},
+            map[string]interface{}{"@type":"BreadcrumbList","itemListElement":[]interface{}{
+                map[string]interface{}{"@type":"ListItem","position":1,"name":map[string]string{"en":"Home","fi":"Etusivu"}[page.Language],"item":"https://"+liikkuvaDomain+landingPathByLang(page.Language)},
+                map[string]interface{}{"@type":"ListItem","position":2,"name":page.Heading,"item":data.OGURL},
+            }},
+        },
+    }
     data.ServicePage=&page
 }
 func parseServiceEdits(r *http.Request) ([]ServicePage,error) {

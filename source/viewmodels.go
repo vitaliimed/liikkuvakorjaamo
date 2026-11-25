@@ -279,6 +279,7 @@ type LandingContent struct {
 }
 
 type LandingPageData struct {
+ ServiceSchema map[string]interface{}
  ResponsiveHero bool
  HasTranslation bool
  EditorPreview bool
