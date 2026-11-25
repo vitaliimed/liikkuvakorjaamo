@@ -18,6 +18,27 @@
   document.addEventListener('invalid',e=>{const name=e.target.name;if(['name','phone','email','address','car','message'].includes(name))event('lead_validation_error',{field_name:name});},true);
   // Standard app.js handles form, telephone and language events. These are complementary.
   document.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;const href=a.getAttribute('href')||'';if(href.startsWith('mailto:'))event('email_click');else if(/wa\.me|whatsapp/.test(href))event('whatsapp_click');else if(a.closest('nav'))event('navigation_click',{destination:href.startsWith('#')?href.slice(1):'page'});});
+  const started=new WeakSet();
+  const isLeadForm=form=>form && (form.id==='leadForm'||form.id==='footer-leadForm');
+  document.addEventListener('input', e=>{
+    const form=e.target.form;
+    if(isLeadForm(form)&&consent().analytics&&!started.has(form)){started.add(form);event('form_start',{form_id:form.id});}
+  });
+  document.addEventListener('submit',e=>{if(isLeadForm(e.target))event('form_submit',{form_id:e.target.id});},true);
+  document.addEventListener('invalid',e=>{if(isLeadForm(e.target.form))event('form_error',{form_id:e.target.form.id});},true);
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a');if(!a)return;
+    const href=a.getAttribute('href')||'';
+    if(href.startsWith('tel:'))event('click_phone');
+    else if(href.startsWith('mailto:'))event('click_email');
+    else if(/^https?:\/\/(wa\.me|api\.whatsapp\.com|web\.whatsapp\.com)\//i.test(href))event('click_whatsapp');
+    else if(/^https?:\/\/t\.me\//i.test(href))event('click_telegram');
+    else if(a.closest('.languages'))event('language_change');
+    else if(a.hasAttribute('data-service'))event('select_service',{service_name:a.getAttribute('data-service')});
+  });
+  let viewed=false;
+  function viewService(){if(!viewed&&consent().analytics&&document.querySelector('.service-detail')){viewed=true;event('view_service',{service_path:location.pathname});}}
+  viewService();addEventListener('liikkuva:consent-updated',viewService);
   let levels=new Set();addEventListener('scroll',()=>{const height=document.documentElement.scrollHeight-innerHeight;if(height<=0)return;const n=100*scrollY/height;[25,50,75,90].forEach(v=>{if(n>=v&&!levels.has(v)&&consent().analytics){levels.add(v);event('scroll_depth',{percent_scrolled:v});}});},{passive:true});
   const prices=document.querySelector('#pricing,#prices,#hinnat,.pricing-section');if(prices&&window.IntersectionObserver){const io=new IntersectionObserver(entries=>{if(entries.some(x=>x.isIntersecting)&&consent().analytics){event('view_pricing');io.disconnect();}},{threshold:.35});io.observe(prices);}
  });
