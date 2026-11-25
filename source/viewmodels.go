@@ -279,6 +279,7 @@ type LandingContent struct {
 }
 
 type LandingPageData struct {
+ ResponsiveHero bool
  HasTranslation bool
  EditorPreview bool
  ExtraServiceLinks []ServicePage

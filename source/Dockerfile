@@ -10,6 +10,8 @@ WORKDIR /app
 COPY --from=build /out/server .
 COPY *.html ./
 COPY static ./static
+COPY build-landing-images.sh ./
+RUN sh build-landing-images.sh
 COPY templates ./templates
 USER app
 ENV PORT=8080

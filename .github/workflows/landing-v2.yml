@@ -18,6 +18,7 @@ jobs:
       - run: node --test tests/*.test.cjs
       - name: Browser regression on rendered FI and EN pages
         run: |
+          docker run --rm -v "$PWD/source:/work" -w /work alpine:3.23 sh -ec 'apk add --no-cache vips-tools && sh build-landing-images.sh'
           mkdir "$RUNNER_TEMP/landing-fixtures"
           (cd source && LANDING_FIXTURE_DIR="$RUNNER_TEMP/landing-fixtures" go test -run '^TestRenderBrowserFixtures$')
           ln -s "$GITHUB_WORKSPACE/source/static" "$RUNNER_TEMP/landing-fixtures/static"
@@ -62,3 +63,16 @@ jobs:
             test -s /tmp/review.jpg
             test "$(vipsheader -f width /tmp/review.jpg)" -le 1200
           '
+
+  go-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache: false
+      - name: Check new Go source formatting
+        run: |
+          gofmt -w source/service_editor.go source/service_layout.go source/service_pages.go source/review_media.go source/landing_v2_test.go
+          git diff --exit-code

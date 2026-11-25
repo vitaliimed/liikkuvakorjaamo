@@ -27,6 +27,8 @@ class Head(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if tag == "br" and self.capture == "h1":
+            self.headings[-1] += " "
         if tag in ("title", "h1"):
             self.capture = tag
             if tag == "h1":
