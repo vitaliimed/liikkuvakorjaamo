@@ -62,3 +62,5 @@
 ```bash
 gcloud run services update-traffic liikkuva-preview --project=liikkuva-korjaamo --region=europe-north1 --to-revisions="$(cat traffic-before.txt)"
 ```
+
+Исходная production-ревизия при аудите 25 ноября — liikkuva-preview-00104-ber. Реестр восьми публичных URL хранится рядом в seo-before-20261125.csv. Для всех шести внутренних страниц зафиксированы HTTP 200, canonical на собственный адрес и отсутствие формы в серверном HTML. Фактические позиции и выбранный Google canonical проверяются в Search Console отдельно.
