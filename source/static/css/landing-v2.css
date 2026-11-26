@@ -18,7 +18,7 @@ html:has(.liikkuva-consent-root:not([style*="none"])),html:has(dialog[open]){ove
 #exitOffer::backdrop{background:rgba(14,25,18,.55)}
 #offerTitle{font-size:clamp(1.25rem,4vw,1.8rem);overflow-wrap:anywhere;white-space:pre-line}
 .offer-close{float:right}
-.exit-offer-link{cursor:pointer;padding:.6rem 1rem;margin:1rem}
+#exitOffer [data-countdown]{display:inline-block;color:#9c4000;background:#fff2e7;border-inline-start:3px solid #ee7414;padding:.35rem .7rem;margin:.4rem 0 .7rem;font-weight:700;font-variant-numeric:tabular-nums}
 .service-detail{padding-block:2rem}.service-detail p{max-width:76ch}.service-detail article{margin:1.2rem 0}
 #exitOffer .footer-lead-mount{min-height:0}
 @media(max-width:374px){

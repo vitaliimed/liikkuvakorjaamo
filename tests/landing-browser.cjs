@@ -48,7 +48,13 @@ const assert = require('node:assert/strict');
     }
     await page.locator('[data-slide="1"]').click();
     await page.waitForFunction(()=>document.querySelector('.review-grid').scrollLeft>0);
-    await page.locator('[data-offer-open]').click();
+    assert.equal(await page.locator('[data-offer-open]').count(),0);
+    await page.evaluate(()=>{
+      const mouse=(type,y)=>document.dispatchEvent(new MouseEvent(type,{clientX:150,clientY:y}));
+      mouse('mousemove',10); mouse('mouseout',0);
+      if(document.querySelector('#exitOffer').open) throw Error('Unexpected offer');
+      mouse('mousemove',180); mouse('mouseout',0);
+    });
     await page.locator('#exitOffer input[name=name]').fill('Fixture');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#footerLeadFormMount input[name=name]').inputValue(),'Fixture');
@@ -58,9 +64,18 @@ const assert = require('node:assert/strict');
     await mobile.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
     await mobile.goto(url);
     await mobile.locator('[data-consent-action="reject"]').click();
-    await mobile.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.dispatchEvent(new Event('touchmove'));window.scrollTo(0,2000);});
+    await mobile.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,2000);});
     await mobile.waitForFunction(()=>scrollY>1500);
     await mobile.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,0);resolve();}))));
+    assert.equal(await mobile.locator('#exitOffer').evaluate(el=>el.open),false);
+    await mobile.evaluate(()=>{
+      window.scrollTo(0,200);
+      const touch=(type,y)=>{
+        const point=new Touch({identifier:1,target:document.body,clientX:120,clientY:y});
+        window.dispatchEvent(new TouchEvent(type,{touches:type==='touchstart'?[point]:[],changedTouches:[point]}));
+      };
+      touch('touchstart',80); window.scrollTo(0,0); touch('touchend',300);
+    });
     await mobile.waitForFunction(()=>document.querySelector('#exitOffer').open);
     await touch.close();
     console.log('FI, EN and service landing: 10 viewport widths, consent, carousel and offer passed.');
