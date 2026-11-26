@@ -17,9 +17,12 @@ const assert = require('node:assert/strict');
       await page.reload();
       await page.locator('[data-consent-action="'+action+'"]').click({trial:true});
       assert(await page.locator('main').evaluate(el => el.inert));
+      await page.evaluate(() => { window.gtag = () => { throw new Error('Tracking unavailable'); }; });
       await page.locator('[data-consent-action="'+action+'"]').click();
       if (action === 'settings') await page.locator('[data-consent-modal-action="save"]').click();
       assert.equal(await page.locator('main').evaluate(el => el.inert), false);
+      await page.locator('#leadForm input[name=name]').fill('Unlocked');
+      assert.equal(await page.locator('#leadForm input[name=name]').inputValue(),'Unlocked');
       await page.reload();
       assert.equal(await page.locator('.liikkuva-consent-root:visible').count(),0);
     }

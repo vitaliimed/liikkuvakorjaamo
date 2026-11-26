@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  if (window.liikkuvaApplyConsentSettings) return;
+
   var tracking = window.LIIKKUVA_TRACKING || {};
   var ui = window.LIIKKUVA_CONSENT_UI || {};
   var consentKey = window.LIIKKUVA_CONSENT_KEY || "liikkuva_consent_v1";
@@ -451,18 +453,22 @@
   function applyConsent(nextConsent) {
     var consent = saveConsent(nextConsent);
 
-    updateGoogleConsent(consent);
-    initGoogleTags(consent);
-
-    if (consent.marketing) {
-      initMarketingTags();
-    } else {
-      revokeMetaConsent();
-    }
-
     hideBanner();
     closeSettingsModal();
-    updateManageButtonVisibility();
+    document.documentElement.inert = false;
+
+    try {
+      updateGoogleConsent(consent);
+      initGoogleTags(consent);
+
+      if (consent.marketing) {
+        initMarketingTags();
+      } else {
+        revokeMetaConsent();
+      }
+    } catch (error) {
+      console.warn("Consent saved; tracking initialization failed", error);
+    }
 
     try {
       window.dispatchEvent(

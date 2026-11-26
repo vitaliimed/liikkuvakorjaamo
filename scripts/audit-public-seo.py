@@ -22,11 +22,14 @@ class Head(HTMLParser):
         self.title = ""
         self.capture = ""
         self.forms = 0
+        self.reviews = 0
         self.structured = []
         self.links = set()
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if tag == "article" and "testimonial-card" in a.get("class", "").split():
+            self.reviews += 1
         if tag == "br" and self.capture == "h1":
             self.headings[-1] += " "
         if tag in ("title", "h1"):
@@ -79,7 +82,7 @@ def main():
     report = csv.writer(sys.stdout)
     report.writerow(["url", "status", "final_url", "title", "description", "h1", "canonical",
                      "robots", "x_robots_tag", "hreflang", "og_title", "og_image", "json_ld",
-                     "server_lead_forms", "internal_links", "issues"])
+                     "server_lead_forms", "published_reviews", "internal_links", "issues"])
     titles = {}
     for url in urls:
         if urllib.parse.urlsplit(url).netloc != "liikkuvakorjaamo.fi":
@@ -112,7 +115,7 @@ def main():
         report.writerow([url, status, final, doc.title, doc.meta.get("description"), " | ".join(doc.headings),
                          " | ".join(doc.canonicals), doc.meta.get("robots"), headers.get("X-Robots-Tag"),
                          " | ".join(doc.alternates), doc.meta.get("og:title"), doc.meta.get("og:image"),
-                         len(doc.structured), doc.forms, " | ".join(sorted(doc.links)), " | ".join(issues)])
+                         len(doc.structured), doc.forms, doc.reviews, " | ".join(sorted(doc.links)), " | ".join(issues)])
 
 
 if __name__ == "__main__":
